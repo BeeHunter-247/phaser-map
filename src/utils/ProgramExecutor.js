@@ -105,7 +105,7 @@ export class ProgramExecutor {
           original: action,
         };
 
-      case "collectOnce":
+      case "collect":
         return {
           type: "collect",
           count: parseInt(action.count) || 1,
@@ -247,7 +247,7 @@ export class ProgramExecutor {
           return this.scene.turnLeft();
 
         case "turnBack":
-          return this.scene.turnAround();
+          return this.scene.turnBack();
 
         case "collect":
           return this.executeCollect(action.count, action.colors);

@@ -6,7 +6,7 @@
       { "type": "forward", "count": 3 },
   
       { "type": "repeat", "times": 3, "body": [
-        { "type": "collectOnce", "color": "green" }
+        { "type": "collect", "color": "green" }
       ]}
     ]
 },

@@ -572,7 +572,7 @@ export default class Scene extends Phaser.Scene {
   /**
    * Quay lại sau lưng 180 độ
    */
-  turnAround() {
+  turnBack() {
     if (this.isMoving) {
       console.log("Cannot turn while moving!");
       return false;
@@ -907,7 +907,7 @@ export default class Scene extends Phaser.Scene {
       actions: [
         { type: "turnRight" },
         { type: "forward", count: "3" },
-        { type: "collectOnce", color: "green", count: 3 },
+        { type: "collect", color: "green", count: 3 },
       ],
     };
 

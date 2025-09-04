@@ -143,6 +143,15 @@ export function initWebViewCommunication(game) {
   setupMessageListener((message) => {
     // Xử lý các loại thông điệp từ trang web chứa
     switch (message.type) {
+      case "START_MAP": {
+        // Bắt đầu trực tiếp Scene với mapKey (bỏ qua menu)
+        const mapKey = message.data && message.data.mapKey;
+        if (mapKey) {
+          console.log(`▶️ START_MAP: ${mapKey}`);
+          game.scene.start("Scene", { mapKey });
+        }
+        break;
+      }
       case "LOAD_MAP":
         // Xử lý yêu cầu tải map
         if (message.data && message.data.mapKey) {
