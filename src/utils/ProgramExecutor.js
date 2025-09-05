@@ -319,7 +319,7 @@ export class ProgramExecutor {
       types,
       count: perTileCount,
     } = this.scene.getBatteriesAtCurrentTile();
-    if (!sprites || sprites.length === 0 || perTileCount === 0) {
+    if (perTileCount === 0) {
       this.scene.lose("Không có pin tại ô hiện tại");
       return false;
     }
