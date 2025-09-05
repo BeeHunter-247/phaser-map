@@ -2,9 +2,23 @@
     "version": "1.0.0",
     "programName": "battery_collection_demo",
     "actions": [
-      { "type": "forward", "count": "2" },
-      { "type": "collect", "color": "green", "count": 2 },
-      { "type": "forward", "count": "2" },
-      { "type": "collect", "color": "red", "count": 3 }
+      {
+        "type": "repeat",
+        "count": 3,
+        "body": [
+          { "type": "forward", "count": 1 }
+        ]
+      },
+      {
+        "type": "if",
+        "cond": { 
+          "type": "condition", 
+          "function": "isGreen", 
+          "check": true 
+        },
+        "then": [
+          { "type": "collect", "color": "green", "count": 1 }
+        ]
+      }
     ]
 }

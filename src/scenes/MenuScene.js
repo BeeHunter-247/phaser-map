@@ -8,12 +8,14 @@ export default class MenuScene extends Phaser.Scene {
   create() {
     this.cameras.main.setBackgroundColor("#f4f4f9");
 
-    // Gọi hàm để vẽ menu cho Basic
+    // Gọi hàm để vẽ menu cho Basic (8 maps)
     this.drawCategory("Basic", 8, 100, 120);
-    this.drawCategory("Variable", 8, 100, 240);
+    
+    // Gọi hàm để vẽ menu cho Boolean (8 maps)
+    this.drawCategory("Boolean", 8, 100, 240);
 
     // Sau này bạn có thể gọi thêm:
-    // this.drawCategory("Variable", 5, 100, 300);
+    // this.drawCategory("Variable", 5, 100, 360);
     // this.drawCategory("Loop", 10, 100, 480);
   }
 
