@@ -58,6 +58,28 @@ export class ProgramExecutor {
 
     for (let i = 0; i < actions.length; i++) {
       const action = actions[i];
+
+      // Hỗ trợ lệnh lặp repeat bằng cách phẳng hoá (flatten) thân lệnh vào danh sách actions
+      if (action && action.type === "repeat") {
+        const repeatCount = parseInt(action.count) || 1;
+        const bodyRaw = Array.isArray(action.body) ? action.body : [];
+
+        // Đệ quy parse phần thân để hỗ trợ repeat lồng nhau
+        const parsedBody = this.parseActions(bodyRaw);
+
+        console.log(
+          `🔁 Expanding repeat x${repeatCount} with ${parsedBody.length} action(s) in body`
+        );
+
+        for (let r = 0; r < repeatCount; r++) {
+          for (let j = 0; j < parsedBody.length; j++) {
+            // Push bản sao nông là đủ vì các action là immutable objects đơn giản
+            parsedActions.push({ ...parsedBody[j] });
+          }
+        }
+        continue;
+      }
+
       const parsedAction = this.parseAction(action, i);
       if (parsedAction) {
         parsedActions.push(parsedAction);
@@ -80,6 +102,20 @@ export class ProgramExecutor {
     }
 
     switch (action.type) {
+      case "if": {
+        // Giữ nguyên cấu trúc if để đánh giá ở runtime
+        const thenActions = Array.isArray(action.then)
+          ? this.parseActions(action.then)
+          : [];
+        const condition = this.parseCondition(action.cond);
+        return {
+          type: "if",
+          condition,
+          thenActions,
+          original: action,
+        };
+      }
+
       case "forward":
         return {
           type: "forward",
@@ -117,6 +153,22 @@ export class ProgramExecutor {
         console.warn(`⚠️ Action ${index}: Unknown type "${action.type}"`);
         return null;
     }
+  }
+
+  /**
+   * Parse đối tượng điều kiện
+   * @param {Object} cond - Raw condition
+   * @returns {Object|null}
+   */
+  parseCondition(cond) {
+    if (!cond || typeof cond !== "object") return null;
+    // Ví dụ cond: { type: "condition", function: "isGreen", check: true }
+    return {
+      type: cond.type || "condition",
+      functionName: cond.function || null,
+      check: typeof cond.check === "boolean" ? cond.check : true,
+      original: cond,
+    };
   }
 
   /**
@@ -237,6 +289,9 @@ export class ProgramExecutor {
   executeCommand(action) {
     try {
       switch (action.type) {
+        case "if":
+          return this.executeIf(action);
+
         case "forward":
           return this.executeForward(action.count);
 
@@ -260,6 +315,61 @@ export class ProgramExecutor {
       console.error(`❌ Error executing command:`, error);
       return false;
     }
+  }
+
+  /**
+   * Thực thi câu lệnh if
+   * - Nếu điều kiện đúng, chèn thenActions ngay sau bước hiện tại
+   */
+  executeIf(action) {
+    try {
+      const result = this.evaluateCondition(action.condition);
+      console.log(
+        `🤔 IF condition (${action.condition?.functionName}) => ${result}`
+      );
+      if (result && Array.isArray(action.thenActions) && action.thenActions.length > 0) {
+        // Chèn thenActions ngay sau currentStep
+        const insertIndex = this.currentStep + 1;
+        this.program.actions.splice(insertIndex, 0, ...action.thenActions.map(a => ({ ...a })));
+        console.log(`🧩 Inserted ${action.thenActions.length} action(s) at ${insertIndex}`);
+      }
+      return true;
+    } catch (e) {
+      console.error("❌ Failed to execute IF:", e);
+      return false;
+    }
+  }
+
+  /**
+   * Đánh giá điều kiện
+   * Hỗ trợ: condition.function = "isGreen" => có pin xanh tại ô hiện tại?
+   * Nếu cond.check = false thì đảo ngược kết quả
+   */
+  evaluateCondition(cond) {
+    if (!cond) return false;
+
+    let actual = false;
+    switch (cond.functionName) {
+      case "isGreen":
+        actual = this.hasBatteryColorAtCurrentTile("green");
+        break;
+      default:
+        console.warn(`⚠️ Unknown condition function: ${cond.functionName}`);
+        actual = false;
+    }
+    return cond.check ? actual : !actual;
+  }
+
+  /**
+   * Kiểm tra có pin màu chỉ định tại ô hiện tại không
+   */
+  hasBatteryColorAtCurrentTile(color) {
+    const info = this.scene.getBatteriesAtCurrentTile();
+    if (!info) return false;
+    const count = info?.count || 0;
+    if (count <= 0) return false;
+    const types = Array.isArray(info?.types) ? info.types : [];
+    return types.some((t) => t === color);
   }
 
   /**

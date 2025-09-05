@@ -164,6 +164,137 @@ export const mapConfigs = {
       },
     ],
   },
+
+  boolean1: {
+    robot: {
+      tile: { x: 3, y: 4 }, // Robot ở góc trên bên trái
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          // Pin ở hàng trên: 2 pin xanh lá
+          { x: 6, y: 4, count: 3, type: "green", spread: 1.2 },
+        ],
+      },
+    ],
+  },
+  boolean2: {
+    robot: {
+      tile: { x: 2, y: 4 }, // Robot ở góc trên bên trái
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          // Pin ở hàng trên: 2 pin xanh lá
+          { x: 4, y: 4, count: 2, type: "green", spread: 1.2 },
+          { x: 6, y: 4, count: 1, type: "red", spread: 1.2 },
+          { x: 8, y: 4, count: 2, type: "green", spread: 1.2 },
+        ],
+      },
+    ],
+  },
+  boolean3: {
+    robot: {
+      tile: { x: 1, y: 4 }, // Robot ở góc trên bên trái
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          // Pin ở hàng trên: 2 pin xanh lá
+          { x: 3, y: 4, count: 3, type: "green", spread: 1.2 },
+          { x: 4, y: 4, count: 1, type: "red", spread: 1.2 },
+          { x: 5, y: 4, count: 3, type: "green", spread: 1.2 },
+          { x: 6, y: 4, count: 3, type: "green", spread: 1.2 },
+        ],
+      },
+    ],
+  },
+  boolean4: {
+    robot: {
+      tile: { x: 2, y: 4 }, // Robot ở góc trên bên trái
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          // Pin ở hàng trên: 2 pin xanh lá
+          { x: 3, y: 4, count: 2, type: "green", spread: 1.2 },
+          { x: 4, y: 4, count: 2, type: "green", spread: 1.2 },
+          { x: 5, y: 4, count: 1, type: "red", spread: 1.2 },
+          { x: 6, y: 4, count: 2, type: "green", spread: 1.2 },
+          { x: 7, y: 4, count: 2, type: "green", spread: 1.2 },
+        ],
+      },
+    ],
+  },
+  boolean5: {
+    robot: {
+      tile: { x: 1, y: 4 }, // Robot ở góc trên bên trái
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          // Pin ở hàng trên: 2 pin xanh lá
+          { x: 5, y: 4, count: 1, type: "red", spread: 1.2 },
+          { x: 5, y: 8, count: 5, type: "green", spread: 1.2 },
+        ],
+      },
+    ],
+  },
+  boolean6: {
+    robot: {
+      tile: { x: 0, y: 4 }, // Robot ở góc trên bên trái
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          // Pin ở hàng trên: 2 pin xanh lá
+          { x: 2, y: 4, count: 4, type: "green", spread: 1.2 },
+          { x: 2, y: 6, count: 4, type: "green", spread: 1.2 },
+          { x: 4, y: 6, count: 1, type: "red", spread: 1.2 },
+          { x: 4, y: 8, count: 4, type: "green", spread: 1.2 },
+        ],
+      },
+    ],
+  },
+  boolean7: {
+    robot: {
+      tile: { x: 1, y: 4 }, // Robot ở góc trên bên trái
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          // Pin ở hàng trên: 2 pin xanh lá
+          { x: 3, y: 5, count: 3, type: "green", spread: 1.2 },
+          { x: 5, y: 5, count: 1, type: "red", spread: 1.2 },
+          { x: 7, y: 5, count: 3, type: "green", spread: 1.2 },
+        ],
+      },
+    ],
+  },
+  boolean8: {
+    robot: {
+      tile: { x: 0, y: 4 }, // Robot ở góc trên bên trái
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          // Pin ở hàng trên: 2 pin xanh lá
+          { x: 2, y: 5, count: 3, type: "green", spread: 1.2 },
+          { x: 5, y: 5, count: 3, type: "green", spread: 1.2 },
+          { x: 3, y: 3, count: 1, type: "red", spread: 1.2 },
+          { x: 6, y: 3, count: 3, type: "green", spread: 1.2 },
+        ],
+      },
+    ],
+  },
 };
 
 /**
