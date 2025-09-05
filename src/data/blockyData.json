@@ -3,7 +3,7 @@
     "programName": "battery_collection_demo",
     "actions": [
       { "type": "forward", "count": "2" },
-      { "type": "collect", "color": "green", "count": 3 },
+      { "type": "collect", "color": "green", "count": 2 },
       { "type": "forward", "count": "2" },
       { "type": "collect", "color": "red", "count": 3 }
     ]

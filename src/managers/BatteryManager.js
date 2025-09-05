@@ -149,6 +149,8 @@ export class BatteryManager {
     const worldX = sprite?.x ?? 0;
     const tilePoint = this.scene.layer.worldToTileXY(worldX, adjustY);
 
+    console.log(`🔍 findTileForSprite: sprite(${sprite?.x}, ${sprite?.y}) -> adjusted(${worldX}, ${adjustY}) -> tile(${tilePoint?.x}, ${tilePoint?.y})`);
+
     if (!tilePoint) return null;
 
     const tileX = Math.max(0, Math.min(this.scene.map.width - 1, tilePoint.x));
@@ -231,14 +233,66 @@ export class BatteryManager {
     }
 
     // Xử lý sprite nếu có
+    console.log(`🔋 DEBUG: Sprite removal for ${collectedType} at ${tileKey}`);
+    console.log(`   sprites.length: ${sprites.length}`);
     if (sprites.length > 0) {
+      console.log(`   Available sprite keys:`, sprites.map(s => s?.texture?.key));
       const indexToRemove = sprites.findIndex((s) =>
         s?.texture?.key?.includes(collectedType)
       );
+      console.log(`   indexToRemove: ${indexToRemove}`);
       if (indexToRemove !== -1) {
         const [sprite] = sprites.splice(indexToRemove, 1);
+        console.log(`   Destroying sprite: ${sprite?.texture?.key}`);
         if (sprite && sprite.active) sprite.destroy();
         this.batterySprites.set(tileKey, sprites);
+        console.log(`   Remaining sprites: ${sprites.length}`);
+      } else {
+        console.log(`   ❌ No matching sprite found for type: ${collectedType}`);
+      }
+    } else {
+      console.log(`   ❌ No sprites available to remove`);
+      // Fallback: Tìm và destroy sprite gần nhất nếu không tìm thấy trong batterySprites
+      console.log(`   🔍 Searching for nearby sprites to destroy...`);
+      const allSprites = Array.from(this.batterySprites.values()).flat();
+      const nearbySprite = allSprites.find(s => {
+        if (!s || !s.active) return false;
+        const spriteTile = this.findTileForSprite(s);
+        return spriteTile && spriteTile.x === robotPos.x && spriteTile.y === robotPos.y;
+      });
+      
+      if (nearbySprite) {
+        console.log(`   🎯 Found nearby sprite to destroy: ${nearbySprite.texture.key}`);
+        nearbySprite.destroy();
+      } else {
+        console.log(`   ❌ No nearby sprites found either`);
+        // Ultimate fallback: Tìm sprite theo vị trí world coordinates
+        console.log(`   🔍 Ultimate fallback: searching by world coordinates...`);
+        const robotWorldPos = this.robotController.getTileWorldCenter(robotPos.x, robotPos.y);
+        console.log(`   Robot world position: (${robotWorldPos.x}, ${robotWorldPos.y})`);
+        
+        // Tìm tất cả battery sprites trong scene
+        const allBatterySprites = this.scene.children.list.filter(child => 
+          child.texture && child.texture.key && child.texture.key.includes('battery')
+        );
+        
+        console.log(`   Found ${allBatterySprites.length} battery sprites in scene`);
+        
+        const closestSprite = allBatterySprites.find(sprite => {
+          const distance = Phaser.Math.Distance.Between(
+            sprite.x, sprite.y, 
+            robotWorldPos.x, robotWorldPos.y
+          );
+          console.log(`   Sprite at (${sprite.x}, ${sprite.y}) distance: ${distance.toFixed(2)}`);
+          return distance < 50; // Trong vòng 50 pixels
+        });
+        
+        if (closestSprite) {
+          console.log(`   🎯 Found closest sprite to destroy: ${closestSprite.texture.key}`);
+          closestSprite.destroy();
+        } else {
+          console.log(`   ❌ No sprites found within 50 pixels`);
+        }
       }
     }
 
