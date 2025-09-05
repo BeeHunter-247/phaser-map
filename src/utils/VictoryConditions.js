@@ -62,23 +62,25 @@ export class VictoryConditions {
    * @returns {Object} Kết quả kiểm tra { isVictory, progress, message }
    */
   static checkVictory(scene) {
-    // Nếu không có mapKey hoặc không có thông tin pin đã thu thập
-    if (!scene.mapKey || !scene.collectedBatteryTypes) {
+    // Nếu không có mapKey hoặc không có batteryManager
+    if (!scene.mapKey || !scene.batteryManager) {
       return {
         isVictory: false,
         progress: 0,
-        message: "Không thể đánh giá",
+        message: "Đang khởi tạo...",
+        details: {
+          red: "Đỏ: 0/0",
+          yellow: "Vàng: 0/0", 
+          green: "Xanh lá: 0/0"
+        }
       };
     }
 
     // Lấy thông tin pin cần thu thập
     const required = this.getRequiredBatteries(scene.mapKey);
 
-    // Lấy thông tin pin đã thu thập
-    const collected = {
-      total: scene.collectedBatteries || 0,
-      byType: scene.collectedBatteryTypes || { red: 0, yellow: 0, green: 0 },
-    };
+    // Lấy thông tin pin đã thu thập từ BatteryManager
+    const collected = scene.batteryManager ? scene.batteryManager.getCollectedBatteries() : { total: 0, byType: { red: 0, yellow: 0, green: 0 } };
 
     // Tính tỷ lệ hoàn thành
     const progress =
@@ -190,9 +192,12 @@ export function checkAndDisplayVictory(scene) {
     console.log(`📊 ${result.message}`);
   }
 
-  console.log(`   ${result.details.red}`);
-  console.log(`   ${result.details.yellow}`);
-  console.log(`   ${result.details.green}`);
+  // Kiểm tra details có tồn tại không trước khi log
+  if (result.details) {
+    console.log(`   ${result.details.red}`);
+    console.log(`   ${result.details.yellow}`);
+    console.log(`   ${result.details.green}`);
+  }
 
   // Gửi kết quả đến webview bên ngoài
   sendBatteryCollectionResult(scene, result);
@@ -240,9 +245,15 @@ export function updateBatteryStatusText(scene, statusText) {
   // Tạo nội dung text
   let content = `Map: ${scene.mapKey}\n`;
   content += `${result.message}\n`;
-  content += `${result.details.red}\n`;
-  content += `${result.details.yellow}\n`;
-  content += `${result.details.green}`;
+  
+  // Kiểm tra details có tồn tại không
+  if (result.details) {
+    content += `${result.details.red}\n`;
+    content += `${result.details.yellow}\n`;
+    content += `${result.details.green}`;
+  } else {
+    content += "Đang tải...";
+  }
 
   // Cập nhật text
   statusText.setText(content);

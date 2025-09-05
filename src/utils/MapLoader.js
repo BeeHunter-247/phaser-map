@@ -15,7 +15,7 @@ export class MapLoader {
     const {
       offsetX = 300,
       offsetY = 0,
-      scale = 0.75,
+      scale = 1,
       backgroundColor = 0xf3f5f2,
     } = config;
 
