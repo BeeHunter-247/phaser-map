@@ -299,17 +299,17 @@ export const mapConfigs = {
   // ForLoop Maps Configuration
   forloop1: {
     robot: {
-      tile: { x: 2, y: 6 }, // Robot ở vị trí (2,6)
+      tile: { x: 2, y: 5 }, // Robot ở vị trí (2,6)
       direction: "east",
     },
     batteries: [
       {
         tiles: [
-          { x: 3, y: 6, count: 1, type: "green" },
-          { x: 4, y: 6, count: 1, type: "green" },
-          { x: 5, y: 6, count: 1, type: "green" },
-          { x: 6, y: 6, count: 1, type: "green" },
-          { x: 7, y: 6, count: 1, type: "green" },
+          { x: 3, y: 5, count: 1, type: "yellow" },
+          { x: 4, y: 5, count: 1, type: "yellow" },
+          { x: 5, y: 5, count: 1, type: "yellow" },
+          { x: 6, y: 5, count: 1, type: "yellow" },
+          { x: 7, y: 5, count: 1, type: "yellow" },
         ],
       },
     ],
@@ -317,17 +317,17 @@ export const mapConfigs = {
 
   forloop2: {
     robot: {
-      tile: { x: 2, y: 6 }, // Robot ở vị trí (2,6)
+      tile: { x: 2, y: 5 }, // Robot ở vị trí (2,6)
       direction: "east",
     },
     batteries: [
       {
         tiles: [
-          { x: 3, y: 6, count: 1, type: "green" },
-          { x: 4, y: 6, count: 2, type: "green" },
-          { x: 5, y: 6, count: 3, type: "green" },
-          { x: 6, y: 6, count: 4, type: "green" },
-          { x: 7, y: 6, count: 5, type: "green" },
+          { x: 3, y: 5, count: 1, type: "yellow" },
+          { x: 4, y: 5, count: 2, type: "yellow" },
+          { x: 5, y: 5, count: 3, type: "yellow" },
+          { x: 6, y: 5, count: 4, type: "yellow" },
+          { x: 7, y: 5, count: 5, type: "yellow" },
         ],
         spread: 1.2,
       },
@@ -336,15 +336,15 @@ export const mapConfigs = {
 
   forloop3: {
     robot: {
-      tile: { x: 1, y: 4 },
+      tile: { x: 1, y: 3 },
       direction: "east",
     },
     batteries: [
       {
         tiles: [
-          { x: 2, y: 4, count: 1, type: "green" },
-          { x: 4, y: 4, count: 1, type: "green" },
-          { x: 7, y: 4, count: 1, type: "green" },
+          { x: 2, y: 3, count: 1, type: "yellow" },
+          { x: 4, y: 3, count: 1, type: "yellow" },
+          { x: 7, y: 3, count: 1, type: "yellow" },
         ],
       },
     ],
@@ -352,15 +352,15 @@ export const mapConfigs = {
 
   forloop4: {
     robot: {
-      tile: { x: 2, y: 6 }, // Robot ở vị trí (2,6)
+      tile: { x: 2, y: 5 }, // Robot ở vị trí (2,6)
       direction: "east",
     },
     batteries: [
       {
         tiles: [
-          { x: 3, y: 6, count: 1, type: "green" },
-          { x: 5, y: 6, count: 2, type: "green" },
-          { x: 8, y: 6, count: 3, type: "green" },
+          { x: 3, y: 5, count: 1, type: "yellow" },
+          { x: 5, y: 5, count: 2, type: "yellow" },
+          { x: 8, y: 5, count: 3, type: "yellow" },
         ],
       },
     ],
@@ -368,17 +368,17 @@ export const mapConfigs = {
 
   forloop5: {
     robot: {
-      tile: { x: 2, y: 6 }, // Robot ở vị trí (2,6)
+      tile: { x: 2, y: 5 }, // Robot ở vị trí (2,6)
       direction: "east",
     },
     batteries: [
       {
         tiles: [
-          { x: 3, y: 6, count: 5, type: "green" },
-          { x: 4, y: 6, count: 4, type: "green" },
-          { x: 5, y: 6, count: 3, type: "green" },
-          { x: 6, y: 6, count: 2, type: "green" },
-          { x: 7, y: 6, count: 1, type: "green" },
+          { x: 3, y: 5, count: 5, type: "yellow" },
+          { x: 4, y: 5, count: 4, type: "yellow" },
+          { x: 5, y: 5, count: 3, type: "yellow" },
+          { x: 6, y: 5, count: 2, type: "yellow" },
+          { x: 7, y: 5, count: 1, type: "yellow" },
         ],
         spread: 1.2,
       },
@@ -387,17 +387,17 @@ export const mapConfigs = {
 
   forloop6: {
     robot: {
-      tile: { x: 2, y: 5 }, // Robot ở vị trí (2,6)
+      tile: { x: 2, y: 4 }, // Robot ở vị trí (2,6)
       direction: "east",
     },
     batteries: [
       {
         tiles: [
-          { x: 3, y: 5, count: 9, type: "green" },
-          { x: 4, y: 5, count: 7, type: "green" },
-          { x: 5, y: 5, count: 5, type: "green" },
-          { x: 6, y: 5, count: 3, type: "green" },
-          { x: 7, y: 5, count: 1, type: "green" },
+          { x: 3, y: 4, count: 9, type: "yellow" },
+          { x: 4, y: 4, count: 7, type: "yellow" },
+          { x: 5, y: 4, count: 5, type: "yellow" },
+          { x: 6, y: 4, count: 3, type: "yellow" },
+          { x: 7, y: 4, count: 1, type: "yellow" },
         ],
         spread: 1.2,
       },
@@ -406,15 +406,15 @@ export const mapConfigs = {
 
   forloop7: {
     robot: {
-      tile: { x: 2, y: 4 }, // Robot ở vị trí (2,4)
+      tile: { x: 3, y: 4 }, // Robot ở vị trí (2,4)
       direction: "east",
     },
     batteries: [
       {
         tiles: [
-          { x: 3, y: 4, count: 2, type: "green" },
-          { x: 4, y: 4, count: 5, type: "green" },
-          { x: 5, y: 4, count: 8, type: "green" },
+          { x: 4, y: 4, count: 2, type: "yellow" },
+          { x: 5, y: 4, count: 5, type: "yellow" },
+          { x: 6, y: 4, count: 8, type: "yellow" },
         ],
         spread: 1.2,
       },
@@ -423,12 +423,12 @@ export const mapConfigs = {
 
   forloop8: {
     robot: {
-      tile: { x: 2, y: 3 }, // Robot ở vị trí (1,3)
+      tile: { x: 3, y: 1 }, // Robot ở vị trí (1,3)
       direction: "east",
     },
     batteries: [
       {
-        tiles: [{ x: 4, y: 4, count: 1, type: "green" }],
+        tiles: [{ x: 5, y: 3, count: 1, type: "yellow" }],
       },
     ],
   },
