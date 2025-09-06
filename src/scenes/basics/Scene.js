@@ -59,10 +59,13 @@ export default class Scene extends Phaser.Scene {
     // Load example Blockly JSON program
     this.load.json("blockyData", "src/data/blockyData.json");
 
-    // Load tile assets để phù hợp với tileset trong basic1.json
+    // Load tile assets để phù hợp với tileset trong demo1.json
+    this.load.image("wood", "assets/tiles/wood.png");
+    this.load.image("road_h", "assets/tiles/road_h.png");
+    this.load.image("road_v", "assets/tiles/road_v.png");
+    this.load.image("water", "assets/tiles/water.png");
     this.load.image("grass", "assets/tiles/grass.png");
-    this.load.image("road", "assets/tiles/road.png");
-    this.load.image("ice", "assets/tiles/ice.png");
+    this.load.image("crossroad", "assets/tiles/crossroad.png");
 
     // Load robot assets theo hướng
     this.load.image("robot_north", "assets/tiles/robot_north.png");
@@ -71,22 +74,21 @@ export default class Scene extends Phaser.Scene {
     this.load.image("robot_west", "assets/tiles/robot_west.png");
     this.load.image("robot_position", "assets/tiles/robot_position.png");
 
-    // Load battery variants
-    this.load.image("battery_red", "assets/tiles/battery_red.png");
-    this.load.image("battery_yellow", "assets/tiles/battery_yellow.png");
-    this.load.image("battery_green", "assets/tiles/battery_green.png");
-    this.load.image("battery_position", "assets/tiles/battery_position.png");
+    // Load pin/battery variants
+    this.load.image("pin_red", "assets/tiles/pin_red.png");
+    this.load.image("pin_yellow", "assets/tiles/pin_yellow.png");
+    this.load.image("pin_green", "assets/tiles/pin_green.png");
 
     // Load other position sprites
-    this.load.image("box_position", "assets/tiles/box_position.png");
+    this.load.image("box", "assets/tiles/box.png");
   }
 
   create() {
     // Load map sử dụng MapLoader
     const mapData = MapLoader.loadMap(this, this.mapKey, {
-      offsetX: 300,
+      offsetX: 500,
       offsetY: 0,
-      scale: 0.75,
+      scale: 1,
     });
 
     this.map = mapData.map;

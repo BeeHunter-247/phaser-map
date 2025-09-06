@@ -1,28 +1,29 @@
 {
     "version": "1.0.0",
-    "programName": "condition_demo",
+    "programName": "move_5_steps_turn_right_demo",
     "actions": [
-      {
-        "type": "repeatRange",
-        "variable": "i",
-        "from": 1,
-        "to": 3,
-        "step": 1,
-        "body": [
-          { "type": "forward", "count": 1 },
-          {
-            "type": "if",
-            "cond": {
-              "type": "variableComparison",
-              "variable": "i",
-              "operator": "==",
-              "value": 3
-            },
-            "then": [
-              { "type": "collect", "color": "green", "count": 1 }
-            ]
-          }
-        ]
-      }
+        {
+            "type": "forward",
+            "count": 5
+        },
+        {
+            "type": "turnRight"
+        },
+        {
+            "type": "forward",
+            "count": 5
+        },
+        {
+            "type": "turnRight"
+        },
+        {
+            "type": "forward",
+            "count": 5
+        },
+        {
+            "type": "collect",
+            "color": "yellow",
+            "count": 1
+        }
     ]
 }

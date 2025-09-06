@@ -5,8 +5,8 @@ import Scene from "./scenes/basics/Scene";
 import { initWebViewCommunication } from "./utils/WebViewMessenger";
 
 const sizes = {
-  width: 800,
-  height: 600,
+  width: 1400,
+  height: 800,
 };
 
 const config = {

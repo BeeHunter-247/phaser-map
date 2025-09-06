@@ -2,21 +2,21 @@ import Phaser from "phaser";
 
 /**
  * BatteryManager - Quản lý pin và thu thập pin
- * 
+ *
  * Tách từ Scene.js để tách biệt trách nhiệm
  * Xử lý tất cả logic liên quan đến pin: tracking, collection, UI updates
  */
 export class BatteryManager {
   constructor(scene) {
     this.scene = scene;
-    
+
     // Battery tracking state
     this.batteries = new Map(); // Store batteries at each tile position
     this.collectedBatteries = 0;
     this.batterySprites = new Map();
     this.batteryTypes = new Map(); // Store battery types at each position
     this.collectedBatteryTypes = { red: 0, yellow: 0, green: 0 };
-    
+
     // References to other managers
     this.robotController = null;
     this.objectConfig = null;
@@ -31,10 +31,10 @@ export class BatteryManager {
   initialize(robotController, objectConfig, loadedBatteries) {
     this.robotController = robotController;
     this.objectConfig = objectConfig;
-    
+
     // Setup battery tracking
     this.setupBatteryTracking(loadedBatteries);
-    
+
     console.log("🔋 BatteryManager initialized");
   }
 
@@ -46,7 +46,7 @@ export class BatteryManager {
     console.log("🔋 DEBUG: Setting up battery tracking...");
     console.log(`   Loaded sprites: ${batterySprites.length}`);
     console.log(`   Object config:`, this.objectConfig);
-    
+
     // Đảm bảo mảng pin từ mapConfig đã được đặt đúng vị trí
     if (this.objectConfig && this.objectConfig.batteries) {
       this.objectConfig.batteries.forEach((batteryConfig) => {
@@ -61,7 +61,9 @@ export class BatteryManager {
             // Tìm sprite tương ứng với vị trí này
             const matchingSprites = batterySprites.filter((sprite) => {
               const spriteTile = this.findTileForSprite(sprite);
-              console.log(`   Checking sprite at world(${sprite.x}, ${sprite.y}) -> tile(${spriteTile?.x}, ${spriteTile?.y})`);
+              console.log(
+                `   Checking sprite at world(${sprite.x}, ${sprite.y}) -> tile(${spriteTile?.x}, ${spriteTile?.y})`
+              );
               return (
                 spriteTile &&
                 spriteTile.x === tilePos.x &&
@@ -69,7 +71,9 @@ export class BatteryManager {
               );
             });
 
-            console.log(`   Found ${matchingSprites.length} matching sprites for tile ${tileKey}`);
+            console.log(
+              `   Found ${matchingSprites.length} matching sprites for tile ${tileKey}`
+            );
 
             if (matchingSprites.length > 0) {
               // Thêm vào battery count
@@ -88,15 +92,19 @@ export class BatteryManager {
               );
             } else {
               // Nếu không tìm thấy sprite phù hợp, tạo pin theo config
-              console.log(`   No matching sprites found, creating batteries from config for tile ${tileKey}`);
+              console.log(
+                `   No matching sprites found, creating batteries from config for tile ${tileKey}`
+              );
               const count = tilePos.count || 1;
               const batteryType = tilePos.type || batteryConfig.type || "green";
-              
+
               this.batteries.set(tileKey, count);
               this.batteryTypes.set(tileKey, Array(count).fill(batteryType));
               this.batterySprites.set(tileKey, []); // Empty array, sẽ tạo sprites khi cần
-              
-              console.log(`   Created ${count} ${batteryType} batteries from config`);
+
+              console.log(
+                `   Created ${count} ${batteryType} batteries from config`
+              );
             }
           });
         }
@@ -149,7 +157,9 @@ export class BatteryManager {
     const worldX = sprite?.x ?? 0;
     const tilePoint = this.scene.layer.worldToTileXY(worldX, adjustY);
 
-    console.log(`🔍 findTileForSprite: sprite(${sprite?.x}, ${sprite?.y}) -> adjusted(${worldX}, ${adjustY}) -> tile(${tilePoint?.x}, ${tilePoint?.y})`);
+    console.log(
+      `🔍 findTileForSprite: sprite(${sprite?.x}, ${sprite?.y}) -> adjusted(${worldX}, ${adjustY}) -> tile(${tilePoint?.x}, ${tilePoint?.y})`
+    );
 
     if (!tilePoint) return null;
 
@@ -187,29 +197,30 @@ export class BatteryManager {
   collectBattery(preferredColor) {
     const robotPos = this.robotController.getCurrentTilePosition();
     const tileKey = `${robotPos.x},${robotPos.y}`;
-    console.log(
-      `🔋 DEBUG: Collecting at tile (${robotPos.x},${robotPos.y})`
-    );
+    console.log(`🔋 DEBUG: Collecting at tile (${robotPos.x},${robotPos.y})`);
     console.log(`   Robot position: x=${robotPos.x}, y=${robotPos.y}`);
     console.log(`   Tile key: "${tileKey}"`);
     console.log(`   Battery map:`, Array.from(this.batteries.entries()));
-    console.log(`   Battery sprites:`, Array.from(this.batterySprites.entries()));
+    console.log(
+      `   Battery sprites:`,
+      Array.from(this.batterySprites.entries())
+    );
 
     // Kiểm tra có pin tại tile này không
     const currentCount = this.batteries.get(tileKey) || 0;
     console.log(`   Current count for ${tileKey}: ${currentCount}`);
-    
+
     // Debug: Kiểm tra tất cả keys có sẵn
     console.log(`   Available tile keys:`, Array.from(this.batteries.keys()));
     console.log(`   Looking for key: "${tileKey}"`);
     console.log(`   Key exists:`, this.batteries.has(tileKey));
-    
+
     if (currentCount === 0) {
       console.log(`   ❌ No batteries found at ${tileKey}`);
       this.scene.lose(`Không có pin tại ô (${robotPos.x}, ${robotPos.y})`);
       return 0;
     }
-    
+
     console.log(`   ✅ Found ${currentCount} batteries at ${tileKey}`);
 
     const sprites = this.batterySprites.get(tileKey) || [];
@@ -236,9 +247,12 @@ export class BatteryManager {
     console.log(`🔋 DEBUG: Sprite removal for ${collectedType} at ${tileKey}`);
     console.log(`   sprites.length: ${sprites.length}`);
     if (sprites.length > 0) {
-      console.log(`   Available sprite keys:`, sprites.map(s => s?.texture?.key));
-      const indexToRemove = sprites.findIndex((s) =>
-        s?.texture?.key?.includes(collectedType)
+      console.log(
+        `   Available sprite keys:`,
+        sprites.map((s) => s?.texture?.key)
+      );
+      const indexToRemove = sprites.findIndex(
+        (s) => s?.texture?.key === `pin_${collectedType}`
       );
       console.log(`   indexToRemove: ${indexToRemove}`);
       if (indexToRemove !== -1) {
@@ -248,47 +262,75 @@ export class BatteryManager {
         this.batterySprites.set(tileKey, sprites);
         console.log(`   Remaining sprites: ${sprites.length}`);
       } else {
-        console.log(`   ❌ No matching sprite found for type: ${collectedType}`);
+        console.log(
+          `   ❌ No matching sprite found for type: ${collectedType}`
+        );
       }
     } else {
       console.log(`   ❌ No sprites available to remove`);
       // Fallback: Tìm và destroy sprite gần nhất nếu không tìm thấy trong batterySprites
       console.log(`   🔍 Searching for nearby sprites to destroy...`);
       const allSprites = Array.from(this.batterySprites.values()).flat();
-      const nearbySprite = allSprites.find(s => {
+      const nearbySprite = allSprites.find((s) => {
         if (!s || !s.active) return false;
         const spriteTile = this.findTileForSprite(s);
-        return spriteTile && spriteTile.x === robotPos.x && spriteTile.y === robotPos.y;
+        return (
+          spriteTile &&
+          spriteTile.x === robotPos.x &&
+          spriteTile.y === robotPos.y
+        );
       });
-      
+
       if (nearbySprite) {
-        console.log(`   🎯 Found nearby sprite to destroy: ${nearbySprite.texture.key}`);
+        console.log(
+          `   🎯 Found nearby sprite to destroy: ${nearbySprite.texture.key}`
+        );
         nearbySprite.destroy();
       } else {
         console.log(`   ❌ No nearby sprites found either`);
         // Ultimate fallback: Tìm sprite theo vị trí world coordinates
-        console.log(`   🔍 Ultimate fallback: searching by world coordinates...`);
-        const robotWorldPos = this.robotController.getTileWorldCenter(robotPos.x, robotPos.y);
-        console.log(`   Robot world position: (${robotWorldPos.x}, ${robotWorldPos.y})`);
-        
-        // Tìm tất cả battery sprites trong scene
-        const allBatterySprites = this.scene.children.list.filter(child => 
-          child.texture && child.texture.key && child.texture.key.includes('battery')
+        console.log(
+          `   🔍 Ultimate fallback: searching by world coordinates...`
         );
-        
-        console.log(`   Found ${allBatterySprites.length} battery sprites in scene`);
-        
-        const closestSprite = allBatterySprites.find(sprite => {
+        const robotWorldPos = this.robotController.getTileWorldCenter(
+          robotPos.x,
+          robotPos.y
+        );
+        console.log(
+          `   Robot world position: (${robotWorldPos.x}, ${robotWorldPos.y})`
+        );
+
+        // Tìm tất cả pin sprites trong scene
+        const allBatterySprites = this.scene.children.list.filter(
+          (child) =>
+            child.texture &&
+            child.texture.key &&
+            child.texture.key.startsWith("pin_")
+        );
+
+        console.log(
+          `   Found ${allBatterySprites.length} battery sprites in scene`
+        );
+
+        const closestSprite = allBatterySprites.find((sprite) => {
           const distance = Phaser.Math.Distance.Between(
-            sprite.x, sprite.y, 
-            robotWorldPos.x, robotWorldPos.y
+            sprite.x,
+            sprite.y,
+            robotWorldPos.x,
+            robotWorldPos.y
           );
-          console.log(`   Sprite at (${sprite.x}, ${sprite.y}) distance: ${distance.toFixed(2)}`);
+          console.log(
+            `   Sprite at (${sprite.x}, ${
+              sprite.y
+            }) distance: ${distance.toFixed(2)}`
+          );
           return distance < 50; // Trong vòng 50 pixels
         });
-        
+
         if (closestSprite) {
-          console.log(`   🎯 Found closest sprite to destroy: ${closestSprite.texture.key}`);
+          console.log(
+            `   🎯 Found closest sprite to destroy: ${closestSprite.texture.key}`
+          );
           closestSprite.destroy();
         } else {
           console.log(`   ❌ No sprites found within 50 pixels`);
@@ -328,7 +370,7 @@ export class BatteryManager {
   getCollectedBatteries() {
     return {
       total: this.collectedBatteries,
-      byType: this.collectedBatteryTypes
+      byType: this.collectedBatteryTypes,
     };
   }
 

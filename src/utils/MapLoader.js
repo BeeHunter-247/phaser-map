@@ -26,13 +26,14 @@ export class MapLoader {
     // Create tilemap
     const map = scene.make.tilemap({ key: mapKey });
 
-    // Add tilesets (phù hợp với basic1.json từ Tiled)
+    // Add tilesets (phù hợp với demo1.json từ Tiled)
     const tilesets = [
-      map.addTilesetImage("Grass", "grass"),
-      map.addTilesetImage("Battery", "battery_position"),
-      map.addTilesetImage("Road", "road"),
-      map.addTilesetImage("Robot", "robot_position"),
-      map.addTilesetImage("Ice", "ice"),
+      map.addTilesetImage("wood", "wood"),
+      map.addTilesetImage("road_h", "road_h"),
+      map.addTilesetImage("road_v", "road_v"),
+      map.addTilesetImage("water", "water"),
+      map.addTilesetImage("grass", "grass"),
+      map.addTilesetImage("crossroad", "crossroad"),
     ];
 
     // Create layer với offset (sử dụng tên layer từ Tiled)
@@ -120,14 +121,14 @@ export class MapLoader {
     // Xác định sprite key dựa trên tên object
     switch (tiledObj.name) {
       case "RobotPoint":
-        spriteKey = "robot_position";
+        spriteKey = "robot_east";
         break;
       case "PinPoint":
       case "BatteryPoint":
-        spriteKey = "battery_position";
+        spriteKey = "pin_green"; // Default to green pin
         break;
       case "BoxPoint":
-        spriteKey = "box_position";
+        spriteKey = "box";
         break;
       default:
         return null; // Unknown object type
@@ -191,11 +192,14 @@ export class MapLoader {
       }
 
       if (robotPos) {
-        // Sử dụng robot.png mới thay vì robot_position.png
+        // Sử dụng robot sprite phù hợp với hướng từ config
+        const direction = robotConfig.direction || "east";
+        const robotSpriteKey = `robot_${direction}`;
+
         const robot = scene.add.image(
           robotPos.x,
-          robotPos.y + 10,
-          "robot_north"
+          robotPos.y + 30,
+          robotSpriteKey
         );
         robot.setOrigin(0.5, 1);
         robot.setScale(scale);
@@ -244,7 +248,7 @@ export class MapLoader {
 
             if (perTileCount <= 1) {
               const batteryType = resolveType(0);
-              const batteryKey = `battery_${batteryType}`;
+              const batteryKey = `pin_${batteryType}`;
               const battery = scene.add.image(pos.x, pos.y + 10, batteryKey);
               battery.setOrigin(0.5, 1);
               battery.setScale(scale);
@@ -263,7 +267,7 @@ export class MapLoader {
                 const by = pos.y + radius * Math.sin(angle);
 
                 const batteryType = resolveType(i);
-                const batteryKey = `battery_${batteryType}`;
+                const batteryKey = `pin_${batteryType}`;
 
                 const battery = scene.add.image(bx, by + 10, batteryKey);
                 battery.setOrigin(0.5, 1);
@@ -334,7 +338,7 @@ export class MapLoader {
         if (count <= 1) {
           // Xác định loại battery (từ config hoặc mặc định)
           const batteryType = batteryConfig.type || "green";
-          const batteryKey = `battery_${batteryType}`;
+          const batteryKey = `pin_${batteryType}`;
 
           const battery = scene.add.image(
             centerPos.x,
@@ -359,7 +363,7 @@ export class MapLoader {
 
             // Xác định loại battery cho multiple batteries
             const batteryType = batteryConfig.type || "green";
-            const batteryKey = `battery_${batteryType}`;
+            const batteryKey = `pin_${batteryType}`;
 
             const battery = scene.add.image(bx, by + 10, batteryKey);
             battery.setOrigin(0.5, 1);

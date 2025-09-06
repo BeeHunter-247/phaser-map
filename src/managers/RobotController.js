@@ -2,7 +2,7 @@ import Phaser from "phaser";
 
 /**
  * RobotController - Quản lý robot movement và rotation
- * 
+ *
  * Tách từ Scene.js để tách biệt trách nhiệm
  * Xử lý tất cả logic liên quan đến robot: di chuyển, quay, collision detection
  */
@@ -12,9 +12,11 @@ export class RobotController {
     this.robot = robot;
     this.map = map;
     this.layer = layer;
-    
+
     // Robot state
-    this.robotDirection = 0; // 0: North, 1: East, 2: South, 3: West
+    // Direction mapping: 0=North, 1=East, 2=South, 3=West
+    // Sprite mapping: robot_north, robot_east, robot_south, robot_west
+    this.robotDirection = 0; // Default: North (0)
     this.robotTileX = 0;
     this.robotTileY = 0;
     this.isMoving = false;
@@ -27,25 +29,36 @@ export class RobotController {
   initialize(objectConfig) {
     if (!this.robot) return;
 
-    const robotTile = this.findRobotTile();
-    if (robotTile) {
-      this.robotTileX = robotTile.x;
-      this.robotTileY = robotTile.y;
-
-      // Lấy hướng từ config hoặc mặc định là north
-      const configDirection = objectConfig?.robot?.direction || "north";
-      this.robotDirection = this.getDirectionIndex(configDirection);
-      this.updateRobotRotation();
-
-      // Log initial robot state
-      console.log(
-        `🤖 Robot initialized at tile (${this.robotTileX}, ${this.robotTileY})`
-      );
-      console.log(
-        `   Facing: ${this.getCurrentDirection()} (from config: "${configDirection}")`
-      );
-      console.log(`   Robot sprite: robot_${configDirection}`);
+    // Sử dụng vị trí từ config (ưu tiên)
+    if (objectConfig?.robot?.tile) {
+      this.robotTileX = objectConfig.robot.tile.x;
+      this.robotTileY = objectConfig.robot.tile.y;
+    } else {
+      // Fallback: tìm vị trí hiện tại nếu không có config
+      const robotTile = this.findRobotTile();
+      if (robotTile) {
+        this.robotTileX = robotTile.x;
+        this.robotTileY = robotTile.y;
+      } else {
+        console.warn("⚠️ Không thể xác định vị trí robot!");
+        this.robotTileX = 0;
+        this.robotTileY = 0;
+      }
     }
+
+    // Lấy hướng từ config hoặc mặc định là north
+    const configDirection = objectConfig?.robot?.direction || "north";
+    this.robotDirection = this.getDirectionIndex(configDirection);
+    this.updateRobotRotation();
+
+    // Log initial robot state
+    console.log(
+      `🤖 Robot initialized at tile (${this.robotTileX}, ${this.robotTileY})`
+    );
+    console.log(
+      `   Facing: ${this.getCurrentDirection()} (from config: "${configDirection}")`
+    );
+    console.log(`   Robot sprite: robot_${configDirection}`);
   }
 
   /**
@@ -81,8 +94,8 @@ export class RobotController {
 
   /**
    * Lấy world center của tile
-   * @param {number} tileX 
-   * @param {number} tileY 
+   * @param {number} tileX
+   * @param {number} tileY
    * @returns {Object} {x, y} world coordinates
    */
   getTileWorldCenter(tileX, tileY) {
@@ -163,7 +176,7 @@ export class RobotController {
     if (!tile) return false;
 
     // Robot có thể di chuyển trên Road (index 3), Robot tile (index 4), và Battery tile (index 2)
-    return (tile.index >= 1 && tile.index <= 4) || tile.index === 6;
+    return tile.index === 1 || tile.index === 6;
   }
 
   /**
@@ -180,7 +193,9 @@ export class RobotController {
 
     // Thua khi đi ra ngoài biên
     if (!this.isWithinBounds(frontTile.x, frontTile.y)) {
-      this.scene.lose(`Đi ra ngoài bản đồ tại (${frontTile.x}, ${frontTile.y})`);
+      this.scene.lose(
+        `Đi ra ngoài bản đồ tại (${frontTile.x}, ${frontTile.y})`
+      );
       return false;
     }
 
@@ -199,7 +214,7 @@ export class RobotController {
     }
 
     // Luật thua cũ: chạm vào tile index 2 hoặc 5 => thua (nếu có)
-    if (targetTile.index === 2 || targetTile.index === 5) {
+    if (targetTile.index === 4 || targetTile.index === 5) {
       this.scene.lose(
         `Rơi vào ô cấm (index ${targetTile.index}) tại (${frontTile.x}, ${frontTile.y})`
       );
@@ -223,7 +238,7 @@ export class RobotController {
     this.scene.tweens.add({
       targets: this.robot,
       x: targetPos.x,
-      y: targetPos.y + 10,
+      y: targetPos.y + 30,
       duration: 300,
       ease: "Power2",
       onComplete: () => {
@@ -246,12 +261,13 @@ export class RobotController {
     }
 
     const oldDirection = this.getCurrentDirection();
+    // Quay trái: North → West → South → East → North
     this.robotDirection = (this.robotDirection - 1 + 4) % 4;
     this.updateRobotRotation();
 
     console.log(`Turned left: ${oldDirection} → ${this.getCurrentDirection()}`);
     console.log(
-      `   Robot sprite changed to: robot_${this.getCurrentDirection().toLowerCase()}`
+      `   Robot sprite changed to: robot_${this.getCurrentDirection()}`
     );
     return true;
   }
@@ -267,6 +283,7 @@ export class RobotController {
     }
 
     const oldDirection = this.getCurrentDirection();
+    // Quay phải: North → East → South → West → North
     this.robotDirection = (this.robotDirection + 1) % 4;
     this.updateRobotRotation();
 
@@ -274,7 +291,7 @@ export class RobotController {
       `Turned right: ${oldDirection} → ${this.getCurrentDirection()}`
     );
     console.log(
-      `   Robot sprite changed to: robot_${this.getCurrentDirection().toLowerCase()}`
+      `   Robot sprite changed to: robot_${this.getCurrentDirection()}`
     );
     return true;
   }
@@ -290,6 +307,7 @@ export class RobotController {
     }
 
     const oldDirection = this.getCurrentDirection();
+    // Quay 180 độ: North ↔ South, East ↔ West
     this.robotDirection = (this.robotDirection + 2) % 4;
     this.updateRobotRotation();
 
@@ -297,7 +315,7 @@ export class RobotController {
       `Turned around: ${oldDirection} → ${this.getCurrentDirection()}`
     );
     console.log(
-      `   Robot sprite changed to: robot_${this.getCurrentDirection().toLowerCase()}`
+      `   Robot sprite changed to: robot_${this.getCurrentDirection()}`
     );
     return true;
   }

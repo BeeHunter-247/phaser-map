@@ -17,6 +17,8 @@ export default class MenuScene extends Phaser.Scene {
     // Gọi hàm để vẽ menu cho ForLoop (8 maps)
     this.drawCategory("ForLoop", 8, 100, 360);
 
+    this.drawCategory("Demo", 8, 100, 520);
+
     // Sau này bạn có thể gọi thêm:
     // this.drawCategory("Variable", 5, 100, 480);
     // this.drawCategory("Loop", 10, 100, 600);
