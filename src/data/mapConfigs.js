@@ -432,18 +432,6 @@ export const mapConfigs = {
       },
     ],
   },
-
-  demo1: {
-    robot: {
-      tile: { x: 7, y: 7 }, // Robot ở vị trí (1,3)
-      direction: "east",
-    },
-    batteries: [
-      {
-        tiles: [{ x: 7, y: 1, count: 1, type: "green" }],
-      },
-    ],
-  },
 };
 
 /**
