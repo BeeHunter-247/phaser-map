@@ -10,6 +10,7 @@ export class ProgramExecutor {
     this.isPaused = false;
     this.executionSpeed = 1000; // ms between commands
     this.timer = null;
+    this.variableContext = {}; // Lưu giá trị biến hiện tại
   }
 
   /**
@@ -80,6 +81,63 @@ export class ProgramExecutor {
         continue;
       }
 
+      // Hỗ trợ lệnh lặp repeat với cú pháp "repeat(i from 1 to 5 by 1)"
+      if (action && action.type === "repeatRange") {
+        const variableName = action.variable || "i";
+        const fromValue = parseInt(action.from) || 1;
+        const toValue = parseInt(action.to) || 5;
+        const stepValue = parseInt(action.step) || 1;
+        const bodyRaw = Array.isArray(action.body) ? action.body : [];
+
+        // Đệ quy parse phần thân để hỗ trợ repeat lồng nhau
+        const parsedBody = this.parseActions(bodyRaw);
+
+        console.log(
+          `🔄 Expanding repeatRange ${variableName} from ${fromValue} to ${toValue} by ${stepValue} with ${parsedBody.length} action(s) in body`
+        );
+
+        // Tạo vòng lặp từ fromValue đến toValue với stepValue
+        for (
+          let currentValue = fromValue;
+          currentValue <= toValue;
+          currentValue += stepValue
+        ) {
+          // Tạo bản sao sâu của parsedBody và thay thế biến
+          for (let j = 0; j < parsedBody.length; j++) {
+            const actionCopy = JSON.parse(JSON.stringify(parsedBody[j]));
+
+            // Thay thế biến trong action nếu có
+            this.replaceVariableInAction(
+              actionCopy,
+              variableName,
+              currentValue
+            );
+
+            // Thêm thông tin về giá trị biến hiện tại cho việc đánh giá điều kiện
+            if (
+              actionCopy.type === "if" &&
+              actionCopy.condition &&
+              actionCopy.condition.type === "variableComparison"
+            ) {
+              actionCopy._currentVariableValue = {
+                [variableName]: currentValue,
+              };
+            }
+
+            // Debug log để kiểm tra biến đã được thay thế
+            if (actionCopy.type === "collect") {
+              console.log(
+                `🔧 DEBUG: Action copy for i=${currentValue}:`,
+                JSON.stringify(actionCopy)
+              );
+            }
+
+            parsedActions.push(actionCopy);
+          }
+        }
+        continue;
+      }
+
       const parsedAction = this.parseAction(action, i);
       if (parsedAction) {
         parsedActions.push(parsedAction);
@@ -87,6 +145,47 @@ export class ProgramExecutor {
     }
 
     return parsedActions;
+  }
+
+  /**
+   * Thay thế biến trong action
+   * @param {Object} action - Action object
+   * @param {string} variableName - Tên biến cần thay thế
+   * @param {number} value - Giá trị thay thế
+   */
+  replaceVariableInAction(action, variableName, value) {
+    if (!action || typeof action !== "object") return;
+
+    // Thay thế biến trong tất cả các thuộc tính của action
+    for (const key in action) {
+      if (action.hasOwnProperty(key)) {
+        const propValue = action[key];
+
+        if (typeof propValue === "string") {
+          // Thay thế biến trong string (ví dụ: "move {{i}} steps" hoặc "{{i}}")
+          const replaced = propValue.replace(
+            new RegExp(`{{${variableName}}}`, "g"),
+            value
+          );
+
+          // Nếu string chỉ chứa biến và số, chuyển thành number
+          if (replaced.match(/^\d+$/)) {
+            action[key] = parseInt(replaced);
+          } else {
+            action[key] = replaced;
+          }
+        } else if (
+          typeof propValue === "number" &&
+          propValue === variableName
+        ) {
+          // Thay thế biến nếu giá trị là tên biến
+          action[key] = value;
+        } else if (typeof propValue === "object" && propValue !== null) {
+          // Đệ quy thay thế trong object lồng nhau
+          this.replaceVariableInAction(propValue, variableName, value);
+        }
+      }
+    }
   }
 
   /**
@@ -144,7 +243,7 @@ export class ProgramExecutor {
       case "collect":
         return {
           type: "collect",
-          count: parseInt(action.count) || 1,
+          count: action.count, // Không parse ngay, để cho replaceVariableInAction xử lý
           colors: action.color ? [action.color] : ["green"],
           original: action,
         };
@@ -162,7 +261,19 @@ export class ProgramExecutor {
    */
   parseCondition(cond) {
     if (!cond || typeof cond !== "object") return null;
-    // Ví dụ cond: { type: "condition", function: "isGreen", check: true }
+
+    // Điều kiện so sánh biến: { type: "variableComparison", variable: "i", operator: "==", value: 0 }
+    if (cond.type === "variableComparison") {
+      return {
+        type: "variableComparison",
+        variable: cond.variable || "i",
+        operator: cond.operator || "==",
+        value: cond.value !== undefined ? cond.value : 0,
+        original: cond,
+      };
+    }
+
+    // Điều kiện cũ: { type: "condition", function: "isGreen", check: true }
     return {
       type: cond.type || "condition",
       functionName: cond.function || null,
@@ -323,15 +434,30 @@ export class ProgramExecutor {
    */
   executeIf(action) {
     try {
-      const result = this.evaluateCondition(action.condition);
+      // Lấy context biến từ action (nếu có)
+      const variableContext = action._currentVariableValue || {};
+
+      const result = this.evaluateCondition(action.condition, variableContext);
       console.log(
-        `🤔 IF condition (${action.condition?.functionName}) => ${result}`
+        `🤔 IF condition (${
+          action.condition?.functionName || action.condition?.type
+        }) => ${result}`
       );
-      if (result && Array.isArray(action.thenActions) && action.thenActions.length > 0) {
+      if (
+        result &&
+        Array.isArray(action.thenActions) &&
+        action.thenActions.length > 0
+      ) {
         // Chèn thenActions ngay sau currentStep
         const insertIndex = this.currentStep + 1;
-        this.program.actions.splice(insertIndex, 0, ...action.thenActions.map(a => ({ ...a })));
-        console.log(`🧩 Inserted ${action.thenActions.length} action(s) at ${insertIndex}`);
+        this.program.actions.splice(
+          insertIndex,
+          0,
+          ...action.thenActions.map((a) => ({ ...a }))
+        );
+        console.log(
+          `🧩 Inserted ${action.thenActions.length} action(s) at ${insertIndex}`
+        );
       }
       return true;
     } catch (e) {
@@ -343,11 +469,32 @@ export class ProgramExecutor {
   /**
    * Đánh giá điều kiện
    * Hỗ trợ: condition.function = "isGreen" => có pin xanh tại ô hiện tại?
+   * Hỗ trợ: variableComparison => so sánh biến với giá trị
    * Nếu cond.check = false thì đảo ngược kết quả
    */
-  evaluateCondition(cond) {
+  evaluateCondition(cond, variableContext = {}) {
     if (!cond) return false;
 
+    // Điều kiện so sánh biến
+    if (cond.type === "variableComparison") {
+      const variableValue = variableContext[cond.variable];
+      if (variableValue === undefined) {
+        console.warn(`⚠️ Variable "${cond.variable}" not found in context`);
+        return false;
+      }
+
+      const result = this.compareValues(
+        variableValue,
+        cond.operator,
+        cond.value
+      );
+      console.log(
+        `🔍 Variable comparison: ${cond.variable}(${variableValue}) ${cond.operator} ${cond.value} => ${result}`
+      );
+      return result;
+    }
+
+    // Điều kiện cũ (sensor-based)
     let actual = false;
     switch (cond.functionName) {
       case "isGreen":
@@ -358,6 +505,33 @@ export class ProgramExecutor {
         actual = false;
     }
     return cond.check ? actual : !actual;
+  }
+
+  /**
+   * So sánh hai giá trị với toán tử
+   * @param {*} leftValue - Giá trị bên trái
+   * @param {string} operator - Toán tử (==, !=, <, >, <=, >=)
+   * @param {*} rightValue - Giá trị bên phải
+   * @returns {boolean}
+   */
+  compareValues(leftValue, operator, rightValue) {
+    switch (operator) {
+      case "==":
+        return leftValue == rightValue;
+      case "!=":
+        return leftValue != rightValue;
+      case "<":
+        return leftValue < rightValue;
+      case ">":
+        return leftValue > rightValue;
+      case "<=":
+        return leftValue <= rightValue;
+      case ">=":
+        return leftValue >= rightValue;
+      default:
+        console.warn(`⚠️ Unknown operator: ${operator}`);
+        return false;
+    }
   }
 
   /**
@@ -420,7 +594,13 @@ export class ProgramExecutor {
    * @returns {boolean} Success/failure
    */
   executeCollect(count, colors) {
-    console.log(`🔋 Collecting ${count} battery(ies) with colors:`, colors);
+    // Parse count nếu là string
+    const parsedCount =
+      typeof count === "string" ? parseInt(count) || 1 : count || 1;
+    console.log(
+      `🔋 Collecting ${parsedCount} battery(ies) with colors:`,
+      colors
+    );
 
     // Pre-check: đủ số lượng theo màu yêu cầu?
     const {
@@ -435,13 +615,13 @@ export class ProgramExecutor {
     }
 
     console.log(
-      `🔍 Collect pre-check at tile ${key}: available=${perTileCount}, requested=${count}`
+      `🔍 Collect pre-check at tile ${key}: available=${perTileCount}, requested=${parsedCount}`
     );
 
     // Quy tắc: số lượng phải khớp CHÍNH XÁC với số pin trong ô
-    if (perTileCount !== count) {
+    if (perTileCount !== parsedCount) {
       this.scene.lose(
-        `Có ${perTileCount} pin tại ô, nhưng yêu cầu thu thập ${count} (phải khớp chính xác)`
+        `Có ${perTileCount} pin tại ô, nhưng yêu cầu thu thập ${parsedCount} (phải khớp chính xác)`
       );
       return false;
     }
@@ -456,7 +636,7 @@ export class ProgramExecutor {
 
     // Kiểm tra theo màu yêu cầu nếu có
     let requiredByColor = { red: 0, yellow: 0, green: 0 };
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < parsedCount; i++) {
       const c =
         normalizedColors[i] ||
         normalizedColors[normalizedColors.length - 1] ||
@@ -475,12 +655,12 @@ export class ProgramExecutor {
     }
 
     // Thực hiện nhặt
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < parsedCount; i++) {
       const color =
         normalizedColors[i] ||
         normalizedColors[normalizedColors.length - 1] ||
         "green";
-      console.log(`   Collecting ${color} battery (${i + 1}/${count})`);
+      console.log(`   Collecting ${color} battery (${i + 1}/${parsedCount})`);
       const ok = this.scene.collectBattery(color);
       if (!ok) return false;
     }

@@ -1,23 +1,27 @@
 {
     "version": "1.0.0",
-    "programName": "battery_collection_demo",
+    "programName": "condition_demo",
     "actions": [
       {
-        "type": "repeat",
-        "count": 3,
+        "type": "repeatRange",
+        "variable": "i",
+        "from": 1,
+        "to": 3,
+        "step": 1,
         "body": [
-          { "type": "forward", "count": 1 }
-        ]
-      },
-      {
-        "type": "if",
-        "cond": { 
-          "type": "condition", 
-          "function": "isGreen", 
-          "check": true 
-        },
-        "then": [
-          { "type": "collect", "color": "green", "count": 1 }
+          { "type": "forward", "count": 1 },
+          {
+            "type": "if",
+            "cond": {
+              "type": "variableComparison",
+              "variable": "i",
+              "operator": "==",
+              "value": 3
+            },
+            "then": [
+              { "type": "collect", "color": "green", "count": 1 }
+            ]
+          }
         ]
       }
     ]

@@ -66,5 +66,34 @@
         ]
       }
     ]
+  },
+  {
+    "version": "1.0.0",
+    "programName": "repeat_range_demo",
+    "actions": [
+      {
+        "type": "repeatRange",
+        "variable": "i",
+        "from": 1,
+        "to": 3,
+        "step": 1,
+        "body": [
+          { "type": "forward", "count": "{{i}}" },
+          { "type": "turnRight" }
+        ]
+      },
+      {
+        "type": "repeatRange",
+        "variable": "step",
+        "from": 2,
+        "to": 6,
+        "step": 2,
+        "body": [
+          { "type": "forward", "count": "{{step}}" },
+          { "type": "collect", "color": "green", "count": 1 }
+        ]
+      }
+    ]
   }
+  
 ]

@@ -1,0 +1,287 @@
+{
+  "examples": [
+    {
+      "name": "Ví dụ 1: So sánh bằng (==)",
+      "description": "Robot thu thập pin chỉ khi i == 3",
+      "program": {
+        "version": "1.0.0",
+        "programName": "equal_condition_demo",
+        "actions": [
+          {
+            "type": "repeatRange",
+            "variable": "i",
+            "from": 1,
+            "to": 5,
+            "step": 1,
+            "body": [
+              { "type": "forward", "count": 1 },
+              {
+                "type": "if",
+                "cond": {
+                  "type": "variableComparison",
+                  "variable": "i",
+                  "operator": "==",
+                  "value": 3
+                },
+                "then": [
+                  { "type": "collect", "color": "green", "count": "{{i}}" },
+                  { "type": "turnRight" }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Ví dụ 2: So sánh lớn hơn (>)",
+      "description": "Robot rẽ trái khi i > 3",
+      "program": {
+        "version": "1.0.0",
+        "programName": "greater_than_demo",
+        "actions": [
+          {
+            "type": "repeatRange",
+            "variable": "step",
+            "from": 1,
+            "to": 6,
+            "step": 1,
+            "body": [
+              { "type": "forward", "count": 1 },
+              {
+                "type": "if",
+                "cond": {
+                  "type": "variableComparison",
+                  "variable": "step",
+                  "operator": ">",
+                  "value": 3
+                },
+                "then": [
+                  { "type": "turnLeft" }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Ví dụ 3: So sánh nhỏ hơn hoặc bằng (<=)",
+      "description": "Robot thu thập pin đỏ khi i <= 2",
+      "program": {
+        "version": "1.0.0",
+        "programName": "less_equal_demo",
+        "actions": [
+          {
+            "type": "repeatRange",
+            "variable": "i",
+            "from": 1,
+            "to": 5,
+            "step": 1,
+            "body": [
+              { "type": "forward", "count": 1 },
+              {
+                "type": "if",
+                "cond": {
+                  "type": "variableComparison",
+                  "variable": "i",
+                  "operator": "<=",
+                  "value": 2
+                },
+                "then": [
+                  { "type": "collect", "color": "red", "count": 1 }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Ví dụ 4: So sánh khác (!=)",
+      "description": "Robot quay lưng khi i != 3",
+      "program": {
+        "version": "1.0.0",
+        "programName": "not_equal_demo",
+        "actions": [
+          {
+            "type": "repeatRange",
+            "variable": "counter",
+            "from": 1,
+            "to": 5,
+            "step": 1,
+            "body": [
+              { "type": "forward", "count": 1 },
+              {
+                "type": "if",
+                "cond": {
+                  "type": "variableComparison",
+                  "variable": "counter",
+                  "operator": "!=",
+                  "value": 3
+                },
+                "then": [
+                  { "type": "turnBack" }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Ví dụ 5: Nhiều điều kiện trong cùng vòng lặp",
+      "description": "Robot thực hiện hành động khác nhau dựa trên giá trị i",
+      "program": {
+        "version": "1.0.0",
+        "programName": "multiple_conditions_demo",
+        "actions": [
+          {
+            "type": "repeatRange",
+            "variable": "i",
+            "from": 1,
+            "to": 8,
+            "step": 1,
+            "body": [
+              { "type": "forward", "count": 1 },
+              {
+                "type": "if",
+                "cond": {
+                  "type": "variableComparison",
+                  "variable": "i",
+                  "operator": "==",
+                  "value": 1
+                },
+                "then": [
+                  { "type": "collect", "color": "red", "count": 1 }
+                ]
+              },
+              {
+                "type": "if",
+                "cond": {
+                  "type": "variableComparison",
+                  "variable": "i",
+                  "operator": ">=",
+                  "value": 3
+                },
+                "then": [
+                  { "type": "collect", "color": "green", "count": "{{i}}" }
+                ]
+              },
+              {
+                "type": "if",
+                "cond": {
+                  "type": "variableComparison",
+                  "variable": "i",
+                  "operator": ">",
+                  "value": 5
+                },
+                "then": [
+                  { "type": "turnRight" }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Ví dụ 6: Vòng lặp lồng nhau với điều kiện",
+      "description": "Robot sử dụng 2 biến outer và inner trong vòng lặp lồng nhau",
+      "program": {
+        "version": "1.0.0",
+        "programName": "nested_loop_condition_demo",
+        "actions": [
+          {
+            "type": "repeatRange",
+            "variable": "outer",
+            "from": 1,
+            "to": 3,
+            "step": 1,
+            "body": [
+              {
+                "type": "repeatRange",
+                "variable": "inner",
+                "from": 1,
+                "to": 3,
+                "step": 1,
+                "body": [
+                  { "type": "forward", "count": 1 },
+                  {
+                    "type": "if",
+                    "cond": {
+                      "type": "variableComparison",
+                      "variable": "outer",
+                      "operator": "==",
+                      "value": 2
+                    },
+                    "then": [
+                      { "type": "collect", "color": "yellow", "count": "{{inner}}" }
+                    ]
+                  },
+                  {
+                    "type": "if",
+                    "cond": {
+                      "type": "variableComparison",
+                      "variable": "inner",
+                      "operator": ">=",
+                      "value": 2
+                    },
+                    "then": [
+                      { "type": "turnRight" }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Ví dụ 7: Điều kiện phức tạp với bước nhảy",
+      "description": "Robot sử dụng vòng lặp với step = 2 và điều kiện",
+      "program": {
+        "version": "1.0.0",
+        "programName": "step_condition_demo",
+        "actions": [
+          {
+            "type": "repeatRange",
+            "variable": "num",
+            "from": 2,
+            "to": 10,
+            "step": 2,
+            "body": [
+              { "type": "forward", "count": "{{num}}" },
+              {
+                "type": "if",
+                "cond": {
+                  "type": "variableComparison",
+                  "variable": "num",
+                  "operator": ">=",
+                  "value": 6
+                },
+                "then": [
+                  { "type": "collect", "color": "green", "count": "{{num}}" },
+                  { "type": "turnLeft" }
+                ]
+              },
+              {
+                "type": "if",
+                "cond": {
+                  "type": "variableComparison",
+                  "variable": "num",
+                  "operator": "<",
+                  "value": 6
+                },
+                "then": [
+                  { "type": "turnRight" }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
