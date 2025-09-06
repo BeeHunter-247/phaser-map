@@ -10,6 +10,7 @@ export class ProgramExecutor {
     this.isPaused = false;
     this.executionSpeed = 1000; // ms between commands
     this.timer = null;
+    this.functions = new Map(); // Lưu trữ các hàm đã định nghĩa
   }
 
   /**
@@ -28,6 +29,19 @@ export class ProgramExecutor {
         throw new Error("Invalid program structure");
       }
 
+      // Xử lý function definitions trước
+      this.functions.clear();
+      if (programData.functions && Array.isArray(programData.functions)) {
+        for (const func of programData.functions) {
+          this.functions.set(func.name, {
+            name: func.name,
+            actions: this.parseActions(func.body || []),
+            original: func,
+          });
+          console.log(`🔧 Defined function: ${func.name}`);
+        }
+      }
+
       // Parse và validate actions
       const parsedActions = this.parseActions(programData.actions);
 
@@ -40,6 +54,7 @@ export class ProgramExecutor {
       console.log(`📋 Program loaded: ${this.program.programName}`);
       console.log(`   Version: ${this.program.version}`);
       console.log(`   Actions: ${this.program.actions.length}`);
+      console.log(`   Functions: ${this.functions.size}`);
 
       return true;
     } catch (error) {
@@ -112,6 +127,27 @@ export class ProgramExecutor {
           type: "if",
           condition,
           thenActions,
+          original: action,
+        };
+      }
+
+      case "while": {
+        // Giữ nguyên cấu trúc while để đánh giá ở runtime
+        const bodyActions = Array.isArray(action.body) ? action.body : [];
+        const condition = this.parseCondition(action.cond);
+        return {
+          type: "while",
+          condition,
+          bodyActions,
+          original: action,
+        };
+      }
+
+      case "callFunction": {
+        // Gọi hàm đã định nghĩa
+        return {
+          type: "callFunction",
+          functionName: action.functionName || action.name,
           original: action,
         };
       }
@@ -292,6 +328,12 @@ export class ProgramExecutor {
         case "if":
           return this.executeIf(action);
 
+        case "while":
+          return this.executeWhile(action);
+
+        case "callFunction":
+          return this.executeCallFunction(action);
+
         case "forward":
           return this.executeForward(action.count);
 
@@ -327,15 +369,96 @@ export class ProgramExecutor {
       console.log(
         `🤔 IF condition (${action.condition?.functionName}) => ${result}`
       );
-      if (result && Array.isArray(action.thenActions) && action.thenActions.length > 0) {
+      if (
+        result &&
+        Array.isArray(action.thenActions) &&
+        action.thenActions.length > 0
+      ) {
         // Chèn thenActions ngay sau currentStep
         const insertIndex = this.currentStep + 1;
-        this.program.actions.splice(insertIndex, 0, ...action.thenActions.map(a => ({ ...a })));
-        console.log(`🧩 Inserted ${action.thenActions.length} action(s) at ${insertIndex}`);
+        this.program.actions.splice(
+          insertIndex,
+          0,
+          ...action.thenActions.map((a) => ({ ...a }))
+        );
+        console.log(
+          `🧩 Inserted ${action.thenActions.length} action(s) at ${insertIndex}`
+        );
       }
       return true;
     } catch (e) {
       console.error("❌ Failed to execute IF:", e);
+      return false;
+    }
+  }
+
+  /**
+   * Thực thi câu lệnh while
+   * - Nếu điều kiện đúng, chèn bodyActions và tái chèn while để lặp lại
+   */
+  executeWhile(action) {
+    try {
+      const result = this.evaluateCondition(action.condition);
+      console.log(
+        `🔄 WHILE condition (${action.condition?.functionName}) => ${result}`
+      );
+
+      if (
+        result &&
+        Array.isArray(action.bodyActions) &&
+        action.bodyActions.length > 0
+      ) {
+        // Chèn bodyActions và tái chèn while để lặp lại
+        const insertIndex = this.currentStep + 1;
+        const whileAction = { ...action }; // Tạo bản sao của while action
+        this.program.actions.splice(
+          insertIndex,
+          0,
+          ...action.bodyActions.map((a) => ({ ...a })),
+          whileAction
+        );
+        console.log(
+          `🔄 Inserted ${action.bodyActions.length} body action(s) + while loop at ${insertIndex}`
+        );
+      }
+      return true;
+    } catch (e) {
+      console.error("❌ Failed to execute WHILE:", e);
+      return false;
+    }
+  }
+
+  /**
+   * Thực thi gọi hàm
+   * - Chèn các action của hàm vào vị trí hiện tại
+   */
+  executeCallFunction(action) {
+    try {
+      const functionName = action.functionName;
+      const func = this.functions.get(functionName);
+
+      if (!func) {
+        console.error(`❌ Function '${functionName}' not found`);
+        return false;
+      }
+
+      console.log(`🔧 Calling function: ${functionName}`);
+
+      if (Array.isArray(func.actions) && func.actions.length > 0) {
+        // Chèn các action của hàm vào vị trí hiện tại
+        const insertIndex = this.currentStep + 1;
+        this.program.actions.splice(
+          insertIndex,
+          0,
+          ...func.actions.map((a) => ({ ...a }))
+        );
+        console.log(
+          `🔧 Inserted ${func.actions.length} action(s) from function '${functionName}' at ${insertIndex}`
+        );
+      }
+      return true;
+    } catch (e) {
+      console.error("❌ Failed to execute function call:", e);
       return false;
     }
   }
