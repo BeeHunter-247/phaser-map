@@ -198,7 +198,7 @@ export class MapLoader {
 
         const robot = scene.add.image(
           robotPos.x,
-          robotPos.y + 20,
+          robotPos.y + 30,
           robotSpriteKey
         );
         robot.setOrigin(0.5, 1);
