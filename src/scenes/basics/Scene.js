@@ -120,11 +120,20 @@ export default class Scene extends Phaser.Scene {
     this.robot = loadedObjects.robot;
 
     // Initialize Managers
-    this.robotController = new RobotController(this, this.robot, this.map, this.layer);
+    this.robotController = new RobotController(
+      this,
+      this.robot,
+      this.map,
+      this.layer
+    );
     this.robotController.initialize(objectConfig);
 
     this.batteryManager = new BatteryManager(this);
-    this.batteryManager.initialize(this.robotController, objectConfig, loadedObjects.batteries);
+    this.batteryManager.initialize(
+      this.robotController,
+      objectConfig,
+      loadedObjects.batteries
+    );
 
     this.inputHandler = new GameInputHandler(this);
     this.uiManager = new GameUIManager(this);
@@ -191,8 +200,8 @@ export default class Scene extends Phaser.Scene {
 
   /**
    * Lấy world center của tile
-   * @param {number} tileX 
-   * @param {number} tileY 
+   * @param {number} tileX
+   * @param {number} tileY
    * @returns {Object} {x, y} world coordinates
    */
   getTileWorldCenter(tileX, tileY) {
@@ -245,7 +254,7 @@ export default class Scene extends Phaser.Scene {
    */
   collectBattery(preferredColor) {
     const result = this.batteryManager.collectBattery(preferredColor);
-    
+
     if (result > 0) {
       // Cập nhật UI trạng thái và kiểm tra thắng/thua
       this.uiManager.updateStatusUI();
@@ -256,7 +265,7 @@ export default class Scene extends Phaser.Scene {
         this.uiManager.showProgressMessage(victoryResult.progress);
       }
     }
-    
+
     return result;
   }
 
