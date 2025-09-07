@@ -420,6 +420,14 @@ export class ProgramExecutor {
 
     if (this.currentStep >= this.program.actions.length) {
       console.log("✅ Program completed!");
+      
+      // KIỂM TRA THUA KHI CHƯƠNG TRÌNH KẾT THÚC
+      const victoryResult = checkAndDisplayVictory(this.scene);
+      if (!victoryResult.isVictory) {
+        // Chương trình kết thúc nhưng chưa đủ pin = THUA
+        this.scene.lose("Chương trình kết thúc nhưng chưa thu thập đủ pin!");
+      }
+      
       this.stopProgram();
       return;
     }

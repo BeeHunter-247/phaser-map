@@ -18,42 +18,25 @@ export class VictoryConditions {
    */
   static getRequiredBatteries(mapKey) {
     const config = mapConfigs[mapKey];
-    if (!config || !config.batteries) {
-      return { total: 0, byType: {} };
-    }
-
-    let total = 0;
-    const byType = { red: 0, yellow: 0, green: 0 };
-
-    // Duyệt qua tất cả cấu hình pin
-    config.batteries.forEach((batteryConfig) => {
-      if (batteryConfig.tiles) {
-        batteryConfig.tiles.forEach((tileConfig) => {
-          // Số lượng pin tại ô này
-          const count = tileConfig.count || 1;
-          total += count;
-
-          // Nếu có mảng types riêng cho từng pin
-          if (Array.isArray(tileConfig.types) && tileConfig.types.length > 0) {
-            // Đếm từng loại pin trong mảng types
-            for (let i = 0; i < count; i++) {
-              const type =
-                i < tileConfig.types.length
-                  ? tileConfig.types[i]
-                  : tileConfig.types[tileConfig.types.length - 1];
-              byType[type] = (byType[type] || 0) + 1;
-            }
-          }
-          // Nếu chỉ có một loại pin (type)
-          else {
-            const type = tileConfig.type || batteryConfig.type || "green";
-            byType[type] = (byType[type] || 0) + count;
-          }
-        });
+  
+    // Ưu tiên sử dụng cấu hình victory mới nếu có
+    if (config && config.victory) {
+      const victory = config.victory;
+      const byType = { red: 0, yellow: 0, green: 0 };
+      
+      // Xử lý cấu trúc byType mới: [{ red: 0, yellow: 0, green: 1 }]
+      if (Array.isArray(victory.byType) && victory.byType.length > 0) {
+        const typeConfig = victory.byType[0];
+        byType.red = typeConfig.red || 0;
+        byType.yellow = typeConfig.yellow || 0;
+        byType.green = typeConfig.green || 0;
       }
-    });
-
-    return { total, byType };
+      
+      return { 
+        total: victory.total || 0, 
+        byType 
+      };
+    }
   }
 
   /**
@@ -66,6 +49,7 @@ export class VictoryConditions {
     if (!scene.mapKey || !scene.batteryManager) {
       return {
         isVictory: false,
+        isDefeat: false,  // Thêm lại
         progress: 0,
         message: "Đang khởi tạo...",
         details: {
@@ -75,43 +59,42 @@ export class VictoryConditions {
         }
       };
     }
-
+  
     // Lấy thông tin pin cần thu thập
     const required = this.getRequiredBatteries(scene.mapKey);
-
+  
     // Lấy thông tin pin đã thu thập từ BatteryManager
     const collected = scene.batteryManager ? scene.batteryManager.getCollectedBatteries() : { total: 0, byType: { red: 0, yellow: 0, green: 0 } };
-
+  
     // Tính tỷ lệ hoàn thành
-    const progress =
-      required.total > 0 ? Math.min(1, collected.total / required.total) : 1;
-
-    // Kiểm tra đã thu thập đủ pin chưa
-    const isVictory = collected.total >= required.total;
-
+    const progress = required.total > 0 ? Math.min(1, collected.total / required.total) : 1;
+  
+    // KIỂM TRA ĐIỀU KIỆN THUA: Thu thập quá số lượng yêu cầu
+    const isDefeat = this.checkDefeatCondition(collected, required);
+  
+    // Kiểm tra đã thu thập đủ pin chưa (chỉ khi chưa thua)
+    const isVictory = !isDefeat && collected.total >= required.total;
+  
     // Tạo thông báo
     let message;
-    if (isVictory) {
+    if (isDefeat) {
+      message = this.getDefeatMessage(collected, required);
+    } else if (isVictory) {
       message = `Chiến thắng! Đã thu thập đủ ${collected.total}/${required.total} pin`;
     } else {
-      message = `Đã thu thập ${collected.total}/${
-        required.total
-      } pin (${Math.round(progress * 100)}%)`;
+      message = `Đã thu thập ${collected.total}/${required.total} pin (${Math.round(progress * 100)}%)`;
     }
-
+  
     // Thông tin chi tiết theo màu
     const details = {
       red: `Đỏ: ${collected.byType.red || 0}/${required.byType.red || 0}`,
-      yellow: `Vàng: ${collected.byType.yellow || 0}/${
-        required.byType.yellow || 0
-      }`,
-      green: `Xanh lá: ${collected.byType.green || 0}/${
-        required.byType.green || 0
-      }`,
+      yellow: `Vàng: ${collected.byType.yellow || 0}/${required.byType.yellow || 0}`,
+      green: `Xanh lá: ${collected.byType.green || 0}/${required.byType.green || 0}`,
     };
-
+  
     return {
       isVictory,
+      isDefeat,  // Thêm lại
       progress,
       message,
       details,
@@ -119,7 +102,52 @@ export class VictoryConditions {
       collected,
     };
   }
-
+  static checkDefeatCondition(collected, required) {
+    // Kiểm tra tổng số pin
+    if (collected.total > required.total) {
+      return true;
+    }
+  
+    // Kiểm tra từng loại pin
+    const colors = ['red', 'yellow', 'green'];
+    for (const color of colors) {
+      const collectedCount = collected.byType[color] || 0;
+      const requiredCount = required.byType[color] || 0;
+      
+      if (collectedCount != requiredCount) {
+        return true;
+      }
+    }
+  
+    return false;
+  }
+  
+  /**
+   * Tạo thông báo thua cuộc
+   * @param {Object} collected - Pin đã thu thập
+   * @param {Object} required - Pin cần thiết
+   * @returns {string} Thông báo thua
+   */
+  static getDefeatMessage(collected, required) {
+    // Kiểm tra tổng số pin
+    if (collected.total > required.total) {
+      return `Thua! Thu thập quá nhiều pin: ${collected.total}/${required.total}`;
+    }
+  
+    // Kiểm tra từng loại pin
+    const colors = ['red', 'yellow', 'green'];
+    for (const color of colors) {
+      const collectedCount = collected.byType[color] || 0;
+      const requiredCount = required.byType[color] || 0;
+      
+      if (collectedCount > requiredCount) {
+        const colorName = color === 'red' ? 'đỏ' : color === 'yellow' ? 'vàng' : 'xanh lá';
+        return `Thua! Thu thập quá nhiều pin ${colorName}: ${collectedCount}/${requiredCount}`;
+      }
+    }
+  
+    return "Thua cuộc!";
+  }
   /**
    * Tạo thông tin tổng quan về map
    * @param {string} mapKey - Key của map (basic1, basic2, etc.)

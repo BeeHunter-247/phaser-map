@@ -29,10 +29,16 @@ export const mapConfigs = {
       {
         tiles: [
           // Đặt 1 pin màu xanh lá
+          { x: 4, y: 4, count: 1, type: "yellow" },
+          { x: 5, y: 4, count: 2, type: "green" },
           { x: 6, y: 4, count: 1, type: "green" },
         ],
       },
     ],
+    victory: {
+      total: 1,
+      byType: [{ red: 0, yellow: 0, green: 2 }]
+    },
   },
 
   // Map 2: Đường thẳng với 2 pin
