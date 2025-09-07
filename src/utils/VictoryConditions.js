@@ -33,7 +33,6 @@ export class VictoryConditions {
       }
       
       return { 
-        total: victory.total || 0, 
         byType 
       };
     }
@@ -49,7 +48,6 @@ export class VictoryConditions {
     if (!scene.mapKey || !scene.batteryManager) {
       return {
         isVictory: false,
-        isDefeat: false,  // Thêm lại
         progress: 0,
         message: "Đang khởi tạo...",
         details: {
@@ -65,25 +63,11 @@ export class VictoryConditions {
   
     // Lấy thông tin pin đã thu thập từ BatteryManager
     const collected = scene.batteryManager ? scene.batteryManager.getCollectedBatteries() : { total: 0, byType: { red: 0, yellow: 0, green: 0 } };
-  
-    // Tính tỷ lệ hoàn thành
-    const progress = required.total > 0 ? Math.min(1, collected.total / required.total) : 1;
-  
-    // KIỂM TRA ĐIỀU KIỆN THUA: Thu thập quá số lượng yêu cầu
-    const isDefeat = this.checkDefeatCondition(collected, required);
-  
-    // Kiểm tra đã thu thập đủ pin chưa (chỉ khi chưa thua)
-    const isVictory = !isDefeat && collected.total >= required.total;
-  
-    // Tạo thông báo
-    let message;
-    if (isDefeat) {
-      message = this.getDefeatMessage(collected, required);
-    } else if (isVictory) {
-      message = `Chiến thắng! Đã thu thập đủ ${collected.total}/${required.total} pin`;
-    } else {
-      message = `Đã thu thập ${collected.total}/${required.total} pin (${Math.round(progress * 100)}%)`;
-    }
+
+    // Kiểm tra đã thu thập đủ pin chưa
+    const isVictory = this.checkVictoryCondition(collected, required);
+
+    // Không tạo message ở đây, để ProgramExecutor tự tạo message phù hợp
   
     // Thông tin chi tiết theo màu
     const details = {
@@ -94,60 +78,33 @@ export class VictoryConditions {
   
     return {
       isVictory,
-      isDefeat,  // Thêm lại
-      progress,
-      message,
       details,
       required,
       collected,
     };
   }
-  static checkDefeatCondition(collected, required) {
-    // Kiểm tra tổng số pin
-    if (collected.total > required.total) {
-      return true;
-    }
-  
-    // Kiểm tra từng loại pin
-    const colors = ['red', 'yellow', 'green'];
-    for (const color of colors) {
-      const collectedCount = collected.byType[color] || 0;
-      const requiredCount = required.byType[color] || 0;
-      
-      if (collectedCount != requiredCount) {
-        return true;
-      }
-    }
-  
-    return false;
-  }
-  
+
   /**
-   * Tạo thông báo thua cuộc
+   * Kiểm tra điều kiện thắng: đủ cả tổng số và từng màu
    * @param {Object} collected - Pin đã thu thập
    * @param {Object} required - Pin cần thiết
-   * @returns {string} Thông báo thua
+   * @returns {boolean} Có thắng không
    */
-  static getDefeatMessage(collected, required) {
-    // Kiểm tra tổng số pin
-    if (collected.total > required.total) {
-      return `Thua! Thu thập quá nhiều pin: ${collected.total}/${required.total}`;
-    }
-  
-    // Kiểm tra từng loại pin
+  static checkVictoryCondition(collected, required) {
+    // Chỉ kiểm tra từng loại pin (bỏ kiểm tra total)
     const colors = ['red', 'yellow', 'green'];
     for (const color of colors) {
       const collectedCount = collected.byType[color] || 0;
       const requiredCount = required.byType[color] || 0;
       
-      if (collectedCount > requiredCount) {
-        const colorName = color === 'red' ? 'đỏ' : color === 'yellow' ? 'vàng' : 'xanh lá';
-        return `Thua! Thu thập quá nhiều pin ${colorName}: ${collectedCount}/${requiredCount}`;
+      if (collectedCount !== requiredCount) {
+        return false;
       }
     }
-  
-    return "Thua cuộc!";
+
+    return true;
   }
+  
   /**
    * Tạo thông tin tổng quan về map
    * @param {string} mapKey - Key của map (basic1, basic2, etc.)
@@ -215,9 +172,9 @@ export function checkAndDisplayVictory(scene) {
 
   // Hiển thị thông tin trong console
   if (result.isVictory) {
-    console.log(`🏆 ${result.message}`);
+    console.log(`🏆 Chiến thắng! Đã thu thập đủ pin theo yêu cầu`);
   } else {
-    console.log(`📊 ${result.message}`);
+    console.log(`📊 Chưa thu thập đủ pin theo yêu cầu`);
   }
 
   // Kiểm tra details có tồn tại không trước khi log
@@ -272,7 +229,11 @@ export function updateBatteryStatusText(scene, statusText) {
 
   // Tạo nội dung text
   let content = `Map: ${scene.mapKey}\n`;
-  content += `${result.message}\n`;
+  if (result.isVictory) {
+    content += `Chiến thắng!\n`;
+  } else {
+    content += `Đang chơi...\n`;
+  }
   
   // Kiểm tra details có tồn tại không
   if (result.details) {

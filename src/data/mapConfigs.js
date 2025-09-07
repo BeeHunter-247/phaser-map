@@ -36,8 +36,7 @@ export const mapConfigs = {
       },
     ],
     victory: {
-      total: 1,
-      byType: [{ red: 0, yellow: 0, green: 2 }]
+      byType: [{ red: 0, yellow: 0, green: 1 }]
     },
   },
 

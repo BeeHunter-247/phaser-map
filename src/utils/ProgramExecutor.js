@@ -1,6 +1,7 @@
 /**
  * ProgramExecutor - Thực thi chương trình robot từ Blockly JSON
  */
+import { checkAndDisplayVictory } from "./VictoryConditions.js";
 export class ProgramExecutor {
   constructor(scene) {
     this.scene = scene;
@@ -425,7 +426,7 @@ export class ProgramExecutor {
       const victoryResult = checkAndDisplayVictory(this.scene);
       if (!victoryResult.isVictory) {
         // Chương trình kết thúc nhưng chưa đủ pin = THUA
-        this.scene.lose("Chương trình kết thúc nhưng chưa thu thập đủ pin!");
+        this.scene.lose("Chương trình kết thúc thua cuộc!");
       }
       
       this.stopProgram();

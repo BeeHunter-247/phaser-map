@@ -4,12 +4,12 @@
     "actions": [
         {
             "type": "forward",
-            "count": 3
+            "count": 2
         },
         {
             "type": "collect",
             "color": "green",
-            "count": 1
+            "count": 2
         }
     ]
 }
