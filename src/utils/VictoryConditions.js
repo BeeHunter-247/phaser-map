@@ -70,9 +70,9 @@ export class VictoryConditions {
         message: "Đang khởi tạo...",
         details: {
           red: "Đỏ: 0/0",
-          yellow: "Vàng: 0/0", 
-          green: "Xanh lá: 0/0"
-        }
+          yellow: "Vàng: 0/0",
+          green: "Xanh lá: 0/0",
+        },
       };
     }
 
@@ -80,7 +80,9 @@ export class VictoryConditions {
     const required = this.getRequiredBatteries(scene.mapKey);
 
     // Lấy thông tin pin đã thu thập từ BatteryManager
-    const collected = scene.batteryManager ? scene.batteryManager.getCollectedBatteries() : { total: 0, byType: { red: 0, yellow: 0, green: 0 } };
+    const collected = scene.batteryManager
+      ? scene.batteryManager.getCollectedBatteries()
+      : { total: 0, byType: { red: 0, yellow: 0, green: 0 } };
 
     // Tính tỷ lệ hoàn thành
     const progress =
@@ -245,7 +247,7 @@ export function updateBatteryStatusText(scene, statusText) {
   // Tạo nội dung text
   let content = `Map: ${scene.mapKey}\n`;
   content += `${result.message}\n`;
-  
+
   // Kiểm tra details có tồn tại không
   if (result.details) {
     content += `${result.details.red}\n`;
@@ -253,6 +255,12 @@ export function updateBatteryStatusText(scene, statusText) {
     content += `${result.details.green}`;
   } else {
     content += "Đang tải...";
+  }
+
+  // Thêm thông tin box nếu có BoxManager
+  if (scene.boxManager) {
+    const boxStats = scene.boxManager.getStats();
+    content += `\n📦 Đã lấy: ${boxStats.collectedBoxes} | Đã đặt: ${boxStats.putBoxes}`;
   }
 
   // Cập nhật text

@@ -1,29 +1,25 @@
 {
-    "version": "1.0.0",
-    "programName": "move_5_steps_turn_right_demo",
-    "actions": [
-        {
-            "type": "forward",
-            "count": 5
-        },
-        {
-            "type": "turnRight"
-        },
-        {
-            "type": "forward",
-            "count": 5
-        },
-        {
-            "type": "turnRight"
-        },
-        {
-            "type": "forward",
-            "count": 5
-        },
-        {
-            "type": "collect",
-            "color": "yellow",
-            "count": 1
-        }
-    ]
+  "version": "1.0.0",
+  "programName": "box_test_demo",
+  "actions": [
+    {
+      "type": "forward",
+      "count": 1
+    },
+    {
+      "type": "takeBox",
+      "count": 2
+    },
+    {
+      "type": "turnBack"
+    },
+    {
+      "type": "forward",
+      "count": 2
+    },
+    {
+      "type": "putBox",
+      "count": 2
+    }
+  ]
 }

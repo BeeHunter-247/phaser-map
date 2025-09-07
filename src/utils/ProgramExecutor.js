@@ -284,6 +284,20 @@ export class ProgramExecutor {
           original: action,
         };
 
+      case "putBox":
+        return {
+          type: "putBox",
+          count: parseInt(action.count) || 1,
+          original: action,
+        };
+
+      case "takeBox":
+        return {
+          type: "takeBox",
+          count: parseInt(action.count) || 1,
+          original: action,
+        };
+
       default:
         console.warn(`⚠️ Action ${index}: Unknown type "${action.type}"`);
         return null;
@@ -459,6 +473,12 @@ export class ProgramExecutor {
 
         case "collect":
           return this.executeCollect(action.count, action.colors);
+
+        case "putBox":
+          return this.executePutBox(action.count);
+
+        case "takeBox":
+          return this.executeTakeBox(action.count);
 
         default:
           console.error(`❌ Unknown command: ${action.type}`);
@@ -779,6 +799,52 @@ export class ProgramExecutor {
     }
 
     return true;
+  }
+
+  /**
+   * Thực thi lệnh putBox
+   * @param {number} count - Số lượng box cần đặt
+   * @returns {boolean} Success/failure
+   */
+  executePutBox(count) {
+    console.log(`📦 Putting ${count} box(es)`);
+
+    try {
+      const success = this.scene.putBox(count);
+      if (!success) {
+        console.error(`❌ Failed to put ${count} box(es)`);
+        return false;
+      }
+
+      console.log(`✅ Successfully put ${count} box(es)`);
+      return true;
+    } catch (error) {
+      console.error(`❌ Error putting boxes:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Thực thi lệnh takeBox
+   * @param {number} count - Số lượng box cần lấy
+   * @returns {boolean} Success/failure
+   */
+  executeTakeBox(count) {
+    console.log(`📦 Taking ${count} box(es)`);
+
+    try {
+      const success = this.scene.takeBox(count);
+      if (!success) {
+        console.error(`❌ Failed to take ${count} box(es)`);
+        return false;
+      }
+
+      console.log(`✅ Successfully took ${count} box(es)`);
+      return true;
+    } catch (error) {
+      console.error(`❌ Error taking boxes:`, error);
+      return false;
+    }
   }
 
   /**
