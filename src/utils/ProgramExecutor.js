@@ -299,12 +299,35 @@ export class ProgramExecutor {
     if (!cond || typeof cond !== "object") return null;
 
     // Điều kiện so sánh biến: { type: "variableComparison", variable: "i", operator: "==", value: 0 }
+    // Hỗ trợ cả biến thường và biến đặc biệt như "batteryCount", "greenCount", "redCount", "yellowCount"
     if (cond.type === "variableComparison") {
       return {
         type: "variableComparison",
         variable: cond.variable || "i",
         operator: cond.operator || "==",
         value: cond.value !== undefined ? cond.value : 0,
+        original: cond,
+      };
+    }
+
+    // Điều kiện logic AND: { type: "and", conditions: [cond1, cond2] }
+    if (cond.type === "and") {
+      return {
+        type: "and",
+        conditions: Array.isArray(cond.conditions) 
+          ? cond.conditions.map(c => this.parseCondition(c)).filter(c => c !== null)
+          : [],
+        original: cond,
+      };
+    }
+
+    // Điều kiện logic OR: { type: "or", conditions: [cond1, cond2] }
+    if (cond.type === "or") {
+      return {
+        type: "or",
+        conditions: Array.isArray(cond.conditions) 
+          ? cond.conditions.map(c => this.parseCondition(c)).filter(c => c !== null)
+          : [],
         original: cond,
       };
     }
@@ -582,17 +605,24 @@ export class ProgramExecutor {
   /**
    * Đánh giá điều kiện
    * Hỗ trợ: condition.function = "isGreen" => có pin xanh tại ô hiện tại?
-   * Hỗ trợ: variableComparison => so sánh biến với giá trị
+   * Hỗ trợ: variableComparison => so sánh biến với giá trị (bao gồm biến đặc biệt)
+   * Hỗ trợ: and/or => điều kiện logic
    * Nếu cond.check = false thì đảo ngược kết quả
    */
   evaluateCondition(cond, variableContext = {}) {
     if (!cond) return false;
 
-    // Điều kiện so sánh biến
+    // Điều kiện so sánh biến (bao gồm biến đặc biệt)
     if (cond.type === "variableComparison") {
-      const variableValue = variableContext[cond.variable];
+      let variableValue = variableContext[cond.variable];
+      
+      // Nếu không tìm thấy trong context, kiểm tra biến đặc biệt
       if (variableValue === undefined) {
-        console.warn(`⚠️ Variable "${cond.variable}" not found in context`);
+        variableValue = this.getSpecialVariableValue(cond.variable);
+      }
+      
+      if (variableValue === undefined) {
+        console.warn(`⚠️ Variable "${cond.variable}" not found in context or special variables`);
         return false;
       }
 
@@ -607,11 +637,45 @@ export class ProgramExecutor {
       return result;
     }
 
+    // Điều kiện logic AND
+    if (cond.type === "and") {
+      if (!Array.isArray(cond.conditions) || cond.conditions.length === 0) {
+        return false;
+      }
+      
+      const results = cond.conditions.map(c => this.evaluateCondition(c, variableContext));
+      const result = results.every(r => r === true);
+      console.log(
+        `🔗 AND condition: [${results.join(', ')}] => ${result}`
+      );
+      return result;
+    }
+
+    // Điều kiện logic OR
+    if (cond.type === "or") {
+      if (!Array.isArray(cond.conditions) || cond.conditions.length === 0) {
+        return false;
+      }
+      
+      const results = cond.conditions.map(c => this.evaluateCondition(c, variableContext));
+      const result = results.some(r => r === true);
+      console.log(
+        `🔗 OR condition: [${results.join(', ')}] => ${result}`
+      );
+      return result;
+    }
+
     // Điều kiện cũ (sensor-based)
     let actual = false;
     switch (cond.functionName) {
       case "isGreen":
         actual = this.hasBatteryColorAtCurrentTile("green");
+        break;
+      case "isRed":
+        actual = this.hasBatteryColorAtCurrentTile("red");
+        break;
+      case "isYellow":
+        actual = this.hasBatteryColorAtCurrentTile("yellow");
         break;
       default:
         console.warn(`⚠️ Unknown condition function: ${cond.functionName}`);
@@ -657,6 +721,55 @@ export class ProgramExecutor {
     if (count <= 0) return false;
     const types = Array.isArray(info?.types) ? info.types : [];
     return types.some((t) => t === color);
+  }
+
+  /**
+   * Lấy số lượng pin tại vị trí hiện tại
+   * @returns {number} Số lượng pin
+   */
+  getNumberBattery() {
+    const info = this.scene.getBatteriesAtCurrentTile();
+    if (!info) return 0;
+    return info?.count || 0;
+  }
+
+  /**
+   * Lấy giá trị của biến đặc biệt
+   * @param {string} variableName - Tên biến đặc biệt
+   * @returns {number|undefined} Giá trị biến hoặc undefined nếu không tìm thấy
+   */
+  getSpecialVariableValue(variableName) {
+    const info = this.scene.getBatteriesAtCurrentTile();
+    if (!info) return undefined;
+
+    switch (variableName) {
+      case "batteryCount":
+        return info?.count || 0;
+      
+      case "greenCount":
+        return this.getBatteryCountByColor("green");
+      
+      case "redCount":
+        return this.getBatteryCountByColor("red");
+      
+      case "yellowCount":
+        return this.getBatteryCountByColor("yellow");
+      
+      default:
+        return undefined;
+    }
+  }
+
+  /**
+   * Đếm số lượng pin theo màu tại vị trí hiện tại
+   * @param {string} color - Màu pin cần đếm
+   * @returns {number} Số lượng pin theo màu
+   */
+  getBatteryCountByColor(color) {
+    const info = this.scene.getBatteriesAtCurrentTile();
+    if (!info || !Array.isArray(info.types)) return 0;
+    
+    return info.types.filter(type => type === color).length;
   }
 
   /**

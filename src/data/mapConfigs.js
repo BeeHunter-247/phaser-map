@@ -432,6 +432,257 @@ export const mapConfigs = {
       },
     ],
   },
+  conditional1: {
+    robot: {
+      tile: { x: 3, y: 4 }, // Robot ở vị trí (1,3)
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 4, y: 4, count: 1, type: "yellow", },
+          { x: 5, y: 4, count: 1, type: "green", },
+        ],
+      },
+    ],
+  },
+  conditional2: {
+    robot: {
+      tile: { x: 3, y: 3 }, // Robot ở vị trí (1,3)
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 4, y: 3, count: 2, type: "red", },
+          { x: 5, y: 3, count: 2, type: "green", },
+          { x: 6, y: 3, count: 2, type: "green", },
+          { x: 7, y: 3, count: 3, type: "green", },
+        ],
+      },
+    ],
+  },
+  conditional3: {
+    robot: {
+      tile: { x: 3, y: 4 }, // Robot ở vị trí (1,3)
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 4, y: 4, count: 3, type: "green", },
+          { x: 5, y: 4, count: 2, type: "green", },
+          { x: 6, y: 4, count: 2, type: "yellow", },
+          { x: 7, y: 4, count: 3, type: "green", },
+        ],
+      },
+    ],
+  },
+  conditional4: {
+    robot: {
+      tile: { x: 5, y: 7 }, // Robot ở vị trí (1,3)
+      direction: "west",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 2, y: 2, count: 2, type: "green", },
+          { x: 2, y: 4, count: 2, type: "yellow", },
+          { x: 2, y: 6, count: 1, type: "green", },
+        ],
+      },
+    ],
+  },
+  conditional5: {
+    robot: {
+      tile: { x: 7, y: 4 }, // Robot ở vị trí (1,3)
+      direction: "west",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 5, y: 4, count: 2, type: "green", },
+          { x: 4, y: 3, count: 2, type: "yellow", },
+          { x: 3, y: 2, count: 1, type: "green", },
+          { x: 2, y: 1, count: 2, type: "green", },
+        ],
+      },
+    ],
+  },
+  conditional6: {
+    robot: {
+      tile: { x: 6, y: 6 }, // Robot ở vị trí (1,3)
+      direction: "west",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 5, y: 6, count: 2, type: "green", },
+          { x: 4, y: 6, count: 2, type: "yellow", },
+          { x: 3, y: 6, count: 1, type: "green", },
+          { x: 3, y: 5, count: 2, type: "green", },
+          { x: 3, y: 4, count: 2, type: "green", },
+          { x: 3, y: 3, count: 2, type: "red", },
+          { x: 4, y: 3, count: 2, type: "green", },
+          { x: 5, y: 3, count: 2, type: "red", },
+          { x: 6, y: 3, count: 2, type: "green", },
+        ],
+      },
+    ],
+  },
+  conditional7: {
+    robot: {
+      tile: { x: 2, y: 3 }, // Robot ở vị trí (1,3)
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 3, y: 3, count: 1, type: "yellow", },
+          { x: 4, y: 3, count: 2, type: "green", },
+          { x: 5, y: 3, count: 2, type: "red", },
+          { x: 6, y: 3, count: 1, type: "green", },
+          { x: 7, y: 3, count: 2, type: "red", },
+          { x: 8, y: 3, count: 1, type: "red", },
+        ],
+      },
+    ],
+  },
+  conditional8: {
+    robot: {
+      tile: { x: 2, y: 3 }, // Robot ở vị trí (1,3)
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 3, y: 3, count: 2, type: "yellow", },
+          { x: 4, y: 3, count: 2, type: "green", },
+          { x: 5, y: 3, count: 2, type: "red", },
+          { x: 6, y: 3, count: 1, type: "green", },
+          { x: 6, y: 4, count: 2, type: "red", },
+          { x: 6, y: 5, count: 1, type: "red", },
+          { x: 6, y: 6, count: 1, type: "yellow", },
+          { x: 6, y: 7, count: 2, type: "yellow", },
+        ],
+      },
+    ],
+  },
+  function1: {
+    robot: {
+      tile: { x: 3, y: 4 }, // Robot ở vị trí (1,3)
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 4, y: 4, count: 2, type: "green", },
+        ],
+      },
+    ],
+  },
+  function2: {
+    robot: {
+      tile: { x: 2, y: 4 }, // Robot ở vị trí (1,3)
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 6, y: 4, count: 1, type: "green", },
+        ],
+      },
+    ],
+  },
+  function3: {
+    robot: {
+      tile: { x: 3, y: 3 }, // Robot ở vị trí (1,3)
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 5, y: 3, count: 1, type: "green", },
+          { x: 7, y: 3, count: 1, type: "green", },
+        ],
+      },
+    ],
+  },
+  function4: {
+    robot: {
+      tile: { x: 1, y: 4 }, // Robot ở vị trí (1,3)
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 3, y: 4, count: 1, type: "green", },
+
+        ],
+      },
+    ],
+  },
+  function5: {
+    robot: {
+      tile: { x: 2, y: 4 }, // Robot ở vị trí (1,3)
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 4, y: 5, count: 2, type: "green", },
+
+        ],
+      },
+    ],
+  },
+  function6: {
+    robot: {
+      tile: { x: 2, y: 5 }, // Robot ở vị trí (1,3)
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 5, y: 5, count: 5, type: "green", },
+          { x: 5, y: 2, count: 5, type: "green", },
+
+        ],
+      },
+    ],
+  },
+  function7: {
+    robot: {
+      tile: { x: 2, y: 3 }, // Robot ở vị trí (1,3)
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 3, y: 4, count: 3, type: "green", },
+          { x: 4, y: 5, count: 3, type: "green", },
+          { x: 5, y: 6, count: 3, type: "green", },
+        ],
+      },
+    ],
+  },
+  function8: {
+    robot: {
+      tile: { x: 2, y: 4 }, // Robot ở vị trí (1,3)
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 3, y: 4, count: 1, type: "green", },
+          { x: 4, y: 4, count: 1, type: "green", },
+          { x: 5, y: 4, count: 1, type: "green", },
+          { x: 6, y: 4, count: 1, type: "green", },
+          { x: 7, y: 4, count: 1, type: "green", },
+        ],
+      },
+    ],
+  },
 };
 
 /**
