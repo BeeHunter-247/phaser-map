@@ -586,6 +586,7 @@ export const mapConfigs = {
     boxes: [
       {
         tiles: [{ x: 4, y: 4, count: 2 }],
+        warehouse: { x: 4, y: 4, count: 2 },
         spread: 1.2,
       },
     ],
@@ -599,6 +600,7 @@ export const mapConfigs = {
     boxes: [
       {
         tiles: [{ x: 4, y: 4, count: 2 }],
+        warehouse: { x: 4, y: 4, count: 2 },
         spread: 1.2,
       },
     ],
@@ -612,6 +614,7 @@ export const mapConfigs = {
     boxes: [
       {
         tiles: [{ x: 2, y: 4, count: 6 }],
+        warehouse: { x: 2, y: 4, count: 6 },
         spread: 1.2,
       },
     ],
@@ -625,6 +628,7 @@ export const mapConfigs = {
     boxes: [
       {
         tiles: [{ x: 3, y: 4, count: 3 }],
+        warehouse: { x: 3, y: 4, count: 3 },
         spread: 1.2,
       },
     ],
@@ -638,6 +642,7 @@ export const mapConfigs = {
     boxes: [
       {
         tiles: [{ x: 2, y: 6, count: 3 }],
+        warehouse: { x: 2, y: 6, count: 3 },
         spread: 1.2,
       },
     ],
@@ -651,6 +656,7 @@ export const mapConfigs = {
     boxes: [
       {
         tiles: [{ x: 2, y: 5, count: 5 }],
+        warehouse: { x: 2, y: 5, count: 5 },
         spread: 1.2,
       },
     ],
@@ -664,6 +670,7 @@ export const mapConfigs = {
     boxes: [
       {
         tiles: [{ x: 2, y: 4, count: 4 }],
+        warehouse: { x: 2, y: 4, count: 4 },
         spread: 1.2,
       },
     ],
@@ -677,6 +684,7 @@ export const mapConfigs = {
     boxes: [
       {
         tiles: [{ x: 4, y: 5, count: 5 }],
+        warehouse: { x: 4, y: 5, count: 5 },
         spread: 1.2,
       },
     ],

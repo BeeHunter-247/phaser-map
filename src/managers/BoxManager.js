@@ -26,7 +26,7 @@ export class BoxManager {
       `📦 BoxManager initializing with ${loadedBoxes.length} loaded boxes`
     );
 
-    // Đăng ký boxes từ loadedBoxes (nếu có)
+    // Đăng ký boxes từ loadedBoxes (luôn đăng ký để quản lý sprites)
     if (loadedBoxes && loadedBoxes.length > 0) {
       loadedBoxes.forEach((box) => {
         const tileKey = this.getTileKeyFromPosition(box.x, box.y);
@@ -36,8 +36,12 @@ export class BoxManager {
       });
     }
 
-    // Đăng ký boxes từ config
-    if (objectConfig && objectConfig.boxes) {
+    // Đăng ký boxes từ config (chỉ khi không có loadedBoxes)
+    if (
+      objectConfig &&
+      objectConfig.boxes &&
+      (!loadedBoxes || loadedBoxes.length === 0)
+    ) {
       objectConfig.boxes.forEach((boxConfig) => {
         if (boxConfig.tiles) {
           boxConfig.tiles.forEach((tilePos) => {
@@ -104,8 +108,11 @@ export class BoxManager {
     tileData.count += count;
     this.totalBoxes += count;
 
+    // Không tạo sprites ở đây vì MapLoader đã tạo rồi
+    // Chỉ tăng count để theo dõi logic
+
     console.log(
-      `📦 Registered ${count} boxes at ${tileKey}: total=${tileData.count}`
+      `📦 Registered ${count} boxes at ${tileKey}: total=${tileData.count}, sprites=${tileData.sprites.length}`
     );
   }
 
@@ -181,13 +188,21 @@ export class BoxManager {
     this.collectedBoxes += count;
 
     // Xóa sprites nếu có
+    console.log(
+      `📦 tileData.sprites.length: ${tileData.sprites.length} at ${tileKey}`
+    );
     if (tileData.sprites.length > 0) {
       const spritesToRemove = tileData.sprites.splice(0, count);
+      console.log(
+        `📦 Removing ${spritesToRemove.length} sprites from ${tileKey}`
+      );
       spritesToRemove.forEach((sprite) => {
         if (sprite && sprite.destroy) {
           sprite.destroy();
         }
       });
+    } else {
+      console.log(`📦 No sprites to remove at ${tileKey}`);
     }
 
     console.log(
@@ -241,7 +256,10 @@ export class BoxManager {
 
     // Cập nhật số lượng
     tileData.count += count;
-    this.totalBoxes += count;
+    // Chỉ tăng totalBoxes nếu không phải warehouse
+    if (!this.isWarehouseTile(tileKey)) {
+      this.totalBoxes += count;
+    }
     this.putBoxes += count; // Tăng số box đã đặt
 
     console.log(
@@ -280,6 +298,63 @@ export class BoxManager {
       console.error("❌ Failed to create box sprite:", error);
       return null;
     }
+  }
+
+  /**
+   * Kiểm tra tile có phải warehouse không
+   * @param {string} tileKey - Tile key (x,y)
+   * @returns {boolean} True nếu là warehouse
+   */
+  isWarehouseTile(tileKey) {
+    const mapConfig = this.scene.objectConfig;
+    if (!mapConfig || !mapConfig.boxes) {
+      return false;
+    }
+
+    for (const boxConfig of mapConfig.boxes) {
+      if (boxConfig.warehouse) {
+        const warehouse = boxConfig.warehouse;
+        const warehouseKey = `${warehouse.x},${warehouse.y}`;
+        if (tileKey === warehouseKey) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Kiểm tra số lượng box còn lại tại warehouse (nhà kho cố định)
+   * @returns {number} Số lượng box còn lại tại warehouse
+   */
+  checkWarehouse() {
+    // Lấy warehouse position từ map config
+    const mapConfig = this.scene.objectConfig;
+    if (!mapConfig || !mapConfig.boxes) {
+      console.log(`🏭 No warehouse config found`);
+      return 0;
+    }
+
+    // Tìm warehouse trong config
+    for (const boxConfig of mapConfig.boxes) {
+      if (boxConfig.warehouse) {
+        const warehouse = boxConfig.warehouse;
+        const tileKey = `${warehouse.x},${warehouse.y}`;
+        const tileData = this.boxes.get(tileKey);
+        console.log(`🏭 Warehouse tile data: ${tileData}`);
+
+        // Đếm box hiện tại tại warehouse (từ tiles, không phải warehouse config)
+        const remainingBoxes = tileData ? tileData.count : 0;
+
+        console.log(
+          `🏭 Warehouse (${warehouse.x}, ${warehouse.y}) has ${remainingBoxes} boxes remaining`
+        );
+        return remainingBoxes;
+      }
+    }
+
+    console.log(`🏭 No warehouse found in config`);
+    return 0;
   }
 
   /**

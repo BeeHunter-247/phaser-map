@@ -1,25 +1,22 @@
 {
   "version": "1.0.0",
-  "programName": "box_test_demo",
+  "programName": "basic1_isGreen_demo",
   "actions": [
     {
       "type": "forward",
-      "count": 1
+      "count": 3
     },
     {
-      "type": "takeBox",
-      "count": 2
-    },
-    {
-      "type": "turnBack"
-    },
-    {
-      "type": "forward",
-      "count": 2
-    },
-    {
-      "type": "putBox",
-      "count": 2
+      "type": "while",
+      "cond": {
+        "function": "isGreen",
+        "check": true
+      },
+      "body": [
+        {
+          "type": "turnRight"
+        }
+      ]
     }
   ]
 }

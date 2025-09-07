@@ -298,6 +298,12 @@ export class ProgramExecutor {
           original: action,
         };
 
+      case "checkWarehouse":
+        return {
+          type: "checkWarehouse",
+          original: action,
+        };
+
       default:
         console.warn(`⚠️ Action ${index}: Unknown type "${action.type}"`);
         return null;
@@ -323,10 +329,12 @@ export class ProgramExecutor {
       };
     }
 
-    // Điều kiện cũ: { type: "condition", function: "isGreen", check: true }
+    // Hỗ trợ cả 2 format: functionName và function
     return {
       type: cond.type || "condition",
-      functionName: cond.function || null,
+      functionName: cond.functionName || cond.function || null,
+      operator: cond.operator || null,
+      value: cond.value || null,
       check: typeof cond.check === "boolean" ? cond.check : true,
       original: cond,
     };
@@ -480,6 +488,9 @@ export class ProgramExecutor {
         case "takeBox":
           return this.executeTakeBox(action.count);
 
+        case "checkWarehouse":
+          return this.executeCheckWarehouse();
+
         default:
           console.error(`❌ Unknown command: ${action.type}`);
           return false;
@@ -629,12 +640,26 @@ export class ProgramExecutor {
 
     // Điều kiện cũ (sensor-based)
     let actual = false;
-    switch (cond.functionName) {
+    const functionName = cond.functionName || cond.function;
+    switch (functionName) {
       case "isGreen":
         actual = this.hasBatteryColorAtCurrentTile("green");
         break;
+      case "isWarehouse":
+        actual = this.scene.boxManager.checkWarehouse() > 0;
+        break;
+      case "warehouseCount":
+        // Number box block - gọi checkWarehouse() và so sánh với giá trị
+        const warehouseCount = this.scene.boxManager.checkWarehouse();
+        const operator = cond.operator || "==";
+        const compareValue = parseInt(cond.value) || 0;
+        actual = this.compareValues(warehouseCount, operator, compareValue);
+        console.log(
+          `🏭 Warehouse count: ${warehouseCount} ${operator} ${compareValue} => ${actual}`
+        );
+        break;
       default:
-        console.warn(`⚠️ Unknown condition function: ${cond.functionName}`);
+        console.warn(`⚠️ Unknown condition function: ${functionName}`);
         actual = false;
     }
     return cond.check ? actual : !actual;
@@ -844,6 +869,23 @@ export class ProgramExecutor {
     } catch (error) {
       console.error(`❌ Error taking boxes:`, error);
       return false;
+    }
+  }
+
+  /**
+   * Thực thi lệnh checkWarehouse
+   * @returns {number} Số lượng box còn lại tại warehouse
+   */
+  executeCheckWarehouse() {
+    console.log(`🏭 Checking warehouse...`);
+
+    try {
+      const remainingBoxes = this.scene.boxManager.checkWarehouse();
+      console.log(`🏭 Warehouse has ${remainingBoxes} boxes remaining`);
+      return remainingBoxes;
+    } catch (error) {
+      console.error(`❌ Error checking warehouse:`, error);
+      return 0;
     }
   }
 
