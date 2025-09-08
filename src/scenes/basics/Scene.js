@@ -4,6 +4,7 @@ import { getMapConfig, getDirectionIndex } from "../../data/mapConfigs.js";
 import { ProgramExecutor } from "../../utils/ProgramExecutor.js";
 import { RobotController } from "../../managers/RobotController.js";
 import { BatteryManager } from "../../managers/BatteryManager.js";
+import { BoxManager } from "../../managers/BoxManager.js";
 import { GameInputHandler } from "../../managers/GameInputHandler.js";
 import { GameUIManager } from "../../managers/GameUIManager.js";
 import {
@@ -135,6 +136,16 @@ export default class Scene extends Phaser.Scene {
       this.robotController,
       objectConfig,
       loadedObjects.batteries
+    );
+
+    this.boxManager = new BoxManager(this);
+    console.log(
+      `📦 Initializing BoxManager with ${loadedObjects.boxes.length} loaded boxes`
+    );
+    this.boxManager.initialize(
+      this.robotController,
+      objectConfig,
+      loadedObjects.boxes
     );
 
     this.inputHandler = new GameInputHandler(this);
@@ -272,6 +283,40 @@ export default class Scene extends Phaser.Scene {
     if (result > 0) {
       // Chỉ cập nhật UI trạng thái, không kiểm tra thắng/thua
       this.uiManager.updateStatusUI();
+    }
+
+    return result;
+  }
+
+  /**
+   * Đặt box tại vị trí hiện tại của robot
+   * @param {number} count - Số lượng box cần đặt
+   * @returns {boolean} Success/failure
+   */
+  putBox(count = 1) {
+    const result = this.boxManager.putBox(count);
+
+    if (result) {
+      // Cập nhật UI trạng thái
+      this.uiManager.updateStatusUI();
+      console.log(`📦 Put ${count} box(es) successfully`);
+    }
+
+    return result;
+  }
+
+  /**
+   * Lấy box tại vị trí hiện tại của robot
+   * @param {number} count - Số lượng box cần lấy
+   * @returns {boolean} Success/failure
+   */
+  takeBox(count = 1) {
+    const result = this.boxManager.takeBox(count);
+
+    if (result) {
+      // Cập nhật UI trạng thái
+      this.uiManager.updateStatusUI();
+      console.log(`📦 Took ${count} box(es) successfully`);
     }
 
     return result;

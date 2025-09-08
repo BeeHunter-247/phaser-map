@@ -27,9 +27,24 @@ export class VictoryConditions {
       // Xử lý cấu trúc byType mới: [{ red: 0, yellow: 0, green: 1 }]
       if (Array.isArray(victory.byType) && victory.byType.length > 0) {
         const typeConfig = victory.byType[0];
+        // Nếu entry đầu là dạng box (có x,y) thì không có cấu hình pin
+        if (
+          typeof typeConfig.x === "number" &&
+          typeof typeConfig.y === "number"
+        ) {
+          return undefined;
+        }
+
         byType.red = typeConfig.red || 0;
         byType.yellow = typeConfig.yellow || 0;
         byType.green = typeConfig.green || 0;
+
+        const totalRequired =
+          (byType.red || 0) + (byType.yellow || 0) + (byType.green || 0);
+        if (totalRequired === 0) {
+          // Không đặt mục tiêu pin
+          return undefined;
+        }
       }
 
       return {
@@ -40,13 +55,28 @@ export class VictoryConditions {
   }
 
   /**
+   * Lấy yêu cầu về box được đặt tại các vị trí chỉ định (nếu có)
+   * Dùng cùng trường victory.byType nhưng mỗi phần tử có {x,y,count}
+   */
+  static getRequiredBoxes(mapKey) {
+    const config = mapConfigs[mapKey];
+    if (!config || !config.victory) return undefined;
+    const arr = Array.isArray(config.victory.byType)
+      ? config.victory.byType
+      : [];
+    const targets = arr.filter(
+      (v) => typeof v.x === "number" && typeof v.y === "number"
+    );
+    return targets.length > 0 ? targets : undefined;
+  }
+
+  /**
    * Kiểm tra điều kiện thắng dựa trên pin đã thu thập
    * @param {Object} scene - Scene hiện tại
    * @returns {Object} Kết quả kiểm tra { isVictory, progress, message }
    */
   static checkVictory(scene) {
-    // Nếu không có mapKey hoặc không có batteryManager
-    if (!scene.mapKey || !scene.batteryManager) {
+    if (!scene.mapKey) {
       return {
         isVictory: false,
         progress: 0,
@@ -59,15 +89,47 @@ export class VictoryConditions {
       };
     }
 
+    // Ưu tiên kiểm tra theo box nếu cấu hình victory dùng toạ độ
+    const requiredBoxes = this.getRequiredBoxes(scene.mapKey);
+    if (requiredBoxes && scene.boxManager) {
+      const detailsBoxes = [];
+      let allMet = true;
+      for (const t of requiredBoxes) {
+        const key = `${t.x},${t.y}`;
+        const data = scene.boxManager.getBoxesAtTile
+          ? scene.boxManager.getBoxesAtTile(key)
+          : null;
+        const current = data ? data.count : 0;
+        const need = t.count || 0;
+        detailsBoxes.push(`Box (${t.x},${t.y}): ${current}/${need}`);
+        if (current !== need) allMet = false;
+      }
+      return {
+        isVictory: allMet,
+        details: { boxes: detailsBoxes },
+        required: { boxes: requiredBoxes },
+        collected: { boxes: detailsBoxes },
+      };
+    }
+
     // Lấy thông tin pin cần thu thập
     const required = this.getRequiredBatteries(scene.mapKey);
+
+    // Mặc định: kiểm tra theo pin
+    if (!scene.batteryManager || !required) {
+      return {
+        isVictory: false,
+        progress: 0,
+        message: "Đang khởi tạo...",
+        details: {},
+      };
+    }
 
     // Lấy thông tin pin đã thu thập từ BatteryManager
     const collected = scene.batteryManager
       ? scene.batteryManager.getCollectedBatteries()
       : { total: 0, byType: { red: 0, yellow: 0, green: 0 } };
 
-    // Kiểm tra đã thu thập đủ pin chưa
     const isVictory = this.checkVictoryCondition(collected, required);
 
     // Không tạo message ở đây, để ProgramExecutor tự tạo message phù hợp
@@ -242,13 +304,28 @@ export function updateBatteryStatusText(scene, statusText) {
     content += `Đang chơi...\n`;
   }
 
+  // Hiển thị chi tiết theo loại mục tiêu
   // Kiểm tra details có tồn tại không
   if (result.details) {
-    content += `${result.details.red}\n`;
-    content += `${result.details.yellow}\n`;
-    content += `${result.details.green}`;
+    if (result.details.red || result.details.yellow || result.details.green) {
+      // Trường hợp theo pin
+      if (result.details.red) content += `${result.details.red}\n`;
+      if (result.details.yellow) content += `${result.details.yellow}\n`;
+      if (result.details.green) content += `${result.details.green}`;
+    } else if (Array.isArray(result.details.boxes)) {
+      // Trường hợp theo box
+      content += result.details.boxes.join("\n");
+    } else {
+      content += "Đang tải...";
+    }
   } else {
     content += "Đang tải...";
+  }
+
+  // Thêm thông tin box nếu có BoxManager
+  if (scene.boxManager) {
+    const boxStats = scene.boxManager.getStats();
+    content += `\n📦 Đã lấy: ${boxStats.collectedBoxes} | Đã đặt: ${boxStats.putBoxes}`;
   }
 
   // Cập nhật text

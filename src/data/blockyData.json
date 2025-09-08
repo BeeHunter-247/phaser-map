@@ -1,15 +1,15 @@
 {
-    "version": "1.0.0",
-    "programName": "move_5_steps_turn_right_demo",
-    "actions": [
-        {
-            "type": "forward",
-            "count": 3
-        },
-        {
-            "type": "collect",
-            "color": "green",
-            "count": 1
-        }
-    ]
+  "version": "1.0.0",
+  "programName": "move_5_steps_turn_right_demo",
+  "actions": [
+    {
+      "type": "forward",
+      "count": 3
+    },
+    {
+      "type": "collect",
+      "color": "green",
+      "count": 1
+    }
+  ]
 }

@@ -285,6 +285,20 @@ export class ProgramExecutor {
           original: action,
         };
 
+      case "putBox":
+        return {
+          type: "putBox",
+          count: parseInt(action.count) || 1,
+          original: action,
+        };
+
+      case "takeBox":
+        return {
+          type: "takeBox",
+          count: parseInt(action.count) || 1,
+          original: action,
+        };
+
       default:
         console.warn(`⚠️ Action ${index}: Unknown type "${action.type}"`);
         return null;
@@ -311,6 +325,7 @@ export class ProgramExecutor {
       };
     }
 
+    // Hỗ trợ cả 2 format: functionName và function
     // Điều kiện logic AND: { type: "and", conditions: [cond1, cond2] }
     if (cond.type === "and") {
       return {
@@ -340,7 +355,9 @@ export class ProgramExecutor {
     // Điều kiện cũ: { type: "condition", function: "isGreen", check: true }
     return {
       type: cond.type || "condition",
-      functionName: cond.function || null,
+      functionName: cond.functionName || cond.function || null,
+      operator: cond.operator || null,
+      value: cond.value || null,
       check: typeof cond.check === "boolean" ? cond.check : true,
       original: cond,
     };
@@ -508,6 +525,12 @@ export class ProgramExecutor {
 
         case "collect":
           return this.executeCollect(action.count, action.colors);
+
+        case "putBox":
+          return this.executePutBox(action.count);
+
+        case "takeBox":
+          return this.executeTakeBox(action.count);
 
         default:
           console.error(`❌ Unknown command: ${action.type}`);
@@ -695,9 +718,17 @@ export class ProgramExecutor {
 
     // Điều kiện cũ (sensor-based)
     let actual = false;
-    switch (cond.functionName) {
+    const functionName = cond.functionName || cond.function;
+    switch (functionName) {
       case "isGreen":
         actual = this.hasBatteryColorAtCurrentTile("green");
+        break;
+      case "warehouseCount":
+        // Number box block - gọi checkWarehouse() và so sánh với giá trị
+        const warehouseCount = this.scene.boxManager.checkWarehouse();
+        const operator = cond.operator || "==";
+        const compareValue = parseInt(cond.value) || 0;
+        actual = this.compareValues(warehouseCount, operator, compareValue);
         break;
       case "isRed":
         actual = this.hasBatteryColorAtCurrentTile("red");
@@ -706,7 +737,7 @@ export class ProgramExecutor {
         actual = this.hasBatteryColorAtCurrentTile("yellow");
         break;
       default:
-        console.warn(`⚠️ Unknown condition function: ${cond.functionName}`);
+        console.warn(`⚠️ Unknown condition function: ${functionName}`);
         actual = false;
     }
     return cond.check ? actual : !actual;
@@ -920,6 +951,79 @@ export class ProgramExecutor {
     }
 
     return true;
+  }
+
+  /**
+   * Thực thi lệnh putBox
+   * @param {number} count - Số lượng box cần đặt
+   * @returns {boolean} Success/failure
+   */
+  executePutBox(count) {
+    console.log(`📦 Putting ${count} box(es)`);
+
+    try {
+      const success = this.scene.putBox(count);
+      if (!success) {
+        console.error(`❌ Failed to put ${count} box(es)`);
+        if (this.scene && typeof this.scene.lose === "function") {
+          this.scene.lose(
+            `Không thể đặt ${count} hộp (vượt quá số đang mang hoặc lỗi vị trí).`
+          );
+        }
+        return false;
+      }
+
+      console.log(`✅ Successfully put ${count} box(es)`);
+      return true;
+    } catch (error) {
+      console.error(`❌ Error putting boxes:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Thực thi lệnh takeBox
+   * @param {number} count - Số lượng box cần lấy
+   * @returns {boolean} Success/failure
+   */
+  executeTakeBox(count) {
+    console.log(`📦 Taking ${count} box(es)`);
+
+    try {
+      const success = this.scene.takeBox(count);
+      if (!success) {
+        console.error(`❌ Failed to take ${count} box(es)`);
+        if (this.scene && typeof this.scene.lose === "function") {
+          this.scene.lose(
+            `Không thể lấy ${count} hộp (không đủ hộp tại ô hiện tại).`
+          );
+        }
+        return false;
+      }
+
+      console.log(`✅ Successfully took ${count} box(es)`);
+      return true;
+    } catch (error) {
+      console.error(`❌ Error taking boxes:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Thực thi lệnh checkWarehouse
+   * @returns {number} Số lượng box còn lại tại warehouse
+   */
+  executeCheckWarehouse() {
+    console.log(`🏭 Checking warehouse...`);
+
+    try {
+      const remainingBoxes = this.scene.boxManager.checkWarehouse();
+      console.log(`🏭 Warehouse has ${remainingBoxes} boxes remaining`);
+      return remainingBoxes;
+    } catch (error) {
+      console.error(`❌ Error checking warehouse:`, error);
+      return 0;
+    }
   }
 
   /**

@@ -439,6 +439,325 @@ export const mapConfigs = {
       },
     ],
   },
+
+  // Repeat Maps - Maps để test chức năng repeat
+  repeat1: {
+    robot: {
+      tile: { x: 1, y: 3 },
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 3, y: 4, count: 3, type: "yellow" },
+          { x: 4, y: 2, count: 2, type: "green" },
+          { x: 6, y: 4, count: 3, type: "yellow" },
+          { x: 7, y: 2, count: 2, type: "green" },
+        ],
+        spread: 1.2,
+      },
+    ],
+    victory: {
+      byType: [{ red: 0, yellow: 6, green: 4 }],
+    },
+  },
+
+  repeat2: {
+    robot: {
+      tile: { x: 0, y: 3 },
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 1, y: 3, count: 1, type: "yellow" },
+          { x: 1, y: 5, count: 1, type: "yellow" },
+          { x: 3, y: 3, count: 1, type: "yellow" },
+          { x: 3, y: 5, count: 1, type: "yellow" },
+          { x: 5, y: 3, count: 1, type: "yellow" },
+          { x: 5, y: 5, count: 1, type: "yellow" },
+          { x: 7, y: 3, count: 1, type: "yellow" },
+          { x: 7, y: 5, count: 1, type: "yellow" },
+        ],
+        spread: 1.2,
+      },
+    ],
+    victory: {
+      byType: [{ red: 0, yellow: 8, green: 0 }],
+    },
+  },
+
+  repeat3: {
+    robot: {
+      tile: { x: 1, y: 5 },
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 3, y: 5, count: 1, type: "yellow" },
+          { x: 5, y: 5, count: 2, type: "yellow" },
+          { x: 7, y: 5, count: 3, type: "yellow" },
+        ],
+        spread: 1.2,
+      },
+    ],
+    victory: {
+      byType: [{ red: 0, yellow: 6, green: 0 }],
+    },
+  },
+
+  repeat4: {
+    robot: {
+      tile: { x: 3, y: 2 },
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 4, y: 2, count: 4, type: "yellow" },
+          { x: 5, y: 2, count: 3, type: "yellow" },
+          { x: 6, y: 2, count: 2, type: "yellow" },
+          { x: 7, y: 2, count: 1, type: "yellow" },
+          { x: 7, y: 6, count: 1, type: "yellow" },
+          { x: 7, y: 5, count: 2, type: "yellow" },
+          { x: 7, y: 4, count: 3, type: "yellow" },
+          { x: 7, y: 3, count: 4, type: "yellow" },
+        ],
+        spread: 1.2,
+      },
+    ],
+    victory: {
+      byType: [{ red: 0, yellow: 20, green: 0 }],
+    },
+  },
+
+  repeat5: {
+    robot: {
+      tile: { x: 3, y: 3 },
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 5, y: 5, count: 3, type: "yellow" },
+          { x: 7, y: 7, count: 2, type: "yellow" },
+        ],
+        spread: 1.2,
+      },
+    ],
+    victory: {
+      byType: [{ red: 0, yellow: 5, green: 0 }],
+    },
+  },
+
+  repeat6: {
+    robot: {
+      tile: { x: 3, y: 2 },
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [{ x: 5, y: 4, count: 1, type: "yellow" }],
+        spread: 1.2,
+      },
+    ],
+    victory: {
+      byType: [{ red: 0, yellow: 1, green: 0 }],
+    },
+  },
+
+  repeat7: {
+    robot: {
+      tile: { x: 2, y: 2 },
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 7, y: 2, count: 8, type: "yellow" },
+          { x: 7, y: 6, count: 4, type: "yellow" },
+          { x: 4, y: 6, count: 2, type: "yellow" },
+          { x: 4, y: 4, count: 1, type: "yellow" },
+        ],
+        spread: 1.2,
+      },
+    ],
+    victory: {
+      byType: [{ red: 0, yellow: 15, green: 0 }],
+    },
+  },
+
+  repeat8: {
+    robot: {
+      tile: { x: 2, y: 3 },
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 6, y: 6, count: 1, type: "yellow" },
+          { x: 7, y: 6, count: 3, type: "yellow" },
+          { x: 7, y: 3, count: 5, type: "yellow" },
+        ],
+        spread: 1.2,
+      },
+    ],
+    victory: {
+      byType: [{ red: 0, yellow: 8, green: 0 }],
+    },
+  },
+
+  // WhileLoop Maps - Maps để test chức năng while loop
+  whileloop1: {
+    robot: {
+      tile: { x: 5, y: 4 },
+      direction: "east",
+    },
+    boxes: [
+      {
+        tiles: [{ x: 4, y: 4, count: 2 }],
+        warehouse: { x: 4, y: 4, count: 2 },
+        spread: 1.2,
+      },
+    ],
+    victory: {
+      byType: [{ x: 6, y: 4, count: 2 }],
+    },
+  },
+
+  whileloop2: {
+    robot: {
+      tile: { x: 5, y: 4 },
+      direction: "west",
+    },
+    boxes: [
+      {
+        tiles: [{ x: 4, y: 4, count: 2 }],
+        warehouse: { x: 4, y: 4, count: 2 },
+        spread: 1.2,
+      },
+    ],
+    victory: {
+      byType: [{ x: 6, y: 4, count: 2 }],
+    },
+  },
+
+  whileloop3: {
+    robot: {
+      tile: { x: 5, y: 4 },
+      direction: "east",
+    },
+    boxes: [
+      {
+        tiles: [{ x: 2, y: 4, count: 6 }],
+        warehouse: { x: 2, y: 4, count: 6 },
+        spread: 1.2,
+      },
+    ],
+    victory: {
+      byType: [{ x: 6, y: 4, count: 6 }],
+    },
+  },
+
+  whileloop4: {
+    robot: {
+      tile: { x: 4, y: 4 },
+      direction: "west",
+    },
+    boxes: [
+      {
+        tiles: [{ x: 3, y: 4, count: 3 }],
+        warehouse: { x: 3, y: 4, count: 3 },
+        spread: 1.2,
+      },
+    ],
+    victory: {
+      byType: [{ x: 7, y: 4, count: 3 }],
+    },
+  },
+
+  whileloop5: {
+    robot: {
+      tile: { x: 3, y: 6 },
+      direction: "west",
+    },
+    boxes: [
+      {
+        tiles: [{ x: 2, y: 6, count: 3 }],
+        warehouse: { x: 2, y: 6, count: 3 },
+        spread: 1.2,
+      },
+    ],
+    victory: {
+      byType: [
+        { x: 3, y: 6, count: 1 },
+        { x: 7, y: 6, count: 1 },
+        { x: 7, y: 4, count: 1 },
+      ],
+    },
+  },
+
+  whileloop6: {
+    robot: {
+      tile: { x: 3, y: 5 },
+      direction: "west",
+    },
+    boxes: [
+      {
+        tiles: [{ x: 2, y: 5, count: 6 }],
+        warehouse: { x: 2, y: 5, count: 6 },
+        spread: 1.2,
+      },
+    ],
+    victory: {
+      byType: [
+        { x: 6, y: 4, count: 3 },
+        { x: 8, y: 4, count: 3 },
+      ],
+    },
+  },
+
+  whileloop7: {
+    robot: {
+      tile: { x: 3, y: 4 },
+      direction: "west",
+    },
+    boxes: [
+      {
+        tiles: [{ x: 2, y: 4, count: 4 }],
+        warehouse: { x: 2, y: 4, count: 4 },
+        spread: 1.2,
+      },
+    ],
+    victory: {
+      byType: [
+        { x: 6, y: 2, count: 2 },
+        { x: 6, y: 6, count: 2 },
+      ],
+    },
+  },
+
+  whileloop8: {
+    robot: {
+      tile: { x: 5, y: 5 },
+      direction: "west",
+    },
+    boxes: [
+      {
+        tiles: [{ x: 4, y: 5, count: 6 }],
+        warehouse: { x: 4, y: 5, count: 6 },
+        spread: 1.2,
+      },
+    ],
+    victory: {
+      byType: [
+        { x: 5, y: 4, count: 2 },
+        { x: 5, y: 6, count: 2 },
+        { x: 6, y: 5, count: 2 },
+      ],
+    },
+  },
   conditional1: {
     robot: {
       tile: { x: 3, y: 4 }, // Robot ở vị trí (1,3)

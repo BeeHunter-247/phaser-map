@@ -65,29 +65,34 @@ export class MapLoader {
       others: [],
     };
 
-    // // Load từ object layer nếu có
-    // const objectLayer = map.getObjectLayer("objects");
-    // if (objectLayer) {
-    //   objectLayer.objects.forEach((obj) => {
-    //     const worldPos = this.convertObjectToWorld(obj, mapData);
-    //     const loadedObj = this.createObjectFromTiled(
-    //       scene,
-    //       obj,
-    //       worldPos,
-    //       scale
-    //     );
+    console.log(`📦 MapLoader: Starting to load objects`);
 
-    //     if (loadedObj) {
-    //       this.categorizeObject(loadedObj, obj, loadedObjects);
-    //     }
-    //   });
-    // }
+    // Load từ object layer nếu có
+    const objectLayer = map.getObjectLayer("objects");
+    if (objectLayer) {
+      objectLayer.objects.forEach((obj) => {
+        const worldPos = this.convertObjectToWorld(obj, mapData);
+        const loadedObj = this.createObjectFromTiled(
+          scene,
+          obj,
+          worldPos,
+          scale
+        );
+
+        if (loadedObj) {
+          this.categorizeObject(loadedObj, obj, loadedObjects);
+        }
+      });
+    }
 
     // Load từ custom config
     if (objectConfig) {
       this.loadCustomObjects(scene, mapData, objectConfig, loadedObjects);
     }
 
+    console.log(
+      `📦 MapLoader: Final loaded objects - boxes: ${loadedObjects.boxes.length}`
+    );
     return loadedObjects;
   }
 
@@ -252,6 +257,8 @@ export class MapLoader {
               const battery = scene.add.image(pos.x, pos.y + 10, batteryKey);
               battery.setOrigin(0.5, 1);
               battery.setScale(scale);
+              // Depth cao hơn robot khi cùng tile
+              battery.setDepth(battery.y + 50);
               loadedObjects.batteries.push(battery);
             } else {
               // Đặt nhiều batteries theo hình tròn quanh tâm tile
@@ -272,6 +279,8 @@ export class MapLoader {
                 const battery = scene.add.image(bx, by + 10, batteryKey);
                 battery.setOrigin(0.5, 1);
                 battery.setScale(scale);
+                // Depth cao hơn robot khi cùng tile
+                battery.setDepth(battery.y + 50);
                 loadedObjects.batteries.push(battery);
               }
             }
@@ -279,6 +288,57 @@ export class MapLoader {
         }
       });
     }
+
+    // Load boxes từ config
+    if (objectConfig.boxes) {
+      console.log(
+        `📦 MapLoader: Loading ${objectConfig.boxes.length} box configs`
+      );
+      objectConfig.boxes.forEach((boxConfig) => {
+        if (boxConfig.tiles) {
+          boxConfig.tiles.forEach((tilePos) => {
+            const pos = this.getTileWorldCenter(tilePos.x, tilePos.y, mapData);
+            const count = tilePos.count || 1;
+            const spread = tilePos.spread || 1;
+
+            if (count <= 1) {
+              const box = scene.add.image(pos.x, pos.y + 10, "box");
+              box.setOrigin(0.5, 1);
+              box.setScale(scale);
+              loadedObjects.boxes.push(box);
+              console.log(
+                `📦 MapLoader: Created box at (${tilePos.x},${tilePos.y})`
+              );
+            } else {
+              // Đặt nhiều boxes theo hình tròn quanh tâm tile
+              const base = Math.min(
+                map.tileWidth * layer.scaleX,
+                map.tileHeight * layer.scaleY
+              );
+              const radius = base * 0.2 * spread;
+
+              for (let i = 0; i < count; i++) {
+                const angle = -Math.PI / 2 + (i * (Math.PI * 2)) / count;
+                const bx = pos.x + radius * Math.cos(angle);
+                const by = pos.y + radius * Math.sin(angle);
+
+                const box = scene.add.image(bx, by + 10, "box");
+                box.setOrigin(0.5, 1);
+                box.setScale(scale);
+                loadedObjects.boxes.push(box);
+              }
+              console.log(
+                `📦 MapLoader: Created ${count} boxes at (${tilePos.x},${tilePos.y})`
+              );
+            }
+          });
+        }
+      });
+    }
+
+    console.log(
+      `📦 MapLoader: Total boxes loaded: ${loadedObjects.boxes.length}`
+    );
   }
 
   /**
