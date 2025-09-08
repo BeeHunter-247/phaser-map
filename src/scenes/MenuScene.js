@@ -20,6 +20,7 @@ export default class MenuScene extends Phaser.Scene {
     this.drawCategory("Conditional", 8, 100, 480);
 
     this.drawCategory("Function", 8, 100, 600);
+    this.drawCategory("Variable", 8, 100, 720);
 
     // Sau này bạn có thể gọi thêm:
     // this.drawCategory("Variable", 5, 100, 480);

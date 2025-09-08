@@ -36,7 +36,7 @@ export const mapConfigs = {
       },
     ],
     victory: {
-      byType: [{ red: 0, yellow: 0, green: 1 }]
+      byType: [{ red: 0, yellow: 0, green: 1 }],
     },
   },
 
@@ -172,102 +172,118 @@ export const mapConfigs = {
 
   boolean1: {
     robot: {
-      tile: { x: 3, y: 4 }, // Robot ở góc trên bên trái
+      tile: { x: 4, y: 5 }, // Robot ở góc trên bên trái
       direction: "east",
     },
     batteries: [
       {
         tiles: [
           // Pin ở hàng trên: 2 pin xanh lá
-          { x: 6, y: 4, count: 3, type: "green", spread: 1.2 },
+          { x: 7, y: 5, count: 3, type: "green", spread: 1.2 },
         ],
       },
     ],
   },
   boolean2: {
     robot: {
-      tile: { x: 2, y: 4 }, // Robot ở góc trên bên trái
+      tile: { x: 2, y: 5 }, // Robot ở góc trên bên trái
       direction: "east",
     },
     batteries: [
       {
         tiles: [
           // Pin ở hàng trên: 2 pin xanh lá
-          { x: 4, y: 4, count: 2, type: "green", spread: 1.2 },
-          { x: 6, y: 4, count: 1, type: "red", spread: 1.2 },
-          { x: 8, y: 4, count: 2, type: "green", spread: 1.2 },
+          { x: 4, y: 5, count: 2, type: "green", spread: 1.2 },
+          { x: 6, y: 5, count: 1, type: "red", spread: 1.2 },
+          { x: 8, y: 5, count: 2, type: "green", spread: 1.2 },
         ],
       },
     ],
   },
   boolean3: {
     robot: {
-      tile: { x: 1, y: 4 }, // Robot ở góc trên bên trái
+      tile: { x: 2, y: 5 }, // Robot ở góc trên bên trái
       direction: "east",
     },
     batteries: [
       {
         tiles: [
           // Pin ở hàng trên: 2 pin xanh lá
-          { x: 3, y: 4, count: 3, type: "green", spread: 1.2 },
-          { x: 4, y: 4, count: 1, type: "red", spread: 1.2 },
-          { x: 5, y: 4, count: 3, type: "green", spread: 1.2 },
-          { x: 6, y: 4, count: 3, type: "green", spread: 1.2 },
+          { x: 4, y: 5, count: 3, type: "green", spread: 1.2 },
+          { x: 5, y: 5, count: 1, type: "red", spread: 1.2 },
+          { x: 6, y: 5, count: 3, type: "green", spread: 1.2 },
+          { x: 7, y: 5, count: 3, type: "green", spread: 1.2 },
         ],
       },
     ],
   },
   boolean4: {
     robot: {
-      tile: { x: 2, y: 4 }, // Robot ở góc trên bên trái
+      tile: { x: 2, y: 5 }, // Robot ở góc trên bên trái
       direction: "east",
     },
     batteries: [
       {
         tiles: [
           // Pin ở hàng trên: 2 pin xanh lá
-          { x: 3, y: 4, count: 2, type: "green", spread: 1.2 },
-          { x: 4, y: 4, count: 2, type: "green", spread: 1.2 },
-          { x: 5, y: 4, count: 1, type: "red", spread: 1.2 },
-          { x: 6, y: 4, count: 2, type: "green", spread: 1.2 },
-          { x: 7, y: 4, count: 2, type: "green", spread: 1.2 },
+          { x: 3, y: 5, count: 2, type: "green", spread: 1.2 },
+          { x: 4, y: 5, count: 2, type: "green", spread: 1.2 },
+          { x: 5, y: 5, count: 1, type: "red", spread: 1.2 },
+          { x: 6, y: 5, count: 2, type: "green", spread: 1.2 },
+          { x: 7, y: 5, count: 2, type: "green", spread: 1.2 },
         ],
       },
     ],
   },
   boolean5: {
     robot: {
-      tile: { x: 1, y: 4 }, // Robot ở góc trên bên trái
+      tile: { x: 3, y: 2 }, // Robot ở góc trên bên trái
       direction: "east",
     },
     batteries: [
       {
         tiles: [
           // Pin ở hàng trên: 2 pin xanh lá
-          { x: 5, y: 4, count: 1, type: "red", spread: 1.2 },
-          { x: 5, y: 8, count: 5, type: "green", spread: 1.2 },
+          { x: 7, y: 2, count: 1, type: "red", spread: 1.2 },
+          { x: 7, y: 6, count: 5, type: "green", spread: 1.2 },
         ],
       },
     ],
   },
   boolean6: {
     robot: {
-      tile: { x: 0, y: 4 }, // Robot ở góc trên bên trái
+      tile: { x: 3, y: 3 }, // Robot ở góc trên bên trái
       direction: "east",
     },
     batteries: [
       {
         tiles: [
           // Pin ở hàng trên: 2 pin xanh lá
-          { x: 2, y: 4, count: 4, type: "green", spread: 1.2 },
-          { x: 2, y: 6, count: 4, type: "green", spread: 1.2 },
-          { x: 4, y: 6, count: 1, type: "red", spread: 1.2 },
-          { x: 4, y: 8, count: 4, type: "green", spread: 1.2 },
+          { x: 5, y: 3, count: 4, type: "green", spread: 1.2 },
+          { x: 5, y: 5, count: 4, type: "green", spread: 1.2 },
+          { x: 7, y: 5, count: 1, type: "red", spread: 1.2 },
+          { x: 7, y: 7, count: 4, type: "green", spread: 1.2 },
         ],
       },
     ],
   },
   boolean7: {
+    robot: {
+      tile: { x: 2, y: 3 }, // Robot ở góc trên bên trái
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          // Pin ở hàng trên: 2 pin xanh lá
+          { x: 4, y: 4, count: 3, type: "green", spread: 1.2 },
+          { x: 6, y: 4, count: 1, type: "red", spread: 1.2 },
+          { x: 8, y: 4, count: 3, type: "green", spread: 1.2 },
+        ],
+      },
+    ],
+  },
+  boolean8: {
     robot: {
       tile: { x: 1, y: 4 }, // Robot ở góc trên bên trái
       direction: "east",
@@ -277,25 +293,9 @@ export const mapConfigs = {
         tiles: [
           // Pin ở hàng trên: 2 pin xanh lá
           { x: 3, y: 5, count: 3, type: "green", spread: 1.2 },
-          { x: 5, y: 5, count: 1, type: "red", spread: 1.2 },
-          { x: 7, y: 5, count: 3, type: "green", spread: 1.2 },
-        ],
-      },
-    ],
-  },
-  boolean8: {
-    robot: {
-      tile: { x: 0, y: 4 }, // Robot ở góc trên bên trái
-      direction: "east",
-    },
-    batteries: [
-      {
-        tiles: [
-          // Pin ở hàng trên: 2 pin xanh lá
-          { x: 2, y: 5, count: 3, type: "green", spread: 1.2 },
-          { x: 5, y: 5, count: 3, type: "green", spread: 1.2 },
-          { x: 3, y: 3, count: 1, type: "red", spread: 1.2 },
-          { x: 6, y: 3, count: 3, type: "green", spread: 1.2 },
+          { x: 4, y: 3, count: 1, type: "red", spread: 1.2 },
+          { x: 6, y: 5, count: 3, type: "green", spread: 1.2 },
+          { x: 7, y: 3, count: 3, type: "green", spread: 1.2 },
         ],
       },
     ],
@@ -445,8 +445,8 @@ export const mapConfigs = {
     batteries: [
       {
         tiles: [
-          { x: 4, y: 4, count: 1, type: "yellow", },
-          { x: 5, y: 4, count: 1, type: "green", },
+          { x: 4, y: 4, count: 1, type: "yellow" },
+          { x: 5, y: 4, count: 1, type: "green" },
         ],
       },
     ],
@@ -459,10 +459,10 @@ export const mapConfigs = {
     batteries: [
       {
         tiles: [
-          { x: 4, y: 3, count: 2, type: "red", },
-          { x: 5, y: 3, count: 2, type: "green", },
-          { x: 6, y: 3, count: 2, type: "green", },
-          { x: 7, y: 3, count: 3, type: "green", },
+          { x: 4, y: 3, count: 2, type: "red" },
+          { x: 5, y: 3, count: 2, type: "green" },
+          { x: 6, y: 3, count: 2, type: "green" },
+          { x: 7, y: 3, count: 3, type: "green" },
         ],
       },
     ],
@@ -475,10 +475,10 @@ export const mapConfigs = {
     batteries: [
       {
         tiles: [
-          { x: 4, y: 4, count: 3, type: "green", },
-          { x: 5, y: 4, count: 2, type: "green", },
-          { x: 6, y: 4, count: 2, type: "yellow", },
-          { x: 7, y: 4, count: 3, type: "green", },
+          { x: 4, y: 4, count: 3, type: "green" },
+          { x: 5, y: 4, count: 2, type: "green" },
+          { x: 6, y: 4, count: 2, type: "yellow" },
+          { x: 7, y: 4, count: 3, type: "green" },
         ],
       },
     ],
@@ -491,9 +491,9 @@ export const mapConfigs = {
     batteries: [
       {
         tiles: [
-          { x: 2, y: 2, count: 2, type: "green", },
-          { x: 2, y: 4, count: 2, type: "yellow", },
-          { x: 2, y: 6, count: 1, type: "green", },
+          { x: 2, y: 2, count: 2, type: "green" },
+          { x: 2, y: 4, count: 2, type: "yellow" },
+          { x: 2, y: 6, count: 1, type: "green" },
         ],
       },
     ],
@@ -506,10 +506,10 @@ export const mapConfigs = {
     batteries: [
       {
         tiles: [
-          { x: 5, y: 4, count: 2, type: "green", },
-          { x: 4, y: 3, count: 2, type: "yellow", },
-          { x: 3, y: 2, count: 1, type: "green", },
-          { x: 2, y: 1, count: 2, type: "green", },
+          { x: 5, y: 4, count: 2, type: "green" },
+          { x: 4, y: 3, count: 2, type: "yellow" },
+          { x: 3, y: 2, count: 1, type: "green" },
+          { x: 2, y: 1, count: 2, type: "green" },
         ],
       },
     ],
@@ -522,15 +522,15 @@ export const mapConfigs = {
     batteries: [
       {
         tiles: [
-          { x: 5, y: 6, count: 2, type: "green", },
-          { x: 4, y: 6, count: 2, type: "yellow", },
-          { x: 3, y: 6, count: 1, type: "green", },
-          { x: 3, y: 5, count: 2, type: "green", },
-          { x: 3, y: 4, count: 2, type: "green", },
-          { x: 3, y: 3, count: 2, type: "red", },
-          { x: 4, y: 3, count: 2, type: "green", },
-          { x: 5, y: 3, count: 2, type: "red", },
-          { x: 6, y: 3, count: 2, type: "green", },
+          { x: 5, y: 6, count: 2, type: "green" },
+          { x: 4, y: 6, count: 2, type: "yellow" },
+          { x: 3, y: 6, count: 1, type: "green" },
+          { x: 3, y: 5, count: 2, type: "green" },
+          { x: 3, y: 4, count: 2, type: "green" },
+          { x: 3, y: 3, count: 2, type: "red" },
+          { x: 4, y: 3, count: 2, type: "green" },
+          { x: 5, y: 3, count: 2, type: "red" },
+          { x: 6, y: 3, count: 2, type: "green" },
         ],
       },
     ],
@@ -543,12 +543,12 @@ export const mapConfigs = {
     batteries: [
       {
         tiles: [
-          { x: 3, y: 3, count: 1, type: "yellow", },
-          { x: 4, y: 3, count: 2, type: "green", },
-          { x: 5, y: 3, count: 2, type: "red", },
-          { x: 6, y: 3, count: 1, type: "green", },
-          { x: 7, y: 3, count: 2, type: "red", },
-          { x: 8, y: 3, count: 1, type: "red", },
+          { x: 3, y: 3, count: 1, type: "yellow" },
+          { x: 4, y: 3, count: 2, type: "green" },
+          { x: 5, y: 3, count: 2, type: "red" },
+          { x: 6, y: 3, count: 1, type: "green" },
+          { x: 7, y: 3, count: 2, type: "red" },
+          { x: 8, y: 3, count: 1, type: "red" },
         ],
       },
     ],
@@ -561,14 +561,14 @@ export const mapConfigs = {
     batteries: [
       {
         tiles: [
-          { x: 3, y: 3, count: 2, type: "yellow", },
-          { x: 4, y: 3, count: 2, type: "green", },
-          { x: 5, y: 3, count: 2, type: "red", },
-          { x: 6, y: 3, count: 1, type: "green", },
-          { x: 6, y: 4, count: 2, type: "red", },
-          { x: 6, y: 5, count: 1, type: "red", },
-          { x: 6, y: 6, count: 1, type: "yellow", },
-          { x: 6, y: 7, count: 2, type: "yellow", },
+          { x: 3, y: 3, count: 2, type: "yellow" },
+          { x: 4, y: 3, count: 2, type: "green" },
+          { x: 5, y: 3, count: 2, type: "red" },
+          { x: 6, y: 3, count: 1, type: "green" },
+          { x: 6, y: 4, count: 2, type: "red" },
+          { x: 6, y: 5, count: 1, type: "red" },
+          { x: 6, y: 6, count: 1, type: "yellow" },
+          { x: 6, y: 7, count: 2, type: "yellow" },
         ],
       },
     ],
@@ -580,9 +580,7 @@ export const mapConfigs = {
     },
     batteries: [
       {
-        tiles: [
-          { x: 4, y: 4, count: 2, type: "green", },
-        ],
+        tiles: [{ x: 4, y: 4, count: 2, type: "green" }],
       },
     ],
   },
@@ -593,9 +591,7 @@ export const mapConfigs = {
     },
     batteries: [
       {
-        tiles: [
-          { x: 6, y: 4, count: 1, type: "green", },
-        ],
+        tiles: [{ x: 6, y: 4, count: 1, type: "green" }],
       },
     ],
   },
@@ -607,8 +603,8 @@ export const mapConfigs = {
     batteries: [
       {
         tiles: [
-          { x: 5, y: 3, count: 1, type: "green", },
-          { x: 7, y: 3, count: 1, type: "green", },
+          { x: 5, y: 3, count: 1, type: "green" },
+          { x: 7, y: 3, count: 1, type: "green" },
         ],
       },
     ],
@@ -620,10 +616,7 @@ export const mapConfigs = {
     },
     batteries: [
       {
-        tiles: [
-          { x: 3, y: 4, count: 1, type: "green", },
-
-        ],
+        tiles: [{ x: 3, y: 4, count: 1, type: "green" }],
       },
     ],
   },
@@ -634,10 +627,7 @@ export const mapConfigs = {
     },
     batteries: [
       {
-        tiles: [
-          { x: 4, y: 5, count: 2, type: "green", },
-
-        ],
+        tiles: [{ x: 4, y: 5, count: 2, type: "green" }],
       },
     ],
   },
@@ -649,9 +639,8 @@ export const mapConfigs = {
     batteries: [
       {
         tiles: [
-          { x: 5, y: 5, count: 5, type: "green", },
-          { x: 5, y: 2, count: 5, type: "green", },
-
+          { x: 5, y: 5, count: 5, type: "green" },
+          { x: 5, y: 2, count: 5, type: "green" },
         ],
       },
     ],
@@ -664,9 +653,9 @@ export const mapConfigs = {
     batteries: [
       {
         tiles: [
-          { x: 3, y: 4, count: 3, type: "green", },
-          { x: 4, y: 5, count: 3, type: "green", },
-          { x: 5, y: 6, count: 3, type: "green", },
+          { x: 3, y: 4, count: 3, type: "green" },
+          { x: 4, y: 5, count: 3, type: "green" },
+          { x: 5, y: 6, count: 3, type: "green" },
         ],
       },
     ],
@@ -679,11 +668,125 @@ export const mapConfigs = {
     batteries: [
       {
         tiles: [
-          { x: 3, y: 4, count: 1, type: "green", },
-          { x: 4, y: 4, count: 1, type: "green", },
-          { x: 5, y: 4, count: 1, type: "green", },
-          { x: 6, y: 4, count: 1, type: "green", },
-          { x: 7, y: 4, count: 1, type: "green", },
+          { x: 3, y: 4, count: 1, type: "green" },
+          { x: 4, y: 4, count: 1, type: "green" },
+          { x: 5, y: 4, count: 1, type: "green" },
+          { x: 6, y: 4, count: 1, type: "green" },
+          { x: 7, y: 4, count: 1, type: "green" },
+        ],
+      },
+    ],
+  },
+  variable1: {
+    robot: {
+      tile: { x: 4, y: 4 }, // Robot ở vị trí (1,3)
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [{ x: 6, y: 4, count: 2, type: "yellow" }],
+      },
+    ],
+  },
+  variable2: {
+    robot: {
+      tile: { x: 3, y: 5 }, // Robot ở vị trí (1,3)
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [{ x: 6, y: 5, count: 3, type: "yellow" }],
+      },
+    ],
+  },
+  variable3: {
+    robot: {
+      tile: { x: 2, y: 5 }, // Robot ở vị trí (1,3)
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 4, y: 5, count: 2, type: "yellow" },
+          { x: 6, y: 5, count: 2, type: "yellow" },
+          { x: 8, y: 5, count: 2, type: "yellow" },
+        ],
+      },
+    ],
+  },
+  variable4: {
+    robot: {
+      tile: { x: 3, y: 3 }, // Robot ở vị trí (1,3)
+      direction: "west",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 6, y: 3, count: 3, type: "yellow" },
+          { x: 6, y: 6, count: 3, type: "yellow" },
+          { x: 3, y: 6, count: 3, type: "yellow" },
+        ],
+      },
+    ],
+  },
+  variable5: {
+    robot: {
+      tile: { x: 3, y: 4 }, // Robot ở vị trí (1,3)
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 4, y: 4, count: 1, type: "yellow" },
+          { x: 5, y: 4, count: 2, type: "yellow" },
+          { x: 6, y: 4, count: 3, type: "yellow" },
+          { x: 7, y: 4, count: 4, type: "yellow" },
+        ],
+      },
+    ],
+  },
+  variable6: {
+    robot: {
+      tile: { x: 2, y: 3 }, // Robot ở vị trí (1,3)
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 5, y: 3, count: 3, type: "yellow" },
+          { x: 7, y: 3, count: 2, type: "yellow" },
+          { x: 8, y: 3, count: 1, type: "yellow" },
+        ],
+      },
+    ],
+  },
+  variable7: {
+    robot: {
+      tile: { x: 1, y: 5 }, // Robot ở vị trí (1,3)
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 2, y: 5, count: 2, type: "yellow" },
+          { x: 4, y: 5, count: 4, type: "yellow" },
+          { x: 7, y: 5, count: 6, type: "yellow" },
+        ],
+      },
+    ],
+  },
+  variable8: {
+    robot: {
+      tile: { x: 2, y: 3 }, // Robot ở vị trí (1,3)
+      direction: "east",
+    },
+    batteries: [
+      {
+        tiles: [
+          { x: 6, y: 3, count: 4, type: "yellow" },
+          { x: 6, y: 6, count: 3, type: "yellow" },
+          { x: 4, y: 6, count: 2, type: "yellow" },
+          { x: 4, y: 5, count: 1, type: "yellow" },
         ],
       },
     ],
