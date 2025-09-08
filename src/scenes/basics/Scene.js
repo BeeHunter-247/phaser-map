@@ -235,6 +235,16 @@ export default class Scene extends Phaser.Scene {
    */
   lose(reason) {
     this.uiManager.showLoseMessage(reason);
+    // Gửi thông báo thua ra webview
+    try {
+      import("../../utils/WebViewMessenger.js").then(({ sendLoseMessage }) => {
+        if (typeof sendLoseMessage === "function") {
+          sendLoseMessage({ mapKey: this.mapKey, reason });
+        }
+      });
+    } catch (e) {
+      // ignore
+    }
     if (this.programExecutor) {
       this.programExecutor.stopProgram();
     }

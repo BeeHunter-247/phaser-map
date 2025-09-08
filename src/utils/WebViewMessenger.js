@@ -62,6 +62,14 @@ export function sendProgressMessage(progressData) {
 }
 
 /**
+ * Gửi thông báo thua đến trang web chứa iframe
+ * @param {Object} loseData - Dữ liệu về thua cuộc
+ */
+export function sendLoseMessage(loseData) {
+  return sendMessageToParent("LOSE", loseData);
+}
+
+/**
  * Gửi thông báo lỗi đến trang web chứa iframe
  * @param {Object} errorData - Dữ liệu về lỗi
  */
