@@ -47,23 +47,27 @@ export class BatteryManager {
     console.log(`   Loaded sprites: ${batterySprites.length}`);
     console.log(`   Object config:`, this.objectConfig);
 
-    // Đảm bảo mảng pin từ mapConfig đã được đặt đúng vị trí
+    // Vì chỉ sử dụng custom config (không có object layer), 
+    // ta chỉ cần tạo tracking system từ config và map sprites với config
     if (this.objectConfig && this.objectConfig.batteries) {
       this.objectConfig.batteries.forEach((batteryConfig) => {
         if (batteryConfig.tiles) {
           batteryConfig.tiles.forEach((tilePos) => {
-            // Đặt pin theo vị trí cụ thể từ config
             const tileKey = `${tilePos.x},${tilePos.y}`;
+            const count = tilePos.count || 1;
+            const batteryType = tilePos.type || batteryConfig.type || "green";
+
             console.log(
-              `🔋 DEBUG: Registering battery from config at tile ${tileKey}`
+              `🔋 DEBUG: Registering ${count} ${batteryType} batteries at tile ${tileKey}`
             );
 
-            // Tìm sprite tương ứng với vị trí này
+            // Tạo tracking data từ config
+            this.batteries.set(tileKey, count);
+            this.batteryTypes.set(tileKey, Array(count).fill(batteryType));
+
+            // Tìm sprites tương ứng với vị trí này từ MapLoader
             const matchingSprites = batterySprites.filter((sprite) => {
               const spriteTile = this.findTileForSprite(sprite);
-              console.log(
-                `   Checking sprite at world(${sprite.x}, ${sprite.y}) -> tile(${spriteTile?.x}, ${spriteTile?.y})`
-              );
               return (
                 spriteTile &&
                 spriteTile.x === tilePos.x &&
@@ -71,50 +75,20 @@ export class BatteryManager {
               );
             });
 
+            // Lưu sprite references
+            this.batterySprites.set(tileKey, [...matchingSprites]);
+
             console.log(
-              `   Found ${matchingSprites.length} matching sprites for tile ${tileKey}`
+              `   Mapped ${matchingSprites.length} sprites to ${count} config batteries`
             );
-
-            if (matchingSprites.length > 0) {
-              // Thêm vào battery count
-              this.batteries.set(tileKey, matchingSprites.length);
-
-              // Thêm sprite reference
-              this.batterySprites.set(tileKey, [...matchingSprites]);
-
-              // Xác định loại battery từ config
-              const batteryType = tilePos.type || batteryConfig.type || "green";
-              const types = Array(matchingSprites.length).fill(batteryType);
-              this.batteryTypes.set(tileKey, types);
-
-              console.log(
-                `   Found ${matchingSprites.length} sprites for tile ${tileKey}, type: ${batteryType}`
-              );
-            } else {
-              // Nếu không tìm thấy sprite phù hợp, tạo pin theo config
-              console.log(
-                `   No matching sprites found, creating batteries from config for tile ${tileKey}`
-              );
-              const count = tilePos.count || 1;
-              const batteryType = tilePos.type || batteryConfig.type || "green";
-
-              this.batteries.set(tileKey, count);
-              this.batteryTypes.set(tileKey, Array(count).fill(batteryType));
-              this.batterySprites.set(tileKey, []); // Empty array, sẽ tạo sprites khi cần
-
-              console.log(
-                `   Created ${count} ${batteryType} batteries from config`
-              );
-            }
           });
         }
       });
     } else {
-      // Fallback: Xử lý theo cách cũ nếu không có config
+      // Fallback: Nếu không có config, tạo tracking từ sprites
+      console.log("🔋 DEBUG: No config found, creating tracking from sprites only");
       batterySprites.forEach((batterySprite, index) => {
-        // Tìm tile của battery này
         const batteryTile = this.findTileForSprite(batterySprite);
-        console.log(`🔋 DEBUG: Battery ${index} at tile:`, batteryTile);
         if (batteryTile) {
           const tileKey = `${batteryTile.x},${batteryTile.y}`;
 
@@ -127,7 +101,7 @@ export class BatteryManager {
           currentSprites.push(batterySprite);
           this.batterySprites.set(tileKey, currentSprites);
 
-          // Xác định loại battery (mặc định hoặc từ sprite texture)
+          // Xác định loại battery từ sprite texture
           let batteryType = "green"; // default
           if (batterySprite.texture && batterySprite.texture.key) {
             if (batterySprite.texture.key.includes("red")) batteryType = "red";

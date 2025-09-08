@@ -258,14 +258,8 @@ export default class Scene extends Phaser.Scene {
     const result = this.batteryManager.collectBattery(preferredColor);
 
     if (result > 0) {
-      // Cập nhật UI trạng thái và kiểm tra thắng/thua
+      // Chỉ cập nhật UI trạng thái, không kiểm tra thắng/thua
       this.uiManager.updateStatusUI();
-      const victoryResult = checkAndDisplayVictory(this);
-      if (victoryResult.isVictory) {
-        this.uiManager.showVictoryMessage(victoryResult.message);
-      } else {
-        this.uiManager.showProgressMessage(victoryResult.progress);
-      }
     }
 
     return result;
