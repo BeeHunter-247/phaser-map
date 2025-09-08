@@ -18,12 +18,12 @@ export class VictoryConditions {
    */
   static getRequiredBatteries(mapKey) {
     const config = mapConfigs[mapKey];
-  
+
     // Ưu tiên sử dụng cấu hình victory mới nếu có
     if (config && config.victory) {
       const victory = config.victory;
       const byType = { red: 0, yellow: 0, green: 0 };
-      
+
       // Xử lý cấu trúc byType mới: [{ red: 0, yellow: 0, green: 1 }]
       if (Array.isArray(victory.byType) && victory.byType.length > 0) {
         const typeConfig = victory.byType[0];
@@ -31,9 +31,9 @@ export class VictoryConditions {
         byType.yellow = typeConfig.yellow || 0;
         byType.green = typeConfig.green || 0;
       }
-      
-      return { 
-        byType 
+
+      return {
+        byType,
       };
     }
   }
@@ -52,30 +52,36 @@ export class VictoryConditions {
         message: "Đang khởi tạo...",
         details: {
           red: "Đỏ: 0/0",
-          yellow: "Vàng: 0/0", 
-          green: "Xanh lá: 0/0"
-        }
+          yellow: "Vàng: 0/0",
+          green: "Xanh lá: 0/0",
+        },
       };
     }
-  
+
     // Lấy thông tin pin cần thu thập
     const required = this.getRequiredBatteries(scene.mapKey);
-  
+
     // Lấy thông tin pin đã thu thập từ BatteryManager
-    const collected = scene.batteryManager ? scene.batteryManager.getCollectedBatteries() : { total: 0, byType: { red: 0, yellow: 0, green: 0 } };
+    const collected = scene.batteryManager
+      ? scene.batteryManager.getCollectedBatteries()
+      : { total: 0, byType: { red: 0, yellow: 0, green: 0 } };
 
     // Kiểm tra đã thu thập đủ pin chưa
     const isVictory = this.checkVictoryCondition(collected, required);
 
     // Không tạo message ở đây, để ProgramExecutor tự tạo message phù hợp
-  
+
     // Thông tin chi tiết theo màu
     const details = {
       red: `Đỏ: ${collected.byType.red || 0}/${required.byType.red || 0}`,
-      yellow: `Vàng: ${collected.byType.yellow || 0}/${required.byType.yellow || 0}`,
-      green: `Xanh lá: ${collected.byType.green || 0}/${required.byType.green || 0}`,
+      yellow: `Vàng: ${collected.byType.yellow || 0}/${
+        required.byType.yellow || 0
+      }`,
+      green: `Xanh lá: ${collected.byType.green || 0}/${
+        required.byType.green || 0
+      }`,
     };
-  
+
     return {
       isVictory,
       details,
@@ -92,11 +98,11 @@ export class VictoryConditions {
    */
   static checkVictoryCondition(collected, required) {
     // Chỉ kiểm tra từng loại pin (bỏ kiểm tra total)
-    const colors = ['red', 'yellow', 'green'];
+    const colors = ["red", "yellow", "green"];
     for (const color of colors) {
       const collectedCount = collected.byType[color] || 0;
       const requiredCount = required.byType[color] || 0;
-      
+
       if (collectedCount !== requiredCount) {
         return false;
       }
@@ -104,7 +110,7 @@ export class VictoryConditions {
 
     return true;
   }
-  
+
   /**
    * Tạo thông tin tổng quan về map
    * @param {string} mapKey - Key của map (basic1, basic2, etc.)
@@ -234,7 +240,7 @@ export function updateBatteryStatusText(scene, statusText) {
   } else {
     content += `Đang chơi...\n`;
   }
-  
+
   // Kiểm tra details có tồn tại không
   if (result.details) {
     content += `${result.details.red}\n`;
