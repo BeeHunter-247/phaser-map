@@ -1,19 +1,15 @@
 {
   "version": "1.0.0",
-  "programName": "whileloop8_box_route",
+  "programName": "move_5_steps_turn_right_demo",
   "actions": [
-    { "type": "forward", "count": 1 },
-    { "type": "takeBox", "count": 6 },
-    { "type": "turnBack" },
-    { "type": "forward", "count": 2 },
-    { "type": "putBox", "count": 2 },
-    { "type": "turnBack" },
-    { "type": "forward", "count": 1 },
-    { "type": "turnRight" },
-    { "type": "forward", "count": 1 },
-    { "type": "putBox", "count": 2 },
-    { "type": "turnBack" },
-    { "type": "forward", "count": 2 },
-    { "type": "putBox", "count": 2 }
+    {
+      "type": "forward",
+      "count": 3
+    },
+    {
+      "type": "collect",
+      "color": "green",
+      "count": 1
+    }
   ]
 }

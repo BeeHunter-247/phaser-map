@@ -151,6 +151,8 @@ export default class Scene extends Phaser.Scene {
     this.inputHandler = new GameInputHandler(this);
     this.uiManager = new GameUIManager(this);
     this.uiManager.initialize();
+    // Hiển thị yêu cầu chiến thắng của map
+    this.uiManager.showVictoryRequirements();
 
     // Setup program executor
     this.programExecutor = new ProgramExecutor(this);
@@ -244,6 +246,16 @@ export default class Scene extends Phaser.Scene {
    */
   lose(reason) {
     this.uiManager.showLoseMessage(reason);
+    // Gửi thông báo thua ra webview
+    try {
+      import("../../utils/WebViewMessenger.js").then(({ sendLoseMessage }) => {
+        if (typeof sendLoseMessage === "function") {
+          sendLoseMessage({ mapKey: this.mapKey, reason });
+        }
+      });
+    } catch (e) {
+      // ignore
+    }
     if (this.programExecutor) {
       this.programExecutor.stopProgram();
     }

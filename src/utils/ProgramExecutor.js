@@ -448,6 +448,19 @@ export class ProgramExecutor {
       if (!victoryResult.isVictory) {
         // Chương trình kết thúc nhưng chưa đủ pin = THUA
         this.scene.lose("Chương trình kết thúc thua cuộc!");
+      } else {
+        // Gửi thông báo chiến thắng ra webview (không blocking)
+        import("./WebViewMessenger.js")
+          .then(({ sendVictoryMessage }) => {
+            if (typeof sendVictoryMessage === "function") {
+              sendVictoryMessage({
+                mapKey: this.scene.mapKey,
+                collected: victoryResult.collected,
+                required: victoryResult.required,
+              });
+            }
+          })
+          .catch((e) => console.warn("Cannot send victory message:", e));
       }
 
       this.stopProgram();

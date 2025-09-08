@@ -60,6 +60,8 @@ export default class MenuScene extends Phaser.Scene {
       const maxScroll = Math.max(0, totalHeight - camera.height);
       camera.scrollY = Phaser.Math.Clamp(startScrollY - dy, 0, maxScroll);
     });
+    this.drawCategory("Function", 8, 100, 600);
+    this.drawCategory("Variable", 8, 100, 720);
 
     // Sau này bạn có thể gọi thêm:
     // this.drawCategory("Variable", 5, 100, 720);

@@ -49,6 +49,7 @@ export class VictoryConditions {
 
       return {
         byType,
+        description: victory.description || undefined,
       };
     }
   }
@@ -80,9 +81,23 @@ export class VictoryConditions {
         isVictory: false,
         progress: 0,
         message: "Đang khởi tạo...",
-        details: {},
+        details: {
+          red: "Đỏ: 0/0",
+          yellow: "Vàng: 0/0",
+          green: "Xanh lá: 0/0",
+        },
       };
     }
+
+    // Lấy thông tin pin cần thu thập
+    const required = this.getRequiredBatteries(scene.mapKey);
+
+    // Lấy thông tin pin đã thu thập từ BatteryManager
+    const collected = scene.batteryManager
+      ? scene.batteryManager.getCollectedBatteries()
+      : { total: 0, byType: { red: 0, yellow: 0, green: 0 } };
+
+    const isVictory = this.checkVictoryCondition(collected, required);
 
     // Ưu tiên kiểm tra theo box nếu cấu hình victory dùng toạ độ
     const requiredBoxes = this.getRequiredBoxes(scene.mapKey);
@@ -117,12 +132,9 @@ export class VictoryConditions {
       };
     }
 
-    const required = this.getRequiredBatteries(scene.mapKey) || {
-      byType: { red: 0, yellow: 0, green: 0 },
-    };
-    const collected = scene.batteryManager.getCollectedBatteries();
-    const isVictory = this.checkVictoryCondition(collected, required);
+    // Không tạo message ở đây, để ProgramExecutor tự tạo message phù hợp
 
+    // Thông tin chi tiết theo màu
     const details = {
       red: `Đỏ: ${collected.byType.red || 0}/${required.byType.red || 0}`,
       yellow: `Vàng: ${collected.byType.yellow || 0}/${
@@ -133,7 +145,12 @@ export class VictoryConditions {
       }`,
     };
 
-    return { isVictory, details, required, collected };
+    return {
+      isVictory,
+      details,
+      required,
+      collected,
+    };
   }
 
   /**
@@ -288,6 +305,7 @@ export function updateBatteryStatusText(scene, statusText) {
   }
 
   // Hiển thị chi tiết theo loại mục tiêu
+  // Kiểm tra details có tồn tại không
   if (result.details) {
     if (result.details.red || result.details.yellow || result.details.green) {
       // Trường hợp theo pin
