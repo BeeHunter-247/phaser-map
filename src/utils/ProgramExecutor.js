@@ -298,12 +298,6 @@ export class ProgramExecutor {
           original: action,
         };
 
-      case "checkWarehouse":
-        return {
-          type: "checkWarehouse",
-          original: action,
-        };
-
       default:
         console.warn(`⚠️ Action ${index}: Unknown type "${action.type}"`);
         return null;
@@ -488,9 +482,6 @@ export class ProgramExecutor {
         case "takeBox":
           return this.executeTakeBox(action.count);
 
-        case "checkWarehouse":
-          return this.executeCheckWarehouse();
-
         default:
           console.error(`❌ Unknown command: ${action.type}`);
           return false;
@@ -644,9 +635,6 @@ export class ProgramExecutor {
     switch (functionName) {
       case "isGreen":
         actual = this.hasBatteryColorAtCurrentTile("green");
-        break;
-      case "isWarehouse":
-        actual = this.scene.boxManager.checkWarehouse() > 0;
         break;
       case "warehouseCount":
         // Number box block - gọi checkWarehouse() và so sánh với giá trị

@@ -1,20 +1,23 @@
 {
   "version": "1.0.0",
-  "programName": "basic1_isGreen_demo",
+  "programName": "warehouse_number_box_demo",
   "actions": [
     {
-      "type": "forward",
-      "count": 3
-    },
-    {
-      "type": "while",
+      "type": "if",
       "cond": {
-        "function": "isGreen",
+        "function": "warehouseCount",
+        "operator": ">",
+        "value": 0,
         "check": true
       },
-      "body": [
+      "then": [
         {
-          "type": "turnRight"
+          "type": "forward",
+          "count": 1
+        },
+        {
+          "type": "takeBox",
+          "count": 2
         }
       ]
     }
