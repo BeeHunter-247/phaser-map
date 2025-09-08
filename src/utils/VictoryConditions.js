@@ -34,6 +34,7 @@ export class VictoryConditions {
 
       return {
         byType,
+        description: victory.description || undefined,
       };
     }
   }

@@ -140,6 +140,8 @@ export default class Scene extends Phaser.Scene {
     this.inputHandler = new GameInputHandler(this);
     this.uiManager = new GameUIManager(this);
     this.uiManager.initialize();
+    // Hiển thị yêu cầu chiến thắng của map
+    this.uiManager.showVictoryRequirements();
 
     // Setup program executor
     this.programExecutor = new ProgramExecutor(this);
