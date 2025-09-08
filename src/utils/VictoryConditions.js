@@ -89,16 +89,6 @@ export class VictoryConditions {
       };
     }
 
-    // Lấy thông tin pin cần thu thập
-    const required = this.getRequiredBatteries(scene.mapKey);
-
-    // Lấy thông tin pin đã thu thập từ BatteryManager
-    const collected = scene.batteryManager
-      ? scene.batteryManager.getCollectedBatteries()
-      : { total: 0, byType: { red: 0, yellow: 0, green: 0 } };
-
-    const isVictory = this.checkVictoryCondition(collected, required);
-
     // Ưu tiên kiểm tra theo box nếu cấu hình victory dùng toạ độ
     const requiredBoxes = this.getRequiredBoxes(scene.mapKey);
     if (requiredBoxes && scene.boxManager) {
@@ -122,8 +112,11 @@ export class VictoryConditions {
       };
     }
 
+    // Lấy thông tin pin cần thu thập
+    const required = this.getRequiredBatteries(scene.mapKey);
+
     // Mặc định: kiểm tra theo pin
-    if (!scene.batteryManager) {
+    if (!scene.batteryManager || !required) {
       return {
         isVictory: false,
         progress: 0,
@@ -131,6 +124,13 @@ export class VictoryConditions {
         details: {},
       };
     }
+
+    // Lấy thông tin pin đã thu thập từ BatteryManager
+    const collected = scene.batteryManager
+      ? scene.batteryManager.getCollectedBatteries()
+      : { total: 0, byType: { red: 0, yellow: 0, green: 0 } };
+
+    const isVictory = this.checkVictoryCondition(collected, required);
 
     // Không tạo message ở đây, để ProgramExecutor tự tạo message phù hợp
 
