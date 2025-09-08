@@ -315,8 +315,10 @@ export class ProgramExecutor {
     if (cond.type === "and") {
       return {
         type: "and",
-        conditions: Array.isArray(cond.conditions) 
-          ? cond.conditions.map(c => this.parseCondition(c)).filter(c => c !== null)
+        conditions: Array.isArray(cond.conditions)
+          ? cond.conditions
+              .map((c) => this.parseCondition(c))
+              .filter((c) => c !== null)
           : [],
         original: cond,
       };
@@ -326,8 +328,10 @@ export class ProgramExecutor {
     if (cond.type === "or") {
       return {
         type: "or",
-        conditions: Array.isArray(cond.conditions) 
-          ? cond.conditions.map(c => this.parseCondition(c)).filter(c => c !== null)
+        conditions: Array.isArray(cond.conditions)
+          ? cond.conditions
+              .map((c) => this.parseCondition(c))
+              .filter((c) => c !== null)
           : [],
         original: cond,
       };
@@ -421,14 +425,27 @@ export class ProgramExecutor {
 
     if (this.currentStep >= this.program.actions.length) {
       console.log("✅ Program completed!");
-      
+
       // KIỂM TRA THUA KHI CHƯƠNG TRÌNH KẾT THÚC
       const victoryResult = checkAndDisplayVictory(this.scene);
       if (!victoryResult.isVictory) {
         // Chương trình kết thúc nhưng chưa đủ pin = THUA
         this.scene.lose("Chương trình kết thúc thua cuộc!");
+      } else {
+        // Gửi thông báo chiến thắng ra webview (không blocking)
+        import("./WebViewMessenger.js")
+          .then(({ sendVictoryMessage }) => {
+            if (typeof sendVictoryMessage === "function") {
+              sendVictoryMessage({
+                mapKey: this.scene.mapKey,
+                collected: victoryResult.collected,
+                required: victoryResult.required,
+              });
+            }
+          })
+          .catch((e) => console.warn("Cannot send victory message:", e));
       }
-      
+
       this.stopProgram();
       return;
     }
@@ -624,14 +641,16 @@ export class ProgramExecutor {
     // Điều kiện so sánh biến (bao gồm biến đặc biệt)
     if (cond.type === "variableComparison") {
       let variableValue = variableContext[cond.variable];
-      
+
       // Nếu không tìm thấy trong context, kiểm tra biến đặc biệt
       if (variableValue === undefined) {
         variableValue = this.getSpecialVariableValue(cond.variable);
       }
-      
+
       if (variableValue === undefined) {
-        console.warn(`⚠️ Variable "${cond.variable}" not found in context or special variables`);
+        console.warn(
+          `⚠️ Variable "${cond.variable}" not found in context or special variables`
+        );
         return false;
       }
 
@@ -651,12 +670,12 @@ export class ProgramExecutor {
       if (!Array.isArray(cond.conditions) || cond.conditions.length === 0) {
         return false;
       }
-      
-      const results = cond.conditions.map(c => this.evaluateCondition(c, variableContext));
-      const result = results.every(r => r === true);
-      console.log(
-        `🔗 AND condition: [${results.join(', ')}] => ${result}`
+
+      const results = cond.conditions.map((c) =>
+        this.evaluateCondition(c, variableContext)
       );
+      const result = results.every((r) => r === true);
+      console.log(`🔗 AND condition: [${results.join(", ")}] => ${result}`);
       return result;
     }
 
@@ -665,12 +684,12 @@ export class ProgramExecutor {
       if (!Array.isArray(cond.conditions) || cond.conditions.length === 0) {
         return false;
       }
-      
-      const results = cond.conditions.map(c => this.evaluateCondition(c, variableContext));
-      const result = results.some(r => r === true);
-      console.log(
-        `🔗 OR condition: [${results.join(', ')}] => ${result}`
+
+      const results = cond.conditions.map((c) =>
+        this.evaluateCondition(c, variableContext)
       );
+      const result = results.some((r) => r === true);
+      console.log(`🔗 OR condition: [${results.join(", ")}] => ${result}`);
       return result;
     }
 
@@ -754,16 +773,16 @@ export class ProgramExecutor {
     switch (variableName) {
       case "batteryCount":
         return info?.count || 0;
-      
+
       case "greenCount":
         return this.getBatteryCountByColor("green");
-      
+
       case "redCount":
         return this.getBatteryCountByColor("red");
-      
+
       case "yellowCount":
         return this.getBatteryCountByColor("yellow");
-      
+
       default:
         return undefined;
     }
@@ -777,8 +796,8 @@ export class ProgramExecutor {
   getBatteryCountByColor(color) {
     const info = this.scene.getBatteriesAtCurrentTile();
     if (!info || !Array.isArray(info.types)) return 0;
-    
-    return info.types.filter(type => type === color).length;
+
+    return info.types.filter((type) => type === color).length;
   }
 
   /**

@@ -4,25 +4,11 @@
     "actions": [
         {
             "type": "forward",
-            "count": 5
-        },
-        {
-            "type": "turnRight"
-        },
-        {
-            "type": "forward",
-            "count": 5
-        },
-        {
-            "type": "turnRight"
-        },
-        {
-            "type": "forward",
-            "count": 5
+            "count": 3
         },
         {
             "type": "collect",
-            "color": "yellow",
+            "color": "green",
             "count": 1
         }
     ]
