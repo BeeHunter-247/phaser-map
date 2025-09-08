@@ -29,14 +29,16 @@ export const mapConfigs = {
       {
         tiles: [
           // Đặt 1 pin màu xanh lá
-          { x: 4, y: 4, count: 1, type: "yellow" },
-          { x: 5, y: 4, count: 2, type: "green" },
+          { x: 4, y: 4, count: 1, type: "red" },
+          { x: 5, y: 4, count: 2, type: "red" },
           { x: 6, y: 4, count: 1, type: "green" },
         ],
       },
     ],
     victory: {
       byType: [{ red: 0, yellow: 0, green: 1 }],
+      description:
+        "Hãy giúp tôi thu thập pin màu xanh lá và bỏ qua pin màu đỏ. ",
     },
   },
 
