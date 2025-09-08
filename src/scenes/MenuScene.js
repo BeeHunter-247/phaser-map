@@ -23,7 +23,43 @@ export default class MenuScene extends Phaser.Scene {
     // Gọi hàm để vẽ menu cho WhileLoop (8 maps)
     this.drawCategory("WhileLoop", 8, 100, 600);
 
-    this.drawCategory("Demo", 8, 100, 720);
+    this.drawCategory("Conditional", 8, 100, 720);
+    this.drawCategory("Function", 8, 100, 840);
+    this.drawCategory("Demo", 8, 100, 960);
+
+    // Enable vertical scrolling (mouse wheel + drag to pan)
+    const camera = this.cameras.main;
+    const totalHeight = 1200; // enough to contain all categories below
+    camera.setBounds(0, 0, this.scale.width, totalHeight);
+
+    // Mouse wheel scroll
+    this.input.on("wheel", (_pointer, _objects, _dx, dy) => {
+      const maxScroll = Math.max(0, totalHeight - camera.height);
+      camera.scrollY = Phaser.Math.Clamp(
+        camera.scrollY + dy * 0.5,
+        0,
+        maxScroll
+      );
+    });
+
+    // Drag to pan
+    let isDragging = false;
+    let dragStartY = 0;
+    let startScrollY = 0;
+    this.input.on("pointerdown", (p) => {
+      isDragging = true;
+      dragStartY = p.y;
+      startScrollY = camera.scrollY;
+    });
+    this.input.on("pointerup", () => {
+      isDragging = false;
+    });
+    this.input.on("pointermove", (p) => {
+      if (!isDragging) return;
+      const dy = p.y - dragStartY;
+      const maxScroll = Math.max(0, totalHeight - camera.height);
+      camera.scrollY = Phaser.Math.Clamp(startScrollY - dy, 0, maxScroll);
+    });
 
     // Sau này bạn có thể gọi thêm:
     // this.drawCategory("Variable", 5, 100, 720);

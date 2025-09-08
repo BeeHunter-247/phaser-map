@@ -99,79 +99,79 @@ export class MapLoader {
   /**
    * Chuyển đổi tọa độ object từ Tiled sang world position
    */
-  static convertObjectToWorld(obj, mapData) {
-    const { map, layer, offsetX, offsetY } = mapData;
+  // static convertObjectToWorld(obj, mapData) {
+  //   const { map, layer, offsetX, offsetY } = mapData;
 
-    // Convert từ pixel projected sang tile coords
-    const tileX = obj.x / map.tileWidth;
-    const tileY = obj.y / map.tileHeight;
+  //   // Convert từ pixel projected sang tile coords
+  //   const tileX = obj.x / map.tileWidth;
+  //   const tileY = obj.y / map.tileHeight;
 
-    // Sử dụng map.tileToWorldXY để tránh double offset
-    const worldPoint = map.tileToWorldXY(tileX, tileY);
+  //   // Sử dụng map.tileToWorldXY để tránh double offset
+  //   const worldPoint = map.tileToWorldXY(tileX, tileY);
 
-    // Áp dụng offset của layer
-    const finalX = worldPoint.x + offsetX;
-    const finalY = worldPoint.y + offsetY;
+  //   // Áp dụng offset của layer
+  //   const finalX = worldPoint.x + offsetX;
+  //   const finalY = worldPoint.y + offsetY;
 
-    return { x: finalX, y: finalY };
-  }
+  //   return { x: finalX, y: finalY };
+  // }
 
   /**
    * Tạo object từ Tiled object
    */
-  static createObjectFromTiled(scene, tiledObj, worldPos, scale) {
-    let spriteKey = null;
-    let origin = { x: 0.5, y: 1 }; // Default isometric origin
+  // static createObjectFromTiled(scene, tiledObj, worldPos, scale) {
+  //   let spriteKey = null;
+  //   let origin = { x: 0.5, y: 1 }; // Default isometric origin
 
-    // Xác định sprite key dựa trên tên object
-    switch (tiledObj.name) {
-      case "RobotPoint":
-        spriteKey = "robot_east";
-        break;
-      case "PinPoint":
-      case "BatteryPoint":
-        spriteKey = "pin_green"; // Default to green pin
-        break;
-      case "BoxPoint":
-        spriteKey = "box";
-        break;
-      default:
-        return null; // Unknown object type
-    }
+  //   // Xác định sprite key dựa trên tên object
+  //   switch (tiledObj.name) {
+  //     case "RobotPoint":
+  //       spriteKey = "robot_east";
+  //       break;
+  //     case "PinPoint":
+  //     case "BatteryPoint":
+  //       spriteKey = "pin_green"; // Default to green pin
+  //       break;
+  //     case "BoxPoint":
+  //       spriteKey = "box";
+  //       break;
+  //     default:
+  //       return null; // Unknown object type
+  //   }
 
-    // Tạo sprite
-    const sprite = scene.add.image(worldPos.x, worldPos.y, spriteKey);
-    sprite.setOrigin(origin.x, origin.y);
-    sprite.setScale(scale);
+  //   // Tạo sprite
+  //   const sprite = scene.add.image(worldPos.x, worldPos.y, spriteKey);
+  //   sprite.setOrigin(origin.x, origin.y);
+  //   sprite.setScale(scale);
 
-    return {
-      sprite,
-      type: tiledObj.name,
-      originalData: tiledObj,
-    };
-  }
+  //   return {
+  //     sprite,
+  //     type: tiledObj.name,
+  //     originalData: tiledObj,
+  //   };
+  // }
 
   /**
    * Phân loại object vào categories
    */
-  static categorizeObject(loadedObj, tiledObj, loadedObjects) {
-    switch (tiledObj.name) {
-      case "RobotPoint":
-        loadedObjects.robot = loadedObj.sprite;
-        break;
-      case "PinPoint":
-      case "BatteryPoint":
-        loadedObjects.batteries.push(loadedObj.sprite);
-        break;
-      case "BoxPoint":
-        if (!loadedObjects.boxes) loadedObjects.boxes = [];
-        loadedObjects.boxes.push(loadedObj.sprite);
-        break;
-      default:
-        loadedObjects.others.push(loadedObj);
-        break;
-    }
-  }
+  // static categorizeObject(loadedObj, tiledObj, loadedObjects) {
+  //   switch (tiledObj.name) {
+  //     case "RobotPoint":
+  //       loadedObjects.robot = loadedObj.sprite;
+  //       break;
+  //     case "PinPoint":
+  //     case "BatteryPoint":
+  //       loadedObjects.batteries.push(loadedObj.sprite);
+  //       break;
+  //     case "BoxPoint":
+  //       if (!loadedObjects.boxes) loadedObjects.boxes = [];
+  //       loadedObjects.boxes.push(loadedObj.sprite);
+  //       break;
+  //     default:
+  //       loadedObjects.others.push(loadedObj);
+  //       break;
+  //   }
+  // }
 
   /**
    * Load objects từ custom configuration
@@ -257,6 +257,8 @@ export class MapLoader {
               const battery = scene.add.image(pos.x, pos.y + 10, batteryKey);
               battery.setOrigin(0.5, 1);
               battery.setScale(scale);
+              // Depth cao hơn robot khi cùng tile
+              battery.setDepth(battery.y + 50);
               loadedObjects.batteries.push(battery);
             } else {
               // Đặt nhiều batteries theo hình tròn quanh tâm tile
@@ -277,6 +279,8 @@ export class MapLoader {
                 const battery = scene.add.image(bx, by + 10, batteryKey);
                 battery.setOrigin(0.5, 1);
                 battery.setScale(scale);
+                // Depth cao hơn robot khi cùng tile
+                battery.setDepth(battery.y + 50);
                 loadedObjects.batteries.push(battery);
               }
             }

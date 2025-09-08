@@ -1,6 +1,7 @@
 /**
  * ProgramExecutor - Thực thi chương trình robot từ Blockly JSON
  */
+import { checkAndDisplayVictory } from "./VictoryConditions.js";
 export class ProgramExecutor {
   constructor(scene) {
     this.scene = scene;
@@ -313,6 +314,7 @@ export class ProgramExecutor {
     if (!cond || typeof cond !== "object") return null;
 
     // Điều kiện so sánh biến: { type: "variableComparison", variable: "i", operator: "==", value: 0 }
+    // Hỗ trợ cả biến thường và biến đặc biệt như "batteryCount", "greenCount", "redCount", "yellowCount"
     if (cond.type === "variableComparison") {
       return {
         type: "variableComparison",
@@ -324,6 +326,33 @@ export class ProgramExecutor {
     }
 
     // Hỗ trợ cả 2 format: functionName và function
+    // Điều kiện logic AND: { type: "and", conditions: [cond1, cond2] }
+    if (cond.type === "and") {
+      return {
+        type: "and",
+        conditions: Array.isArray(cond.conditions)
+          ? cond.conditions
+              .map((c) => this.parseCondition(c))
+              .filter((c) => c !== null)
+          : [],
+        original: cond,
+      };
+    }
+
+    // Điều kiện logic OR: { type: "or", conditions: [cond1, cond2] }
+    if (cond.type === "or") {
+      return {
+        type: "or",
+        conditions: Array.isArray(cond.conditions)
+          ? cond.conditions
+              .map((c) => this.parseCondition(c))
+              .filter((c) => c !== null)
+          : [],
+        original: cond,
+      };
+    }
+
+    // Điều kiện cũ: { type: "condition", function: "isGreen", check: true }
     return {
       type: cond.type || "condition",
       functionName: cond.functionName || cond.function || null,
@@ -413,6 +442,14 @@ export class ProgramExecutor {
 
     if (this.currentStep >= this.program.actions.length) {
       console.log("✅ Program completed!");
+
+      // KIỂM TRA THUA KHI CHƯƠNG TRÌNH KẾT THÚC
+      const victoryResult = checkAndDisplayVictory(this.scene);
+      if (!victoryResult.isVictory) {
+        // Chương trình kết thúc nhưng chưa đủ pin = THUA
+        this.scene.lose("Chương trình kết thúc thua cuộc!");
+      }
+
       this.stopProgram();
       return;
     }
@@ -604,17 +641,26 @@ export class ProgramExecutor {
   /**
    * Đánh giá điều kiện
    * Hỗ trợ: condition.function = "isGreen" => có pin xanh tại ô hiện tại?
-   * Hỗ trợ: variableComparison => so sánh biến với giá trị
+   * Hỗ trợ: variableComparison => so sánh biến với giá trị (bao gồm biến đặc biệt)
+   * Hỗ trợ: and/or => điều kiện logic
    * Nếu cond.check = false thì đảo ngược kết quả
    */
   evaluateCondition(cond, variableContext = {}) {
     if (!cond) return false;
 
-    // Điều kiện so sánh biến
+    // Điều kiện so sánh biến (bao gồm biến đặc biệt)
     if (cond.type === "variableComparison") {
-      const variableValue = variableContext[cond.variable];
+      let variableValue = variableContext[cond.variable];
+
+      // Nếu không tìm thấy trong context, kiểm tra biến đặc biệt
       if (variableValue === undefined) {
-        console.warn(`⚠️ Variable "${cond.variable}" not found in context`);
+        variableValue = this.getSpecialVariableValue(cond.variable);
+      }
+
+      if (variableValue === undefined) {
+        console.warn(
+          `⚠️ Variable "${cond.variable}" not found in context or special variables`
+        );
         return false;
       }
 
@@ -626,6 +672,34 @@ export class ProgramExecutor {
       console.log(
         `🔍 Variable comparison: ${cond.variable}(${variableValue}) ${cond.operator} ${cond.value} => ${result}`
       );
+      return result;
+    }
+
+    // Điều kiện logic AND
+    if (cond.type === "and") {
+      if (!Array.isArray(cond.conditions) || cond.conditions.length === 0) {
+        return false;
+      }
+
+      const results = cond.conditions.map((c) =>
+        this.evaluateCondition(c, variableContext)
+      );
+      const result = results.every((r) => r === true);
+      console.log(`🔗 AND condition: [${results.join(", ")}] => ${result}`);
+      return result;
+    }
+
+    // Điều kiện logic OR
+    if (cond.type === "or") {
+      if (!Array.isArray(cond.conditions) || cond.conditions.length === 0) {
+        return false;
+      }
+
+      const results = cond.conditions.map((c) =>
+        this.evaluateCondition(c, variableContext)
+      );
+      const result = results.some((r) => r === true);
+      console.log(`🔗 OR condition: [${results.join(", ")}] => ${result}`);
       return result;
     }
 
@@ -642,9 +716,12 @@ export class ProgramExecutor {
         const operator = cond.operator || "==";
         const compareValue = parseInt(cond.value) || 0;
         actual = this.compareValues(warehouseCount, operator, compareValue);
-        console.log(
-          `🏭 Warehouse count: ${warehouseCount} ${operator} ${compareValue} => ${actual}`
-        );
+        break;
+      case "isRed":
+        actual = this.hasBatteryColorAtCurrentTile("red");
+        break;
+      case "isYellow":
+        actual = this.hasBatteryColorAtCurrentTile("yellow");
         break;
       default:
         console.warn(`⚠️ Unknown condition function: ${functionName}`);
@@ -690,6 +767,55 @@ export class ProgramExecutor {
     if (count <= 0) return false;
     const types = Array.isArray(info?.types) ? info.types : [];
     return types.some((t) => t === color);
+  }
+
+  /**
+   * Lấy số lượng pin tại vị trí hiện tại
+   * @returns {number} Số lượng pin
+   */
+  getNumberBattery() {
+    const info = this.scene.getBatteriesAtCurrentTile();
+    if (!info) return 0;
+    return info?.count || 0;
+  }
+
+  /**
+   * Lấy giá trị của biến đặc biệt
+   * @param {string} variableName - Tên biến đặc biệt
+   * @returns {number|undefined} Giá trị biến hoặc undefined nếu không tìm thấy
+   */
+  getSpecialVariableValue(variableName) {
+    const info = this.scene.getBatteriesAtCurrentTile();
+    if (!info) return undefined;
+
+    switch (variableName) {
+      case "batteryCount":
+        return info?.count || 0;
+
+      case "greenCount":
+        return this.getBatteryCountByColor("green");
+
+      case "redCount":
+        return this.getBatteryCountByColor("red");
+
+      case "yellowCount":
+        return this.getBatteryCountByColor("yellow");
+
+      default:
+        return undefined;
+    }
+  }
+
+  /**
+   * Đếm số lượng pin theo màu tại vị trí hiện tại
+   * @param {string} color - Màu pin cần đếm
+   * @returns {number} Số lượng pin theo màu
+   */
+  getBatteryCountByColor(color) {
+    const info = this.scene.getBatteriesAtCurrentTile();
+    if (!info || !Array.isArray(info.types)) return 0;
+
+    return info.types.filter((type) => type === color).length;
   }
 
   /**
@@ -826,6 +952,11 @@ export class ProgramExecutor {
       const success = this.scene.putBox(count);
       if (!success) {
         console.error(`❌ Failed to put ${count} box(es)`);
+        if (this.scene && typeof this.scene.lose === "function") {
+          this.scene.lose(
+            `Không thể đặt ${count} hộp (vượt quá số đang mang hoặc lỗi vị trí).`
+          );
+        }
         return false;
       }
 
@@ -849,6 +980,11 @@ export class ProgramExecutor {
       const success = this.scene.takeBox(count);
       if (!success) {
         console.error(`❌ Failed to take ${count} box(es)`);
+        if (this.scene && typeof this.scene.lose === "function") {
+          this.scene.lose(
+            `Không thể lấy ${count} hộp (không đủ hộp tại ô hiện tại).`
+          );
+        }
         return false;
       }
 

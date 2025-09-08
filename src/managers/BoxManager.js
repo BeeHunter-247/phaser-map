@@ -8,6 +8,7 @@ export class BoxManager {
     this.totalBoxes = 0;
     this.collectedBoxes = 0;
     this.putBoxes = 0; // Số box đã đặt
+    this.carriedBoxes = 0; // Số box robot đang mang theo
   }
 
   /**
@@ -21,27 +22,59 @@ export class BoxManager {
     this.boxes.clear();
     this.totalBoxes = 0;
     this.collectedBoxes = 0;
+    this.carriedBoxes = 0;
 
     console.log(
       `📦 BoxManager initializing with ${loadedBoxes.length} loaded boxes`
     );
 
-    // Đăng ký boxes từ loadedBoxes (luôn đăng ký để quản lý sprites)
-    if (loadedBoxes && loadedBoxes.length > 0) {
-      loadedBoxes.forEach((box) => {
-        const tileKey = this.getTileKeyFromPosition(box.x, box.y);
-        if (tileKey) {
-          this.registerBoxAtTile(tileKey, box);
+    // Nếu có config boxes và có sprites đã load, gán mỗi sprite vào tile gần nhất trong config
+    if (
+      objectConfig &&
+      objectConfig.boxes &&
+      loadedBoxes &&
+      loadedBoxes.length > 0
+    ) {
+      // Chuẩn bị danh sách tâm tile theo config
+      const centers = [];
+      objectConfig.boxes.forEach((boxConfig) => {
+        if (boxConfig.tiles) {
+          boxConfig.tiles.forEach((tilePos) => {
+            const key = `${tilePos.x},${tilePos.y}`;
+            const center = this.robotController.getTileWorldCenter(
+              tilePos.x,
+              tilePos.y
+            );
+            if (center) centers.push({ key, x: center.x, y: center.y });
+          });
         }
       });
-    }
 
-    // Đăng ký boxes từ config (chỉ khi không có loadedBoxes)
-    if (
+      loadedBoxes.forEach((sprite) => {
+        if (centers.length === 0) return;
+        // Tìm tile center gần nhất
+        let best = centers[0];
+        let bestD2 =
+          (sprite.x - best.x) * (sprite.x - best.x) +
+          (sprite.y - best.y) * (sprite.y - best.y);
+        for (let i = 1; i < centers.length; i++) {
+          const c = centers[i];
+          const d2 =
+            (sprite.x - c.x) * (sprite.x - c.x) +
+            (sprite.y - c.y) * (sprite.y - c.y);
+          if (d2 < bestD2) {
+            best = c;
+            bestD2 = d2;
+          }
+        }
+        this.registerBoxAtTile(best.key, sprite);
+      });
+    } else if (
       objectConfig &&
       objectConfig.boxes &&
       (!loadedBoxes || loadedBoxes.length === 0)
     ) {
+      // Không có sprites sẵn: chỉ đăng ký theo số lượng từ config
       objectConfig.boxes.forEach((boxConfig) => {
         if (boxConfig.tiles) {
           boxConfig.tiles.forEach((tilePos) => {
@@ -49,6 +82,14 @@ export class BoxManager {
             const count = tilePos.count || 1;
             this.registerBoxesAtTile(tileKey, count);
           });
+        }
+      });
+    } else if (loadedBoxes && loadedBoxes.length > 0) {
+      // Không có config: fallback theo vị trí sprite
+      loadedBoxes.forEach((box) => {
+        const tileKey = this.getTileKeyFromPosition(box.x, box.y);
+        if (tileKey) {
+          this.registerBoxAtTile(tileKey, box);
         }
       });
     }
@@ -65,9 +106,21 @@ export class BoxManager {
       return null;
     }
 
-    // Sử dụng layer để convert world position sang tile position
-    const tileX = Math.floor(worldX / this.robotController.map.tileWidth);
-    const tileY = Math.floor(worldY / this.robotController.map.tileHeight);
+    const map = this.robotController.map;
+    const layer = this.robotController.layer || this.scene.layer;
+    // Dùng API của Phaser để quy đổi world -> tile theo layer thực tế
+    const tileX = map.worldToTileX(
+      worldX,
+      true,
+      this.scene.cameras.main,
+      layer
+    );
+    const tileY = map.worldToTileY(
+      worldY,
+      true,
+      this.scene.cameras.main,
+      layer
+    );
     return `${tileX},${tileY}`;
   }
 
@@ -90,6 +143,8 @@ export class BoxManager {
     this.totalBoxes++;
 
     console.log(`📦 Registered box at ${tileKey}: count=${tileData.count}`);
+    // Re-layout sprites to maintain visual grid
+    this.layoutTileSpritesGrid(tileKey);
   }
 
   /**
@@ -173,6 +228,11 @@ export class BoxManager {
     const tileKey = `${currentTile.x},${currentTile.y}`;
     const tileData = this.boxes.get(tileKey);
 
+    console.log(`📦 currentTile: ${currentTile}`);
+    console.log(`📦 boxes: ${this.boxes}`);
+    console.log(`📦 tileKey: ${tileKey}`);
+    console.log(`📦 tileData: ${tileData}`);
+
     if (!tileData || tileData.count < count) {
       console.error(
         `❌ Not enough boxes at ${tileKey}. Available: ${
@@ -186,6 +246,7 @@ export class BoxManager {
     tileData.count -= count;
     this.totalBoxes -= count;
     this.collectedBoxes += count;
+    this.carriedBoxes += count;
 
     // Xóa sprites nếu có
     console.log(
@@ -212,6 +273,9 @@ export class BoxManager {
     // Kiểm tra thắng thua
     this.checkVictoryConditions();
 
+    // Re-layout after removal
+    this.layoutTileSpritesGrid(tileKey);
+
     return true;
   }
 
@@ -221,6 +285,13 @@ export class BoxManager {
    * @returns {boolean} Success/failure
    */
   putBox(count = 1) {
+    // Không cho đặt vượt quá số lượng đang mang
+    if (this.carriedBoxes < count) {
+      console.error(
+        `❌ Cannot put ${count} box(es). Carried: ${this.carriedBoxes}`
+      );
+      return false;
+    }
     const currentTile = this.robotController.getCurrentTilePosition();
     if (!currentTile) {
       console.error("❌ No current tile for robot");
@@ -261,10 +332,14 @@ export class BoxManager {
       this.totalBoxes += count;
     }
     this.putBoxes += count; // Tăng số box đã đặt
+    this.carriedBoxes -= count; // Giảm số đang mang
 
     console.log(
       `📦 Put ${count} box(es) at ${tileKey}. Total: ${tileData.count}`
     );
+
+    // Re-layout after placing
+    this.layoutTileSpritesGrid(tileKey);
 
     return true;
   }
@@ -276,28 +351,72 @@ export class BoxManager {
     try {
       const worldPos = this.robotController.getTileWorldCenter(tileX, tileY);
       if (!worldPos) return null;
-
-      // Tính toán vị trí cho multiple boxes
-      let x = worldPos.x;
-      let y = worldPos.y;
-
-      if (totalCount > 1) {
-        // Đặt boxes theo hình tròn
-        const radius = 20; // Base radius
-        const angle = -Math.PI / 2 + (index * (Math.PI * 2)) / totalCount;
-        x = worldPos.x + radius * Math.cos(angle);
-        y = worldPos.y + radius * Math.sin(angle);
-      }
-
-      const box = this.scene.add.image(x, y + 10, "box");
+      // Spawn at center; grid layout function will realign all sprites
+      const BOX_Y_OFFSET = 14;
+      const box = this.scene.add.image(
+        worldPos.x,
+        worldPos.y + BOX_Y_OFFSET,
+        "box"
+      );
       box.setOrigin(0.5, 1);
-      box.setScale(0.8); // Slightly smaller than batteries
+      // Keep scale consistent with map layer and preloaded sprites
+      const layer = this.scene.layer;
+      const layerScale = layer?.scaleX || 1;
+      box.setScale(layerScale);
+      // Depth theo y để robot nổi trên cùng tile
+      box.setDepth(worldPos.y - 1);
 
       return box;
     } catch (error) {
       console.error("❌ Failed to create box sprite:", error);
       return null;
     }
+  }
+
+  /**
+   * Grid 2.5D layout: 4 boxes per row, then wrap to next row with a slight vertical drop.
+   */
+  layoutTileSpritesGrid(tileKey) {
+    const data = this.boxes.get(tileKey);
+    if (!data || data.sprites.length === 0) return;
+
+    const [sx, sy] = tileKey.split(",").map((v) => parseInt(v, 10));
+    const center = this.robotController.getTileWorldCenter(sx, sy);
+    if (!center) return;
+
+    const layer = this.scene.layer;
+    const map = this.robotController.map;
+    const tileW = map.tileWidth * (layer?.scaleX || 1);
+    const tileH = map.tileHeight * (layer?.scaleY || 1);
+
+    const BOX_Y_OFFSET = 14;
+    const COLS = 3; // 3 boxes per row
+    // Shift start a bit toward bottom-right so boxes stay inside the tile
+    // Bắt đầu hơi lệch về góc trên-bên phải của tile
+    const START_X = center.x + tileW * 0.06;
+    const START_Y = center.y - tileH * 0.16 + BOX_Y_OFFSET;
+    const STEP_X = Math.max(8, tileW * 0.13);
+    const STEP_Y = Math.max(12, tileH * 0.26);
+    // Isometric feel: deeper column descent; rows also shift a bit to the right
+    const COL_DROP_Y = Math.max(6, tileH * 0.14);
+    const ROW_SHIFT_X = Math.max(2, tileW * 0.02);
+
+    data.sprites.forEach((sprite, i) => {
+      if (!sprite) return;
+      const col = i % COLS;
+      const row = Math.floor(i / COLS);
+      let x = START_X + col * STEP_X + row * ROW_SHIFT_X;
+      let y = START_Y + row * STEP_Y + col * COL_DROP_Y;
+      // Dịch các hàng sau (row >= 1) về góc trên-trái, tăng dần theo số hàng
+      if (row >= 1) {
+        const rowFactor = row; // hàng 1,2,3... dịch mạnh dần
+        x -= tileW * 0.17 * rowFactor;
+        y -= tileH * 0.17 * rowFactor;
+      }
+      sprite.setPosition(x, y);
+      // Cập nhật depth theo y sau layout
+      sprite.setDepth(y - BOX_Y_OFFSET - 1);
+    });
   }
 
   /**
@@ -376,6 +495,7 @@ export class BoxManager {
       totalBoxes: this.totalBoxes,
       collectedBoxes: this.collectedBoxes,
       putBoxes: this.putBoxes,
+      carriedBoxes: this.carriedBoxes,
       remainingBoxes: this.totalBoxes - this.collectedBoxes,
     };
   }
@@ -388,6 +508,7 @@ export class BoxManager {
     this.totalBoxes = 0;
     this.collectedBoxes = 0;
     this.putBoxes = 0;
+    this.carriedBoxes = 0;
     console.log("📦 BoxManager reset");
   }
 

@@ -1,25 +1,19 @@
 {
   "version": "1.0.0",
-  "programName": "warehouse_number_box_demo",
+  "programName": "whileloop8_box_route",
   "actions": [
-    {
-      "type": "if",
-      "cond": {
-        "function": "warehouseCount",
-        "operator": ">",
-        "value": 0,
-        "check": true
-      },
-      "then": [
-        {
-          "type": "forward",
-          "count": 1
-        },
-        {
-          "type": "takeBox",
-          "count": 2
-        }
-      ]
-    }
+    { "type": "forward", "count": 1 },
+    { "type": "takeBox", "count": 6 },
+    { "type": "turnBack" },
+    { "type": "forward", "count": 2 },
+    { "type": "putBox", "count": 2 },
+    { "type": "turnBack" },
+    { "type": "forward", "count": 1 },
+    { "type": "turnRight" },
+    { "type": "forward", "count": 1 },
+    { "type": "putBox", "count": 2 },
+    { "type": "turnBack" },
+    { "type": "forward", "count": 2 },
+    { "type": "putBox", "count": 2 }
   ]
 }
