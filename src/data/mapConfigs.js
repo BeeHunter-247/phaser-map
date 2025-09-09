@@ -771,6 +771,11 @@ export const mapConfigs = {
         ],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 0, green: 1 }],
+      description:
+        "Help me collect green battery? Use if statement to check if the battery is green.",
+    },
   },
   conditional2: {
     robot: {
@@ -787,6 +792,11 @@ export const mapConfigs = {
         ],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 0, green: 4 }],
+      description:
+        "Help me collect 4 green battery? Use if statement to check if the battery is green and get number of green battery.",
+    },
   },
   conditional3: {
     robot: {
@@ -803,6 +813,11 @@ export const mapConfigs = {
         ],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 0, green: 6 }],
+      description:
+        "Help me collect 6 green battery? Use if statement to check if the battery is green and get number of green battery.",
+    },
   },
   conditional4: {
     robot: {
@@ -818,6 +833,11 @@ export const mapConfigs = {
         ],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 0, green: 3 }],
+      description:
+        "Help me collect green battery? Use if statement to check if the battery is green.",
+    },
   },
   conditional5: {
     robot: {
@@ -834,6 +854,11 @@ export const mapConfigs = {
         ],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 0, green: 4 }],
+      description:
+        "Use the if command to help me collect in the cells that have a battery count of 2 and are green batteries",
+    },
   },
   conditional6: {
     robot: {
@@ -855,6 +880,11 @@ export const mapConfigs = {
         ],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 0, green: 10 }],
+      description:
+        "Use the if command to help me collect in the cells that have a battery count of 2 and are green batteries",
+    }, 
   },
   conditional7: {
     robot: {
@@ -873,6 +903,11 @@ export const mapConfigs = {
         ],
       },
     ],
+    victory: {
+      byType: [{ red: 4, yellow: 0, green: 2 }],
+      description:
+        "Use the if command to help me collect in the cells that have a battery count of 2.",
+    },
   },
   conditional8: {
     robot: {
@@ -893,6 +928,11 @@ export const mapConfigs = {
         ],
       },
     ],
+    victory: {
+      byType: [{ red: 4, yellow: 4, green:  0}],
+      description:
+        "Use the if command to help me gather in the cells that have a battery count of 2 and are yellow or red batteries",
+    }, 
   },
   function1: {
     robot: {
@@ -904,6 +944,11 @@ export const mapConfigs = {
         tiles: [{ x: 4, y: 4, count: 2, type: "green" }],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 0, green:  1}],
+      description:
+        "Help me collect only green battery! Function name is myFunction1. Snap the walk block and irrigate plant block in to function block.",
+    }, 
   },
   function2: {
     robot: {
@@ -915,6 +960,11 @@ export const mapConfigs = {
         tiles: [{ x: 6, y: 4, count: 1, type: "green" }],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 0, green:  1}],
+      description:
+        "Help me collect only green battery! Use function to collect green battery.",
+    }, 
   },
   function3: {
     robot: {
@@ -929,6 +979,11 @@ export const mapConfigs = {
         ],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 0, green:  2}],
+      description:
+        "Help me collect green battery! Use function to collect green battery.",
+    }, 
   },
   function4: {
     robot: {
@@ -940,6 +995,11 @@ export const mapConfigs = {
         tiles: [{ x: 3, y: 4, count: 1, type: "green" }],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 0, green:  1}],
+      description:
+        "Help me collect green battery!",
+    }, 
   },
   function5: {
     robot: {
@@ -951,6 +1011,11 @@ export const mapConfigs = {
         tiles: [{ x: 4, y: 5, count: 2, type: "green" }],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 0, green:  2}],
+      description:
+        "Help me collect green battery!",
+    }, 
   },
   function6: {
     robot: {
@@ -965,6 +1030,11 @@ export const mapConfigs = {
         ],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 0, green:  10}],
+      description:
+        "Help me collect green battery!",
+    }, 
   },
   function7: {
     robot: {
@@ -980,6 +1050,11 @@ export const mapConfigs = {
         ],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 0, green:  9}],
+      description:
+        "Help me collect green battery!",
+    }, 
   },
   function8: {
     robot: {
@@ -997,6 +1072,11 @@ export const mapConfigs = {
         ],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 0, green:  5}],
+      description:
+        "Help me collect green battery!",
+    }, 
   },
   variable1: {
     robot: {
