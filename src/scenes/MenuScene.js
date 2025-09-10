@@ -25,7 +25,6 @@ export default class MenuScene extends Phaser.Scene {
 
     this.drawCategory("Conditional", 8, 100, 720);
     this.drawCategory("Function", 8, 100, 840);
-    this.drawCategory("Demo", 8, 100, 960);
 
     // Enable vertical scrolling (mouse wheel + drag to pan)
     const camera = this.cameras.main;
