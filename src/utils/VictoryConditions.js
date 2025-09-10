@@ -253,7 +253,7 @@ export function checkAndDisplayVictory(scene) {
     console.log(`   ${result.details.green}`);
   }
 
-  // Gửi kết quả đến webview bên ngoài
+  // Gửi kết quả đến webview bên ngoài (chỉ thắng/thua)
   sendBatteryCollectionResult(scene, result);
 
   return result;

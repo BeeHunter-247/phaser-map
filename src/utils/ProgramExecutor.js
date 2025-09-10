@@ -453,11 +453,7 @@ export class ProgramExecutor {
         import("./WebViewMessenger.js")
           .then(({ sendVictoryMessage }) => {
             if (typeof sendVictoryMessage === "function") {
-              sendVictoryMessage({
-                mapKey: this.scene.mapKey,
-                collected: victoryResult.collected,
-                required: victoryResult.required,
-              });
+              sendVictoryMessage();
             }
           })
           .catch((e) => console.warn("Cannot send victory message:", e));

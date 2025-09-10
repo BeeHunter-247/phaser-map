@@ -49,8 +49,8 @@ export function sendMessageToParent(type, data = {}) {
  * Gửi thông báo thắng đến trang web chứa iframe
  * @param {Object} victoryData - Dữ liệu về kết quả thắng
  */
-export function sendVictoryMessage(victoryData) {
-  return sendMessageToParent("VICTORY", victoryData);
+export function sendVictoryMessage() {
+  return sendMessageToParent("VICTORY", { isVictory: true });
 }
 
 /**
@@ -65,8 +65,8 @@ export function sendProgressMessage(progressData) {
  * Gửi thông báo thua đến trang web chứa iframe
  * @param {Object} loseData - Dữ liệu về thua cuộc
  */
-export function sendLoseMessage(loseData) {
-  return sendMessageToParent("LOSE", loseData);
+export function sendLoseMessage() {
+  return sendMessageToParent("LOSE", { isVictory: false });
 }
 
 /**
@@ -119,24 +119,11 @@ export function sendReadyMessage() {
  * @param {Object} victoryResult - Kết quả kiểm tra thắng thua
  */
 export function sendBatteryCollectionResult(scene, victoryResult) {
-  const messageType = victoryResult.isVictory ? "VICTORY" : "PROGRESS";
+  const messageType = victoryResult.isVictory ? "VICTORY" : "LOSE";
 
-  const messageData = {
-    mapKey: scene.mapKey,
+  return sendMessageToParent(messageType, {
     isVictory: victoryResult.isVictory,
-    progress: victoryResult.progress,
-    message: victoryResult.message,
-    collected: {
-      total: victoryResult.collected.total,
-      byType: victoryResult.collected.byType,
-    },
-    required: {
-      total: victoryResult.required.total,
-      byType: victoryResult.required.byType,
-    },
-  };
-
-  return sendMessageToParent(messageType, messageData);
+  });
 }
 
 /**
