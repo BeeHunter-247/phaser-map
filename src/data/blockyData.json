@@ -1,42 +1,42 @@
 {
-    "version": "1.0.0",
-    "programName": "move_5_steps_turn_right_demo",
-    "actions": [
-        {
-            "type": "turnBack"
-        },
-        {
-            "type": "forward",
-            "count": 3
-        },
-        {
-            "type": "collect",
-            "color": "yellow",
-            "count": 3
-        },
-        {
-            "type": "turnRight"
-        },
-        {
-            "type": "forward",
-            "count": 3
-        },
-        {
-            "type": "collect",
-            "color": "yellow",
-            "count": 3
-        },
-        {
-            "type": "turnRight"
-        },
-        {
-            "type": "forward",
-            "count": 3
-        },
-        {
-            "type": "collect",
-            "color": "yellow",
-            "count": 3
-        }
-    ]
+  "version": "1.0.0",
+  "programName": "move_5_steps_turn_right_demo",
+  "actions": [
+    {
+      "type": "turnBack"
+    },
+    {
+      "type": "forward",
+      "count": 3
+    },
+    {
+      "type": "collect",
+      "color": "yellow",
+      "count": 3
+    },
+    {
+      "type": "turnRight"
+    },
+    {
+      "type": "forward",
+      "count": 3
+    },
+    {
+      "type": "collect",
+      "color": "yellow",
+      "count": 3
+    },
+    {
+      "type": "turnRight"
+    },
+    {
+      "type": "forward",
+      "count": 3
+    },
+    {
+      "type": "collect",
+      "color": "yellow",
+      "count": 3
+    }
+  ]
 }

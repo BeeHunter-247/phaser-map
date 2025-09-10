@@ -51,6 +51,9 @@ export class RobotController {
     this.robotDirection = this.getDirectionIndex(configDirection);
     this.updateRobotRotation();
 
+    // Đảm bảo robot nổi trên các đối tượng khác theo tọa độ Y
+    this.updateRobotDepth();
+
     // Log initial robot state
     console.log(
       `🤖 Robot initialized at tile (${this.robotTileX}, ${this.robotTileY})`
@@ -59,6 +62,15 @@ export class RobotController {
       `   Facing: ${this.getCurrentDirection()} (from config: "${configDirection}")`
     );
     console.log(`   Robot sprite: robot_${configDirection}`);
+  }
+
+  /**
+   * Cập nhật depth để robot luôn ở trên các object khác cùng tile
+   */
+  updateRobotDepth() {
+    if (!this.robot) return;
+    // Depth theo y: cao hơn box (y-1) nhưng thấp hơn pin (sẽ đặt y+20)
+    this.robot.setDepth(this.robot.y + 10);
   }
 
   /**
@@ -241,9 +253,13 @@ export class RobotController {
       y: targetPos.y + 30,
       duration: 300,
       ease: "Power2",
+      onUpdate: () => {
+        this.updateRobotDepth();
+      },
       onComplete: () => {
         this.isMoving = false;
         console.log(`Arrived at tile (${this.robotTileX}, ${this.robotTileY})`);
+        this.updateRobotDepth();
       },
     });
 
@@ -264,6 +280,7 @@ export class RobotController {
     // Quay trái: North → West → South → East → North
     this.robotDirection = (this.robotDirection - 1 + 4) % 4;
     this.updateRobotRotation();
+    this.updateRobotDepth();
 
     console.log(`Turned left: ${oldDirection} → ${this.getCurrentDirection()}`);
     console.log(
@@ -286,6 +303,7 @@ export class RobotController {
     // Quay phải: North → East → South → West → North
     this.robotDirection = (this.robotDirection + 1) % 4;
     this.updateRobotRotation();
+    this.updateRobotDepth();
 
     console.log(
       `Turned right: ${oldDirection} → ${this.getCurrentDirection()}`
@@ -310,6 +328,7 @@ export class RobotController {
     // Quay 180 độ: North ↔ South, East ↔ West
     this.robotDirection = (this.robotDirection + 2) % 4;
     this.updateRobotRotation();
+    this.updateRobotDepth();
 
     console.log(
       `Turned around: ${oldDirection} → ${this.getCurrentDirection()}`
