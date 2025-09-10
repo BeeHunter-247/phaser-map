@@ -9,22 +9,25 @@ export default class MenuScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor("#f4f4f9");
 
     // Gọi hàm để vẽ menu cho Basic (8 maps)
-    this.drawCategory("Basic", 8, 100, 120);
+    this.drawCategory("Basic", 8, 420, 120);
 
     // Gọi hàm để vẽ menu cho Boolean (8 maps)
-    this.drawCategory("Boolean", 8, 100, 240);
+    this.drawCategory("Boolean", 8, 420, 240);
 
     // Gọi hàm để vẽ menu cho ForLoop (8 maps)
-    this.drawCategory("ForLoop", 8, 100, 360);
+    this.drawCategory("ForLoop", 8, 420, 360);
 
     // Gọi hàm để vẽ menu cho Repeat (8 maps)
-    this.drawCategory("Repeat", 8, 100, 480);
+    this.drawCategory("Repeat", 8, 420, 480);
 
     // Gọi hàm để vẽ menu cho WhileLoop (8 maps)
-    this.drawCategory("WhileLoop", 8, 100, 600);
+    this.drawCategory("WhileLoop", 8, 420, 600);
 
-    this.drawCategory("Conditional", 8, 100, 720);
-    this.drawCategory("Function", 8, 100, 840);
+    this.drawCategory("Conditional", 8, 420, 720);
+
+    this.drawCategory("Function", 8, 420, 840);
+
+    this.drawCategory("Variable", 8, 420, 960);
 
     // Enable vertical scrolling (mouse wheel + drag to pan)
     const camera = this.cameras.main;
