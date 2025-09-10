@@ -576,6 +576,8 @@ export const mapConfigs = {
     ],
     victory: {
       byType: [{ red: 0, yellow: 6, green: 4 }],
+      description:
+        "🔁 Use repeat to collect all batteries following a simple pattern. 🔋",
     },
   },
 
@@ -601,6 +603,8 @@ export const mapConfigs = {
     ],
     victory: {
       byType: [{ red: 0, yellow: 8, green: 0 }],
+      description:
+        "🔁 Use repeat to move in a checkerboard pattern and collect 8 yellow batteries. 🧩",
     },
   },
 
@@ -621,6 +625,8 @@ export const mapConfigs = {
     ],
     victory: {
       byType: [{ red: 0, yellow: 6, green: 0 }],
+      description:
+        "🔁 Use repeat to collect 1–2–3 yellow batteries along the same row. ➡️",
     },
   },
 
@@ -646,6 +652,8 @@ export const mapConfigs = {
     ],
     victory: {
       byType: [{ red: 0, yellow: 20, green: 0 }],
+      description:
+        "🔁 Use repeat to collect increasing/decreasing sequences on both edges. 📈📉↔️",
     },
   },
 
@@ -665,6 +673,8 @@ export const mapConfigs = {
     ],
     victory: {
       byType: [{ red: 0, yellow: 5, green: 0 }],
+      description:
+        "🔁 Use repeat to collect 3 and 2 yellow batteries at two positions. ↔️",
     },
   },
 
@@ -681,6 +691,7 @@ export const mapConfigs = {
     ],
     victory: {
       byType: [{ red: 0, yellow: 1, green: 0 }],
+      description: "🔁 Use repeat to move and collect 1 yellow battery. ➡️🔋",
     },
   },
 
@@ -702,6 +713,8 @@ export const mapConfigs = {
     ],
     victory: {
       byType: [{ red: 0, yellow: 15, green: 0 }],
+      description:
+        "🔁 Use repeat to collect 8–4–2–1 yellow batteries at marked tiles. 📐",
     },
   },
 
@@ -722,6 +735,8 @@ export const mapConfigs = {
     ],
     victory: {
       byType: [{ red: 0, yellow: 8, green: 0 }],
+      description:
+        "🔁 Use repeat to collect 5–3–1 yellow batteries on the bottom row. ⬇️",
     },
   },
 
@@ -740,6 +755,8 @@ export const mapConfigs = {
     ],
     victory: {
       byType: [{ x: 6, y: 4, count: 2 }],
+      description:
+        "📦 Box: Take 2 from the warehouse and place 2 at a new location. ➡️🎯",
     },
   },
 
@@ -757,6 +774,8 @@ export const mapConfigs = {
     ],
     victory: {
       byType: [{ x: 6, y: 4, count: 2 }],
+      description:
+        "📦 Boxes: facing west, move 2 from the warehouse and place 2 at a new location. ⬅️🎯",
     },
   },
 
@@ -774,6 +793,8 @@ export const mapConfigs = {
     ],
     victory: {
       byType: [{ x: 6, y: 4, count: 6 }],
+      description:
+        "📦 Boxes: move 6 boxes from warehouse and place 6 at a new location. ➡️🎯",
     },
   },
 
@@ -791,6 +812,8 @@ export const mapConfigs = {
     ],
     victory: {
       byType: [{ x: 7, y: 4, count: 3 }],
+      description:
+        "📦 Boxes: move 3 boxes from warehouse and place 3 at a new location. ➡️🎯",
     },
   },
 
@@ -812,6 +835,8 @@ export const mapConfigs = {
         { x: 7, y: 6, count: 1 },
         { x: 7, y: 4, count: 1 },
       ],
+      description:
+        "📦 Boxes: Collect 3 boxes and place 1 box at each block with 4 gold lines. 🎯🎯🎯",
     },
   },
 
@@ -832,6 +857,7 @@ export const mapConfigs = {
         { x: 6, y: 4, count: 3 },
         { x: 8, y: 4, count: 3 },
       ],
+      description: "📦 Boxes: split 6 boxes for new positions, 3 each. ➗",
     },
   },
 
@@ -852,6 +878,7 @@ export const mapConfigs = {
         { x: 6, y: 2, count: 2 },
         { x: 6, y: 6, count: 2 },
       ],
+      description: "📦 Boxes: split 4 boxes for new positions, 2 each. ➗",
     },
   },
 
@@ -873,6 +900,7 @@ export const mapConfigs = {
         { x: 5, y: 6, count: 2 },
         { x: 6, y: 5, count: 2 },
       ],
+      description: "📦 Boxes: split 6 boxes for 3 new positions, 2 each. ➗",
     },
   },
   conditional1: {

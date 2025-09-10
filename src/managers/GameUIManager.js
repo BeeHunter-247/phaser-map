@@ -3,6 +3,7 @@ import {
   updateBatteryStatusText,
   VictoryConditions,
 } from "../utils/VictoryConditions.js";
+import { mapConfigs } from "../data/mapConfigs.js";
 
 /**
  * GameUIManager - Quản lý UI elements và notifications
@@ -96,6 +97,26 @@ export class GameUIManager {
    */
   showVictoryRequirements() {
     try {
+      // Ưu tiên: Map dạng BOX → hiển thị mô tả box (nếu có)
+      const requiredBoxes = VictoryConditions.getRequiredBoxes(
+        this.scene.mapKey
+      );
+      if (requiredBoxes && requiredBoxes.length > 0) {
+        const cfg = mapConfigs[this.scene.mapKey];
+        const desc = cfg && cfg.victory ? cfg.victory.description : undefined;
+        let messageBody = desc;
+        if (!messageBody) {
+          // Tự tạo mô tả ngắn nếu thiếu description
+          const parts = requiredBoxes.map((t) => `(${t.x},${t.y}): ${t.count}`);
+          messageBody = `Boxes: place exact counts at targets → ${parts.join(
+            " • "
+          )}`;
+        }
+        const message = ` ${messageBody}`;
+        this.showPersistentBanner(message, "#2563EB");
+        return;
+      }
+
       const required = VictoryConditions.getRequiredBatteries(
         this.scene.mapKey
       );
