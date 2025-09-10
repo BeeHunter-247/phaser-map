@@ -250,7 +250,7 @@ export default class Scene extends Phaser.Scene {
     try {
       import("../../utils/WebViewMessenger.js").then(({ sendLoseMessage }) => {
         if (typeof sendLoseMessage === "function") {
-          sendLoseMessage({ mapKey: this.mapKey, reason });
+          sendLoseMessage();
         }
       });
     } catch (e) {
