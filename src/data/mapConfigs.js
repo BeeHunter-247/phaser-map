@@ -1190,6 +1190,7 @@ export const mapConfigs = {
       description: "Help me collect green battery!",
     },
   },
+
   variable1: {
     robot: {
       tile: { x: 4, y: 4 }, // Robot ở vị trí (1,3)
@@ -1200,7 +1201,13 @@ export const mapConfigs = {
         tiles: [{ x: 6, y: 4, count: 2, type: "yellow" }],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 2, green: 0 }],
+      description:
+        "Help me collect only yellow 🟨 battery! 💡 Let's create a variable and assign it a value of 2.",
+    },
   },
+
   variable2: {
     robot: {
       tile: { x: 3, y: 5 }, // Robot ở vị trí (1,3)
@@ -1211,7 +1218,13 @@ export const mapConfigs = {
         tiles: [{ x: 6, y: 5, count: 3, type: "yellow" }],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 3, green: 0 }],
+      description:
+        "Help me collect only yellow 🟨 battery! 💡 Let's create a variable and assign it a value of 3.",
+    },
   },
+
   variable3: {
     robot: {
       tile: { x: 2, y: 5 }, // Robot ở vị trí (1,3)
@@ -1226,7 +1239,13 @@ export const mapConfigs = {
         ],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 6, green: 0 }],
+      description:
+        "Help me collect only yellow 🟨 battery! 💡 Let's create a variable and assign it a value of 2.",
+    },
   },
+
   variable4: {
     robot: {
       tile: { x: 3, y: 3 }, // Robot ở vị trí (1,3)
@@ -1241,7 +1260,13 @@ export const mapConfigs = {
         ],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 9, green: 0 }],
+      description:
+        "Help me collect only yellow 🟨 battery! 💡 Let's create a variable.",
+    },
   },
+
   variable5: {
     robot: {
       tile: { x: 3, y: 4 }, // Robot ở vị trí (1,3)
@@ -1257,7 +1282,14 @@ export const mapConfigs = {
         ],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 10, green: 0 }],
+      description:
+        "Help me collect only yellow 🟨 battery! 💡 Let's create a variable and assign it a value of 3. " +
+        "Remember to increase the value of the variable by 1. Add to variable 1.",
+    },
   },
+
   variable6: {
     robot: {
       tile: { x: 2, y: 3 }, // Robot ở vị trí (1,3)
@@ -1272,7 +1304,14 @@ export const mapConfigs = {
         ],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 6, green: 0 }],
+      description:
+        "Let's create a variable and assign it a value of 3. " +
+        "💡Remember to subtract the value of the variable by 1. Add to variable -1.",
+    },
   },
+
   variable7: {
     robot: {
       tile: { x: 1, y: 5 }, // Robot ở vị trí (1,3)
@@ -1287,7 +1326,14 @@ export const mapConfigs = {
         ],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 12, green: 0 }],
+      description:
+        "Let's create a variable and assign it a value of 3. " +
+        "💡Remember to subtract the value of the variable by 1. Add to variable -1.",
+    },
   },
+
   variable8: {
     robot: {
       tile: { x: 2, y: 3 }, // Robot ở vị trí (1,3)
@@ -1303,6 +1349,11 @@ export const mapConfigs = {
         ],
       },
     ],
+    victory: {
+      byType: [{ red: 0, yellow: 10, green: 0 }],
+      description:
+        "Help me collect only yellow 🟨 battery! 💡Let's create a variable. ",
+    },
   },
 };
 
