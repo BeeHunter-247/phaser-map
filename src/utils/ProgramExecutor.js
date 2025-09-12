@@ -218,15 +218,36 @@ export class ProgramExecutor {
 
     switch (action.type) {
       case "if": {
-        // Giữ nguyên cấu trúc if để đánh giá ở runtime
+        // Giữ nguyên cấu trúc if để đánh giá ở runtime, mở rộng hỗ trợ else-if và else
         const thenActions = Array.isArray(action.then)
           ? this.parseActions(action.then)
           : [];
         const condition = this.parseCondition(action.cond);
+
+        // else-if: mảng các object { cond, then }
+        const rawElseIf = Array.isArray(action.elseIf) ? action.elseIf : [];
+        const elseIfClauses = rawElseIf
+          .map((clause) => {
+            if (!clause || typeof clause !== "object") return null;
+            const c = this.parseCondition(clause.cond);
+            const a = Array.isArray(clause.then)
+              ? this.parseActions(clause.then)
+              : [];
+            return { condition: c, thenActions: a };
+          })
+          .filter((x) => x !== null);
+
+        // else: danh sách actions
+        const elseActions = Array.isArray(action.else)
+          ? this.parseActions(action.else)
+          : [];
+
         return {
           type: "if",
           condition,
           thenActions,
+          elseIfClauses,
+          elseActions,
           original: action,
         };
       }
@@ -547,26 +568,67 @@ export class ProgramExecutor {
       // Lấy context biến từ action (nếu có)
       const variableContext = action._currentVariableValue || {};
 
-      const result = this.evaluateCondition(action.condition, variableContext);
-      console.log(
-        `🤔 IF condition (${
-          action.condition?.functionName || action.condition?.type
-        }) => ${result}`
-      );
-      if (
-        result &&
-        Array.isArray(action.thenActions) &&
-        action.thenActions.length > 0
-      ) {
-        // Chèn thenActions ngay sau currentStep
+      // Chuỗi nhánh: IF → (ELSE-IF)* → ELSE
+      const branches = [];
+
+      // Nhánh IF đầu tiên
+      branches.push({
+        condition: action.condition,
+        actions: Array.isArray(action.thenActions) ? action.thenActions : [],
+        label: "IF",
+      });
+
+      // Các nhánh ELSE-IF nếu có
+      const elseIfs = Array.isArray(action.elseIfClauses)
+        ? action.elseIfClauses
+        : [];
+      elseIfs.forEach((cl, idx) => {
+        branches.push({
+          condition: cl?.condition || null,
+          actions: Array.isArray(cl?.thenActions) ? cl.thenActions : [],
+          label: `ELSE-IF#${idx + 1}`,
+        });
+      });
+
+      // ELSE actions nếu có
+      const elseActions = Array.isArray(action.elseActions)
+        ? action.elseActions
+        : [];
+
+      // Tìm nhánh phù hợp đầu tiên
+      let selectedActions = null;
+      for (const br of branches) {
+        const ok = this.evaluateCondition(br.condition, variableContext);
+        console.log(
+          `🤔 ${br.label} condition (${
+            br.condition?.functionName || br.condition?.type
+          }) => ${ok}`
+        );
+        if (ok) {
+          selectedActions = br.actions;
+          break;
+        }
+      }
+
+      // Nếu không có nhánh nào khớp, dùng ELSE
+      if (!selectedActions || selectedActions.length === 0) {
+        if (elseActions.length > 0) {
+          selectedActions = elseActions;
+          console.log(
+            `🧩 Using ELSE branch with ${elseActions.length} action(s)`
+          );
+        }
+      }
+
+      if (Array.isArray(selectedActions) && selectedActions.length > 0) {
         const insertIndex = this.currentStep + 1;
         this.program.actions.splice(
           insertIndex,
           0,
-          ...action.thenActions.map((a) => ({ ...a }))
+          ...selectedActions.map((a) => ({ ...a }))
         );
         console.log(
-          `🧩 Inserted ${action.thenActions.length} action(s) at ${insertIndex}`
+          `🧩 Inserted ${selectedActions.length} action(s) at ${insertIndex}`
         );
       }
       return true;
