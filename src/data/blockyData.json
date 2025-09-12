@@ -1,42 +1,33 @@
 {
   "version": "1.0.0",
-  "programName": "move_5_steps_turn_right_demo",
+  "programName": "condition_demo",
   "actions": [
     {
-      "type": "turnBack"
-    },
-    {
-      "type": "forward",
-      "count": 3
-    },
-    {
-      "type": "collect",
-      "color": "yellow",
-      "count": 3
-    },
-    {
-      "type": "turnRight"
-    },
-    {
-      "type": "forward",
-      "count": 3
-    },
-    {
-      "type": "collect",
-      "color": "yellow",
-      "count": 3
-    },
-    {
-      "type": "turnRight"
-    },
-    {
-      "type": "forward",
-      "count": 3
-    },
-    {
-      "type": "collect",
-      "color": "yellow",
-      "count": 3
+      "type": "repeatRange",
+      "variable": "i",
+      "from": 1,
+      "to": 5,
+      "step": 1,
+      "body": [
+        { "type": "forward", "count": 1 },
+        {
+          "type": "if",
+          "cond": {
+            "type": "condition",
+            "function": "isGreen",
+            "check": true
+          },
+          "then": [
+            { "type": "collect", "color": "green", "count": 3 }
+          ],
+          "elseIf": [
+            {
+              "cond": { "type": "condition", "function": "isRed", "check": true },
+              "then": [ { "type": "collect", "color": "red", "count": 1 } ]
+            }
+         ]
+        }
+      ]
     }
   ]
 }
