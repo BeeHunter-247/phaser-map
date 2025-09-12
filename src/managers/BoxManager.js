@@ -1,6 +1,7 @@
 /**
  * BoxManager - Quản lý boxes trên map
  */
+import { VictoryConditions } from "../utils/VictoryConditions.js";
 export class BoxManager {
   constructor(scene) {
     this.scene = scene;
@@ -172,6 +173,18 @@ export class BoxManager {
   }
 
   /**
+   * Lấy vị trí tile phía trước robot (ô trước mặt)
+   * @returns {Object} {x, y} coordinates of front tile
+   */
+  getFrontTilePosition() {
+    if (!this.robotController) {
+      console.error("❌ RobotController not initialized");
+      return null;
+    }
+    return this.robotController.getFrontTile();
+  }
+
+  /**
    * Lấy thông tin boxes tại tile hiện tại của robot
    */
   getBoxesAtCurrentTile() {
@@ -179,6 +192,17 @@ export class BoxManager {
     if (!currentTile) return null;
 
     const tileKey = `${currentTile.x},${currentTile.y}`;
+    return this.getBoxesAtTile(tileKey);
+  }
+
+  /**
+   * Lấy thông tin boxes tại tile phía trước robot
+   */
+  getBoxesAtFrontTile() {
+    const frontTile = this.getFrontTilePosition();
+    if (!frontTile) return null;
+
+    const tileKey = `${frontTile.x},${frontTile.y}`;
     return this.getBoxesAtTile(tileKey);
   }
 
@@ -206,6 +230,14 @@ export class BoxManager {
   }
 
   /**
+   * Kiểm tra có box tại tile phía trước robot không
+   */
+  hasBoxAtFrontTile() {
+    const info = this.getBoxesAtFrontTile();
+    return info && info.count > 0;
+  }
+
+  /**
    * Kiểm tra có box tại tile cụ thể không
    */
   hasBoxAtTile(tileKey) {
@@ -219,23 +251,31 @@ export class BoxManager {
    * @returns {boolean} Success/failure
    */
   takeBox(count = 1) {
-    const currentTile = this.robotController.getCurrentTilePosition();
-    if (!currentTile) {
-      console.error("❌ No current tile for robot");
+    const frontTile = this.getFrontTilePosition();
+    if (!frontTile) {
+      console.error("❌ No front tile for robot");
       return false;
     }
 
-    const tileKey = `${currentTile.x},${currentTile.y}`;
+    // Kiểm tra ô trước mặt có hợp lệ không
+    if (!this.robotController.isWithinBounds(frontTile.x, frontTile.y)) {
+      console.error(
+        `❌ Front tile (${frontTile.x}, ${frontTile.y}) is out of bounds`
+      );
+      return false;
+    }
+
+    const tileKey = `${frontTile.x},${frontTile.y}`;
     const tileData = this.boxes.get(tileKey);
 
-    console.log(`📦 currentTile: ${currentTile}`);
+    console.log(`📦 frontTile: ${frontTile}`);
     console.log(`📦 boxes: ${this.boxes}`);
     console.log(`📦 tileKey: ${tileKey}`);
     console.log(`📦 tileData: ${tileData}`);
 
     if (!tileData || tileData.count < count) {
       console.error(
-        `❌ Not enough boxes at ${tileKey}. Available: ${
+        `❌ Not enough boxes at front tile ${tileKey}. Available: ${
           tileData?.count || 0
         }, Requested: ${count}`
       );
@@ -267,7 +307,7 @@ export class BoxManager {
     }
 
     console.log(
-      `📦 Took ${count} box(es) from ${tileKey}. Remaining: ${tileData.count}`
+      `📦 Took ${count} box(es) from front tile ${tileKey}. Remaining: ${tileData.count}`
     );
 
     // Kiểm tra thắng thua
@@ -292,13 +332,43 @@ export class BoxManager {
       );
       return false;
     }
-    const currentTile = this.robotController.getCurrentTilePosition();
-    if (!currentTile) {
-      console.error("❌ No current tile for robot");
+
+    const frontTile = this.getFrontTilePosition();
+    if (!frontTile) {
+      console.error("❌ No front tile for robot");
       return false;
     }
 
-    const tileKey = `${currentTile.x},${currentTile.y}`;
+    // Kiểm tra ô trước mặt có hợp lệ không
+    if (!this.robotController.isWithinBounds(frontTile.x, frontTile.y)) {
+      console.error(
+        `❌ Front tile (${frontTile.x}, ${frontTile.y}) is out of bounds`
+      );
+      return false;
+    }
+
+    const tileKey = `${frontTile.x},${frontTile.y}`;
+
+    // Ràng buộc: chỉ cho phép đặt box tại các vị trí mục tiêu (nếu map định nghĩa bằng toạ độ)
+    try {
+      const requiredTargets = VictoryConditions.getRequiredBoxes(
+        this.scene.mapKey
+      );
+      if (Array.isArray(requiredTargets) && requiredTargets.length > 0) {
+        const allowed = new Set(requiredTargets.map((t) => `${t.x},${t.y}`));
+        if (!allowed.has(tileKey)) {
+          console.error(
+            `❌ Cannot put box at ${tileKey}. Not a target position.`
+          );
+          if (this.scene && typeof this.scene.lose === "function") {
+            this.scene.lose(`Đặt hộp sai vị trí mục tiêu (${tileKey}).`);
+          }
+          return false;
+        }
+      }
+    } catch (e) {
+      // Bỏ qua nếu không có cấu hình victory phù hợp
+    }
 
     // Khởi tạo tile nếu chưa có
     if (!this.boxes.has(tileKey)) {
@@ -314,8 +384,8 @@ export class BoxManager {
     // Tạo sprites cho boxes mới
     for (let i = 0; i < count; i++) {
       const boxSprite = this.createBoxSprite(
-        currentTile.x,
-        currentTile.y,
+        frontTile.x,
+        frontTile.y,
         i,
         tileData.count + i
       );
@@ -335,7 +405,7 @@ export class BoxManager {
     this.carriedBoxes -= count; // Giảm số đang mang
 
     console.log(
-      `📦 Put ${count} box(es) at ${tileKey}. Total: ${tileData.count}`
+      `📦 Put ${count} box(es) at front tile ${tileKey}. Total: ${tileData.count}`
     );
 
     // Re-layout after placing

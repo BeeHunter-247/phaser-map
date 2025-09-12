@@ -830,13 +830,9 @@ export const mapConfigs = {
       },
     ],
     victory: {
-      byType: [
-        { x: 3, y: 6, count: 1 },
-        { x: 7, y: 6, count: 1 },
-        { x: 7, y: 4, count: 1 },
-      ],
+      byType: [{ x: 7, y: 4, count: 3 }],
       description:
-        "📦 Boxes: Collect 3 boxes and place 1 box at each block with 4 gold lines. 🎯🎯🎯",
+        "📦 Boxes: Collect 3 boxes and place them all on block with 4 gold lines. 🎯🎯🎯",
     },
   },
 

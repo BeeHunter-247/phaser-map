@@ -963,7 +963,7 @@ export class ProgramExecutor {
         console.error(`❌ Failed to put ${count} box(es)`);
         if (this.scene && typeof this.scene.lose === "function") {
           this.scene.lose(
-            `Không thể đặt ${count} hộp (vượt quá số đang mang hoặc lỗi vị trí).`
+            `Không thể đặt ${count} hộp (vượt quá số đang mang hoặc ô trước mặt không hợp lệ).`
           );
         }
         return false;
@@ -991,7 +991,7 @@ export class ProgramExecutor {
         console.error(`❌ Failed to take ${count} box(es)`);
         if (this.scene && typeof this.scene.lose === "function") {
           this.scene.lose(
-            `Không thể lấy ${count} hộp (không đủ hộp tại ô hiện tại).`
+            `Không thể lấy ${count} hộp (không đủ hộp tại ô trước mặt).`
           );
         }
         return false;
