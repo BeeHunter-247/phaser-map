@@ -11,12 +11,11 @@ import { MapModel } from "../models/MapModel.js";
 export class ConfigLoader {
   /**
    * Load map config từ map.json và challenge.json
-   * @param {string} mapKey - Map key (hiện tại chỉ dùng để tương thích)
    * @returns {Promise<MapModel>} Map model instance
    */
-  static async loadMapModel(mapKey = "default") {
+  static async loadMapModel() {
     try {
-      console.log(`🗺️ Loading map config for: ${mapKey}`);
+      console.log(`🗺️ Loading map config`);
 
       // Load challenge config
       const challengeConfig = await this.loadChallengeConfig();
@@ -26,7 +25,7 @@ export class ConfigLoader {
 
       // Merge configs và tạo MapModel
       const fullConfig = {
-        mapKey: mapKey,
+        mapKey: "default",
         width: mapData.width || 10,
         height: mapData.height || 10,
         tileSize: mapData.tilewidth || 128,
@@ -35,7 +34,6 @@ export class ConfigLoader {
       };
 
       console.log("✅ Loaded config:", {
-        mapKey,
         width: fullConfig.width,
         height: fullConfig.height,
         robot: !!fullConfig.robot,
@@ -43,9 +41,9 @@ export class ConfigLoader {
         boxes: fullConfig.boxes?.length || 0,
       });
 
-      return MapModel.fromConfig(mapKey, fullConfig);
+      return MapModel.fromConfig("default", fullConfig);
     } catch (error) {
-      console.error(`❌ Failed to load map config for ${mapKey}:`, error);
+      console.error(`❌ Failed to load map config:`, error);
       throw error;
     }
   }
@@ -208,31 +206,10 @@ export class ConfigLoader {
   }
 
   /**
-   * Get available maps (tương thích với code cũ)
-   * @returns {Promise<Array<string>>} Available map keys
+   * Load map model (tương thích với code cũ)
+   * @returns {Promise<MapModel>} Map model
    */
-  static async getAvailableMaps() {
-    // Hiện tại chỉ có 1 map, nhưng có thể mở rộng sau
-    return ["default"];
-  }
-
-  /**
-   * Load tất cả map models (tương thích với code cũ)
-   * @returns {Promise<Map<string, MapModel>>} Map of all map models
-   */
-  static async loadAllMapModels() {
-    const maps = new Map();
-    const availableMaps = await this.getAvailableMaps();
-
-    for (const mapKey of availableMaps) {
-      try {
-        const mapModel = await this.loadMapModel(mapKey);
-        maps.set(mapKey, mapModel);
-      } catch (error) {
-        console.error(`Failed to load map ${mapKey}:`, error);
-      }
-    }
-
-    return maps;
+  static async loadDefaultMapModel() {
+    return await this.loadMapModel();
   }
 }

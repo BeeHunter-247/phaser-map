@@ -51,16 +51,23 @@ export default class Scene extends Phaser.Scene {
 
   /**
    * Receive params when starting the scene
-   * @param {{ mapKey?: string }} data
+   * @param {{ mapJson?: Object, challengeJson?: Object }} data
    */
   init(data) {
-    this.mapKey = data && data.mapKey ? data.mapKey : "default";
+    this.mapJson = data && data.mapJson ? data.mapJson : null;
+    this.challengeJson = data && data.challengeJson ? data.challengeJson : null;
   }
 
   preload() {
-    // Load map json từ file map.json
-    const mapJsonPath = `assets/maps/map.json`;
-    this.load.tilemapTiledJSON(this.mapKey, mapJsonPath);
+    // Load map json từ file map.json hoặc từ webview
+    if (this.mapJson) {
+      // Sử dụng mapJson từ webview - không cần preload vì đã có data
+      console.log("📥 Using mapJson from webview");
+    } else {
+      // Sử dụng file map.json mặc định
+      const mapJsonPath = `assets/maps/map.json`;
+      this.load.tilemapTiledJSON("default", mapJsonPath);
+    }
 
     // Load example Blockly JSON program
     this.load.json("blockyData", "src/data/blockyData.json");
@@ -91,21 +98,29 @@ export default class Scene extends Phaser.Scene {
 
   async create() {
     try {
-      // Load map model từ config
-      this.mapModel = await ConfigLoader.loadMapModel(this.mapKey);
-      // Lưu challenge config để sử dụng trong managers
-      this.challengeConfig = await ConfigLoader.loadChallengeConfig();
-      console.log(
-        `🗺️ Loaded map model: ${this.mapKey}`,
-        this.mapModel.getStatistics()
-      );
+      // Load map model từ config hoặc từ webview
+      if (this.challengeJson) {
+        // Sử dụng challengeJson từ webview
+        this.mapModel = await this.loadMapModelFromWebview();
+        this.challengeConfig = this.challengeJson;
+      } else {
+        // Sử dụng config mặc định
+        this.mapModel = await ConfigLoader.loadMapModel("default");
+        this.challengeConfig = await ConfigLoader.loadChallengeConfig();
+      }
+
+      console.log(`🗺️ Loaded map model`, this.mapModel.getStatistics());
 
       // Load map visual từ Tiled
-      const mapData = MapLoader.loadMap(this, this.mapKey, {
-        offsetX: 500,
-        offsetY: 0,
-        scale: 1,
-      });
+      const mapData = MapLoader.loadMap(
+        this,
+        {
+          offsetX: 500,
+          offsetY: 0,
+          scale: 1,
+        },
+        this.mapJson
+      );
 
       this.map = mapData.map;
       this.layer = mapData.layer;
@@ -125,6 +140,53 @@ export default class Scene extends Phaser.Scene {
       console.error("❌ Failed to create scene:", error);
       // Fallback to old method if model loading fails
       await this.createFallback();
+    }
+  }
+
+  /**
+   * Load map model từ webview data
+   * @returns {Promise<MapModel>} Map model instance
+   */
+  async loadMapModelFromWebview() {
+    try {
+      // Load map data từ webview hoặc file mặc định
+      let mapData;
+      if (this.mapJson) {
+        mapData = this.mapJson;
+      } else {
+        const response = await fetch("/assets/maps/map.json");
+        mapData = await response.json();
+      }
+
+      // Transform challenge config để phù hợp với MapModel
+      const transformedConfig = ConfigLoader.transformChallengeConfig(
+        this.challengeJson
+      );
+
+      // Merge configs và tạo MapModel
+      const fullConfig = {
+        mapKey: "webview",
+        width: mapData.width || 10,
+        height: mapData.height || 10,
+        tileSize: mapData.tilewidth || 128,
+        ...transformedConfig,
+        mapData: mapData,
+      };
+
+      console.log("✅ Loaded config from webview:", {
+        width: fullConfig.width,
+        height: fullConfig.height,
+        robot: !!fullConfig.robot,
+        batteries: fullConfig.batteries?.length || 0,
+        boxes: fullConfig.boxes?.length || 0,
+      });
+
+      // Import MapModel dynamically để tránh circular dependency
+      const { MapModel } = await import("../models/MapModel.js");
+      return MapModel.fromConfig("webview", fullConfig);
+    } catch (error) {
+      console.error("❌ Failed to load map model from webview:", error);
+      throw error;
     }
   }
 
@@ -325,11 +387,15 @@ export default class Scene extends Phaser.Scene {
     console.warn("⚠️ Using fallback creation method");
 
     // Load map sử dụng MapLoader (old method)
-    const mapData = MapLoader.loadMap(this, this.mapKey, {
-      offsetX: 500,
-      offsetY: 0,
-      scale: 1,
-    });
+    const mapData = MapLoader.loadMap(
+      this,
+      {
+        offsetX: 500,
+        offsetY: 0,
+        scale: 1,
+      },
+      this.mapJson
+    );
 
     this.map = mapData.map;
     this.layer = mapData.layer;
@@ -337,8 +403,16 @@ export default class Scene extends Phaser.Scene {
 
     // Load challenge config thay vì objectConfig
     try {
-      const challengeConfig = await ConfigLoader.loadChallengeConfig();
-      this.challengeConfig = challengeConfig;
+      let challengeConfig;
+      if (this.challengeJson) {
+        // Sử dụng challengeJson từ webview
+        challengeConfig = this.challengeJson;
+        this.challengeConfig = challengeConfig;
+      } else {
+        // Sử dụng config mặc định
+        challengeConfig = await ConfigLoader.loadChallengeConfig();
+        this.challengeConfig = challengeConfig;
+      }
 
       const loadedObjects = MapLoader.loadObjects(
         this,
