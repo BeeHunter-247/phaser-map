@@ -12,7 +12,7 @@
           "count": 3,
           "type": "yellow",
           "spread": 1,
-          "allowedCollect": false
+          "allowedCollect": true
         },
         {
           "x": 5,
@@ -26,15 +26,15 @@
     }
   ],
   "victory": {
-    "description": "Collect all yellow batteries using if statements",
     "byType": [
       {
-        "yellow": 3,
+        "yellow": 6,
         "red": 0,
         "green": 0
       }
-    ]
+    ],
+    "description": "Collect all yellow batteries using if statements"
   },
-  "statement": ["if", "while", "condition"],
+  "statement": ["if", "repeatRange"],
   "statementNumber": 7
 }

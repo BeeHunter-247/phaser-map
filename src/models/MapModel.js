@@ -210,6 +210,14 @@ export class MapModel extends BaseModel {
   }
 
   /**
+   * Lấy tất cả batteries (cả collected và available)
+   * @returns {Array<BatteryModel>} All batteries
+   */
+  getAllBatteries() {
+    return Array.from(this.batteries.values());
+  }
+
+  /**
    * Lấy tất cả boxes available trong warehouse
    * @returns {Array<BoxModel>} Available boxes
    */

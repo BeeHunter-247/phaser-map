@@ -12,6 +12,45 @@ import { sendBatteryCollectionResult } from "./WebViewMessenger.js";
  */
 export class VictoryConditions {
   /**
+   * Tính tổng số pin cần thu thập dựa trên allowedCollect = true
+   * @param {Object} scene - Scene hiện tại (chứa mapModel)
+   * @returns {Object} Thông tin về số lượng pin cần thu thập
+   */
+  static getRequiredBatteriesByAllowedCollect(scene) {
+    if (!scene || !scene.mapModel) {
+      return undefined;
+    }
+
+    const byType = { red: 0, yellow: 0, green: 0 };
+    let totalRequired = 0;
+
+    // Đếm tất cả battery có allowedCollect = true
+    const allBatteries = scene.mapModel.getAllBatteries();
+    for (const battery of allBatteries) {
+      if (battery.allowedCollect === true) {
+        byType[battery.color] = (byType[battery.color] || 0) + 1;
+        totalRequired++;
+      }
+    }
+
+    if (totalRequired === 0) {
+      return undefined;
+    }
+
+    // Lấy description từ challenge.json thông qua mapModel
+    const description =
+      scene.mapModel.victoryConditions?.description ||
+      scene.challengeConfig?.description ||
+      "Collect all allowed batteries";
+
+    return {
+      byType,
+      description: description,
+      totalRequired,
+    };
+  }
+
+  /**
    * Tính tổng số pin cần thu thập trong một map
    * @param {Object} scene - Scene hiện tại (chứa mapModel)
    * @returns {Object} Thông tin về số lượng pin cần thu thập
@@ -21,39 +60,42 @@ export class VictoryConditions {
       return undefined;
     }
 
+    // Ưu tiên sử dụng cấu hình victory.byType nếu có
     const victory = scene.mapModel.victoryConditions;
+    if (victory && Array.isArray(victory.byType) && victory.byType.length > 0) {
+      const typeConfig = victory.byType[0];
 
-    // Ưu tiên sử dụng cấu hình victory mới nếu có
-    if (victory) {
+      // Nếu entry đầu là dạng box (có x,y) thì không có cấu hình pin
+      if (
+        typeof typeConfig.x === "number" &&
+        typeof typeConfig.y === "number"
+      ) {
+        return undefined;
+      }
+
       const byType = { red: 0, yellow: 0, green: 0 };
+      byType.red = typeConfig.red || 0;
+      byType.yellow = typeConfig.yellow || 0;
+      byType.green = typeConfig.green || 0;
 
-      // Xử lý cấu trúc byType mới: [{ red: 0, yellow: 0, green: 1 }]
-      if (Array.isArray(victory.byType) && victory.byType.length > 0) {
-        const typeConfig = victory.byType[0];
-        // Nếu entry đầu là dạng box (có x,y) thì không có cấu hình pin
-        if (
-          typeof typeConfig.x === "number" &&
-          typeof typeConfig.y === "number"
-        ) {
-          return undefined;
-        }
-
-        byType.red = typeConfig.red || 0;
-        byType.yellow = typeConfig.yellow || 0;
-        byType.green = typeConfig.green || 0;
-
-        const totalRequired =
-          (byType.red || 0) + (byType.yellow || 0) + (byType.green || 0);
-        if (totalRequired === 0) {
-          // Không đặt mục tiêu pin
-          return undefined;
-        }
+      const totalRequired =
+        (byType.red || 0) + (byType.yellow || 0) + (byType.green || 0);
+      if (totalRequired === 0) {
+        // Không đặt mục tiêu pin
+        return undefined;
       }
 
       return {
         byType,
         description: victory.description || undefined,
       };
+    }
+
+    // Fallback: sử dụng logic mới đếm battery có allowedCollect = true
+    const allowedCollectResult =
+      this.getRequiredBatteriesByAllowedCollect(scene);
+    if (allowedCollectResult) {
+      return allowedCollectResult;
     }
   }
 
@@ -238,6 +280,91 @@ export class VictoryConditions {
 }
 
 /**
+ * Kiểm tra statement requirements từ challenge.json
+ * @param {Object} scene - Scene hiện tại
+ * @returns {Object} Kết quả kiểm tra statement
+ */
+function checkStatementRequirements(scene) {
+  if (!scene || !scene.mapModel) {
+    return {
+      isValid: false,
+      message: "Scene hoặc mapModel không tồn tại",
+      usedStatements: [],
+      requiredStatements: [],
+    };
+  }
+
+  // Lấy required statements từ challenge.json
+  const requiredStatements =
+    scene.mapModel.victoryConditions?.statement ||
+    scene.challengeConfig?.statement ||
+    [];
+
+  if (!Array.isArray(requiredStatements) || requiredStatements.length === 0) {
+    // Không có yêu cầu statement nào
+    return {
+      isValid: true,
+      message: "Không có yêu cầu statement",
+      usedStatements: [],
+      requiredStatements: [],
+    };
+  }
+
+  // Lấy used statements từ program executor
+  const usedStatements = getUsedStatementsFromProgram(scene);
+
+  // Kiểm tra xem có đủ statement không
+  const missingStatements = requiredStatements.filter(
+    (required) => !usedStatements.includes(required)
+  );
+
+  const isValid = missingStatements.length === 0;
+
+  return {
+    isValid: isValid,
+    message: isValid
+      ? "Đã sử dụng đủ statement theo yêu cầu"
+      : `Thiếu statements: ${missingStatements.join(", ")}`,
+    usedStatements: usedStatements,
+    requiredStatements: requiredStatements,
+    missingStatements: missingStatements,
+  };
+}
+
+/**
+ * Lấy danh sách statements đã sử dụng từ program
+ * @param {Object} scene - Scene hiện tại
+ * @returns {Array<string>} Danh sách statements đã sử dụng
+ */
+function getUsedStatementsFromProgram(scene) {
+  // Kiểm tra program executor nếu có
+  if (scene.programExecutor && scene.programExecutor.usedStatements) {
+    // Sử dụng usedStatements Set từ ProgramExecutor
+    return Array.from(scene.programExecutor.usedStatements);
+  }
+
+  // Fallback: kiểm tra program actions nếu không có usedStatements
+  const usedStatements = [];
+  if (scene.programExecutor && scene.programExecutor.program) {
+    const program = scene.programExecutor.program;
+
+    // Kiểm tra actions đã thực thi
+    if (program.actions && Array.isArray(program.actions)) {
+      for (const action of program.actions) {
+        if (action.type) {
+          // Thêm statement type vào danh sách
+          if (!usedStatements.includes(action.type)) {
+            usedStatements.push(action.type);
+          }
+        }
+      }
+    }
+  }
+
+  return usedStatements;
+}
+
+/**
  * Hàm kiểm tra và hiển thị trạng thái thắng/thua
  * @param {Object} scene - Scene hiện tại
  * @returns {Object} Kết quả kiểm tra
@@ -245,11 +372,30 @@ export class VictoryConditions {
 export function checkAndDisplayVictory(scene) {
   const result = VictoryConditions.checkVictory(scene);
 
+  // Kiểm tra statement requirements từ challenge.json
+  const statementCheck = checkStatementRequirements(scene);
+
+  // Kết hợp kết quả battery collection và statement requirements
+  const finalResult = {
+    ...result,
+    statementCheck: statementCheck,
+    isVictory: result.isVictory && statementCheck.isValid,
+  };
+
   // Hiển thị thông tin trong console
-  if (result.isVictory) {
-    console.log(`🏆 Chiến thắng! Đã thu thập đủ pin theo yêu cầu`);
+  if (finalResult.isVictory) {
+    console.log(
+      `🏆 Chiến thắng! Đã thu thập đủ pin và sử dụng đủ statement theo yêu cầu`
+    );
   } else {
-    console.log(`📊 Chưa thu thập đủ pin theo yêu cầu`);
+    if (!result.isVictory) {
+      console.log(`📊 Chưa thu thập đủ pin theo yêu cầu`);
+    }
+    if (!statementCheck.isValid) {
+      console.log(
+        `❌ Chưa sử dụng đủ statement theo yêu cầu: ${statementCheck.message}`
+      );
+    }
   }
 
   // Kiểm tra details có tồn tại không trước khi log
@@ -259,10 +405,30 @@ export function checkAndDisplayVictory(scene) {
     console.log(`   ${result.details.green}`);
   }
 
-  // Gửi kết quả đến webview bên ngoài (chỉ thắng/thua)
-  sendBatteryCollectionResult(scene, result);
+  // Hiển thị thông tin statement
+  if (
+    statementCheck.usedStatements &&
+    statementCheck.usedStatements.length > 0
+  ) {
+    console.log(
+      `   📝 Đã sử dụng statements: ${statementCheck.usedStatements.join(", ")}`
+    );
+  }
+  if (
+    statementCheck.requiredStatements &&
+    statementCheck.requiredStatements.length > 0
+  ) {
+    console.log(
+      `   📋 Yêu cầu statements: ${statementCheck.requiredStatements.join(
+        ", "
+      )}`
+    );
+  }
 
-  return result;
+  // Gửi kết quả đến webview bên ngoài (chỉ thắng/thua)
+  sendBatteryCollectionResult(scene, finalResult);
+
+  return finalResult;
 }
 
 /**
