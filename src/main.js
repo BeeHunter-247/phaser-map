@@ -37,7 +37,7 @@ window.addEventListener("load", () => {
     // Initialize PhaserChannel first
     const channel = initPhaserChannel(game, { 
       debug: true,
-      channelName: 'phaserChannel'
+      channelName: 'PhaserChannel'
     });
     
     // Initialize WebView communication (which uses PhaserChannel)
