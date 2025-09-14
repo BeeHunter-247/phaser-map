@@ -623,8 +623,8 @@ export default class Scene extends Phaser.Scene {
       }
 
       // Thu thập battery
-      const success = targetBattery.collect(robotModel.id);
-      if (success) {
+      const result = targetBattery.collect(robotModel.id);
+      if (result.success) {
         // Cập nhật robot inventory
         robotModel.addBattery(targetBattery.color);
 
@@ -642,9 +642,15 @@ export default class Scene extends Phaser.Scene {
           `🔋 Collected ${targetBattery.color} battery at (${robotPos.x}, ${robotPos.y})`
         );
         return 1;
+      } else if (result.gameOver) {
+        // Nếu thu thập battery không được phép, game over
+        this.lose(result.message);
+        return 0;
+      } else {
+        // Lỗi khác
+        this.lose(result.message);
+        return 0;
       }
-
-      return 0;
     }
 
     // Fallback to old method

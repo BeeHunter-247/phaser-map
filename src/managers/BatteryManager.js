@@ -261,16 +261,22 @@ export class BatteryManager {
 
     // Collect the battery
     const robotModel = this.mapModel.getFirstRobot();
-    const success = targetBattery.collect(robotModel.id);
+    const result = targetBattery.collect(robotModel.id);
 
-    if (success) {
+    if (result.success) {
       console.log(
         `🔋 Collected ${targetBattery.color} battery at (${robotPos.x}, ${robotPos.y})`
       );
       return 1;
+    } else if (result.gameOver) {
+      // Nếu thu thập battery không được phép, game over
+      console.log(`❌ Game Over: ${result.message}`);
+      this.scene.lose(result.message);
+      return 0;
+    } else {
+      console.log(`❌ Failed to collect battery: ${result.message}`);
+      return 0;
     }
-
-    return 0;
   }
 
   /**

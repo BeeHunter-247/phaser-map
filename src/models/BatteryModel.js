@@ -12,6 +12,10 @@ export class BatteryModel extends BaseModel {
     this.collectedBy = config.collectedBy || null;
     this.collectedAt = config.collectedAt || null;
 
+    // Collection rules
+    this.allowedCollect =
+      config.allowedCollect !== undefined ? config.allowedCollect : true;
+
     // Visual properties
     this.spread = config.spread || 1;
     this.index = config.index || 0; // Index trong nhóm batteries cùng tile
@@ -51,6 +55,7 @@ export class BatteryModel extends BaseModel {
       isCollected: this.isCollected,
       collectedBy: this.collectedBy,
       collectedAt: this.collectedAt,
+      allowedCollect: this.allowedCollect,
       spread: this.spread,
       index: this.index,
       originalCount: this.originalCount,
@@ -67,11 +72,25 @@ export class BatteryModel extends BaseModel {
   /**
    * Thu thập battery
    * @param {string} robotId - ID của robot thu thập
-   * @returns {boolean} Success
+   * @returns {Object} {success: boolean, gameOver: boolean, message: string}
    */
   collect(robotId) {
     if (this.isCollected || !this.isActive) {
-      return false;
+      return {
+        success: false,
+        gameOver: false,
+        message: "Battery already collected or inactive",
+      };
+    }
+
+    // Kiểm tra allowedCollect
+    if (!this.allowedCollect) {
+      // Nếu không được phép thu thập, trả về game over
+      return {
+        success: false,
+        gameOver: true,
+        message: `Game Over! You collected a forbidden ${this.color} battery at (${this.position.x}, ${this.position.y})`,
+      };
     }
 
     this.isCollected = true;
@@ -82,7 +101,11 @@ export class BatteryModel extends BaseModel {
     // Hide sprite when collected
     this.hideSprite();
 
-    return true;
+    return {
+      success: true,
+      gameOver: false,
+      message: `Collected ${this.color} battery`,
+    };
   }
 
   /**
@@ -164,6 +187,10 @@ export class BatteryModel extends BaseModel {
       spread: tileConfig.spread || 1,
       index: index,
       originalCount: count,
+      allowedCollect:
+        tileConfig.allowedCollect !== undefined
+          ? tileConfig.allowedCollect
+          : true,
       metadata: {
         tileConfig: tileConfig,
       },
