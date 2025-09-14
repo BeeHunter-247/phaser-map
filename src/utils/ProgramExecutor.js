@@ -13,6 +13,7 @@ export class ProgramExecutor {
     this.timer = null;
     this.functions = new Map(); // Lưu trữ các hàm đã định nghĩa
     this.variableContext = {}; // Lưu giá trị biến hiện tại
+    this.usedStatements = new Set(); // Lưu trữ các statement đã sử dụng
   }
 
   /**
@@ -30,6 +31,9 @@ export class ProgramExecutor {
       ) {
         throw new Error("Invalid program structure");
       }
+
+      // Reset used statements khi load program mới
+      this.usedStatements.clear();
 
       // Xử lý function definitions trước
       this.functions.clear();
@@ -78,6 +82,9 @@ export class ProgramExecutor {
 
       // Hỗ trợ lệnh lặp repeat bằng cách phẳng hoá (flatten) thân lệnh vào danh sách actions
       if (action && action.type === "repeat") {
+        // Track repeat statement usage
+        this.usedStatements.add("repeat");
+
         const repeatCount = parseInt(action.count) || 1;
         const bodyRaw = Array.isArray(action.body) ? action.body : [];
 
@@ -99,6 +106,9 @@ export class ProgramExecutor {
 
       // Hỗ trợ lệnh lặp repeat với cú pháp "repeat(i from 1 to 5 by 1)"
       if (action && action.type === "repeatRange") {
+        // Track repeatRange statement usage
+        this.usedStatements.add("repeatRange");
+
         const variableName = action.variable || "i";
         const fromValue = parseInt(action.from) || 1;
         const toValue = parseInt(action.to) || 5;
@@ -518,6 +528,9 @@ export class ProgramExecutor {
    */
   executeCommand(action) {
     try {
+      // Track statement usage
+      this.usedStatements.add(action.type);
+
       switch (action.type) {
         case "if":
           return this.executeIf(action);

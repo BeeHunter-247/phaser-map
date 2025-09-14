@@ -7,11 +7,11 @@ export class MapLoader {
   /**
    * Load tilemap với cấu hình chuẩn
    * @param {Phaser.Scene} scene - Scene hiện tại
-   * @param {string} mapKey - Key của tilemap
    * @param {Object} config - Cấu hình load map
+   * @param {Object} mapJsonData - Map JSON data từ webview
    * @returns {Object} Map data với map, layer, scale
    */
-  static loadMap(scene, mapKey, config = {}) {
+  static loadMap(scene, config = {}, mapJsonData = null) {
     const {
       offsetX = 300,
       offsetY = 0,
@@ -24,7 +24,15 @@ export class MapLoader {
     scene.cameras.main.roundPixels = true;
 
     // Create tilemap
-    const map = scene.make.tilemap({ key: mapKey });
+    let map;
+    if (mapJsonData) {
+      // Sử dụng mapJsonData từ webview
+      map = scene.make.tilemap({ data: mapJsonData });
+    } else {
+      // Sử dụng file map.json mặc định
+      const mapJsonPath = `assets/maps/map.json`;
+      map = scene.make.tilemap({ key: "default", data: mapJsonPath });
+    }
 
     // Add tilesets (phù hợp với demo1.json từ Tiled)
     const tilesets = [

@@ -127,6 +127,44 @@ export function sendBatteryCollectionResult(scene, victoryResult) {
 }
 
 /**
+ * Xử lý việc load mapJson và challengeJson từ webview
+ * @param {Object} game - Đối tượng game Phaser
+ * @param {Object} mapJson - Dữ liệu map JSON
+ * @param {Object} challengeJson - Dữ liệu challenge JSON
+ * @returns {boolean} Success/failure
+ */
+export function loadMapAndChallenge(game, mapJson, challengeJson) {
+  try {
+    if (!mapJson || !challengeJson) {
+      console.error(
+        "❌ loadMapAndChallenge: mapJson and challengeJson are required"
+      );
+      return false;
+    }
+
+    console.log("📥 Loading mapJson and challengeJson from webview");
+
+    const scene = game.scene.getScene("Scene");
+    if (scene) {
+      // Khởi động lại scene với mapJson và challengeJson mới
+      scene.scene.restart({ mapJson, challengeJson });
+    } else {
+      // Nếu scene chưa tồn tại, tạo mới
+      game.scene.start("Scene", { mapJson, challengeJson });
+    }
+
+    return true;
+  } catch (error) {
+    console.error("❌ Error loading mapJson and challengeJson:", error);
+    sendErrorMessage({
+      type: "LOAD_ERROR",
+      message: error.message,
+    });
+    return false;
+  }
+}
+
+/**
  * Khởi tạo hệ thống giao tiếp với webview
  * @param {Object} game - Đối tượng game Phaser
  */
@@ -139,22 +177,59 @@ export function initWebViewCommunication(game) {
     // Xử lý các loại thông điệp từ trang web chứa
     switch (message.type) {
       case "START_MAP": {
-        // Bắt đầu trực tiếp Scene với mapKey (bỏ qua menu)
-        const mapKey = message.data && message.data.mapKey;
-        if (mapKey) {
-          console.log(`▶️ START_MAP: ${mapKey}`);
-          game.scene.start("Scene", { mapKey });
+        // Bắt đầu trực tiếp Scene với mapJson và challengeJson
+        const mapJson = message.data && message.data.mapJson;
+        const challengeJson = message.data && message.data.challengeJson;
+        if (mapJson && challengeJson) {
+          console.log(`▶️ START_MAP with mapJson and challengeJson`);
+          game.scene.start("Scene", { mapJson, challengeJson });
+        } else if (mapJson) {
+          console.log(`▶️ START_MAP with mapJson only`);
+          game.scene.start("Scene", { mapJson });
+        } else {
+          console.warn("⚠️ START_MAP: Missing mapJson or challengeJson");
         }
         break;
       }
       case "LOAD_MAP":
-        // Xử lý yêu cầu tải map
-        if (message.data && message.data.mapKey) {
+        // Xử lý yêu cầu tải map (deprecated - sử dụng LOAD_MAP_AND_CHALLENGE)
+        console.warn(
+          "⚠️ LOAD_MAP is deprecated. Use LOAD_MAP_AND_CHALLENGE instead."
+        );
+        break;
+
+      case "LOAD_MAP_AND_CHALLENGE":
+        // Xử lý yêu cầu tải mapJson và challengeJson
+        const mapJsonData = message.data && message.data.mapJson;
+        const challengeJsonData = message.data && message.data.challengeJson;
+
+        if (mapJsonData && challengeJsonData) {
+          console.log(
+            `📥 LOAD_MAP_AND_CHALLENGE: Received mapJson and challengeJson`
+          );
+
           const scene = game.scene.getScene("Scene");
           if (scene) {
-            // Khởi động lại scene với mapKey mới
-            scene.scene.restart({ mapKey: message.data.mapKey });
+            // Khởi động lại scene với mapJson và challengeJson mới
+            scene.scene.restart({
+              mapJson: mapJsonData,
+              challengeJson: challengeJsonData,
+            });
+          } else {
+            // Nếu scene chưa tồn tại, tạo mới
+            game.scene.start("Scene", {
+              mapJson: mapJsonData,
+              challengeJson: challengeJsonData,
+            });
           }
+        } else {
+          console.warn(
+            "⚠️ LOAD_MAP_AND_CHALLENGE: Missing mapJson or challengeJson"
+          );
+          sendErrorMessage({
+            type: "MISSING_DATA",
+            message: "mapJson and challengeJson are required",
+          });
         }
         break;
 
@@ -189,13 +264,8 @@ export function initWebViewCommunication(game) {
 
   // Thêm API toàn cục cho webview gọi trực tiếp (tùy chọn)
   window.RobotGameAPI = {
-    loadMap: (mapKey) => {
-      const scene = game.scene.getScene("Scene");
-      if (scene) {
-        scene.scene.restart({ mapKey });
-        return true;
-      }
-      return false;
+    loadMapAndChallenge: (mapJson, challengeJson) => {
+      return loadMapAndChallenge(game, mapJson, challengeJson);
     },
 
     runProgram: (program) => {
@@ -210,7 +280,6 @@ export function initWebViewCommunication(game) {
       const scene = game.scene.getScene("Scene");
       if (scene) {
         return {
-          mapKey: scene.mapKey,
           collectedBatteries: scene.collectedBatteries || 0,
           collectedBatteryTypes: scene.collectedBatteryTypes || {
             red: 0,
