@@ -2,8 +2,10 @@
  * WebViewMessenger.js
  *
  * Hệ thống giao tiếp giữa game Phaser và webview bên ngoài
- * Sử dụng window.parent.postMessage để gửi thông báo
+ * Sử dụng PhaserChannel để giao tiếp với Flutter WebView
  */
+
+import { getPhaserChannel } from './PhaserChannel.js';
 
 /**
  * Kiểm tra xem game có đang chạy trong iframe không
@@ -23,16 +25,31 @@ export function isRunningInIframe() {
  * @param {Object} data - Dữ liệu kèm theo
  */
 export function sendMessageToParent(type, data = {}) {
+  const channel = getPhaserChannel();
+  
   if (isRunningInIframe()) {
     try {
-      const message = {
-        source: "phaser-robot-game",
-        type: type,
-        data: data,
-        timestamp: Date.now(),
-      };
-
-      window.parent.postMessage(message, "*");
+      // Use PhaserChannel for structured communication
+      switch (type) {
+        case 'VICTORY':
+          channel.sendVictory(data);
+          break;
+        case 'LOSE':
+          channel.sendDefeat(data);
+          break;
+        case 'PROGRESS':
+          channel.sendProgress(data);
+          break;
+        case 'ERROR':
+          channel.sendError(data);
+          break;
+        case 'READY':
+          channel.sendReady(data);
+          break;
+        default:
+          channel.sendEvent(type.toLowerCase(), data);
+      }
+      
       console.log(`📤 Sent message to parent: ${type}`, data);
       return true;
     } catch (e) {
@@ -82,15 +99,45 @@ export function sendErrorMessage(errorData) {
  * @param {Function} callback - Hàm xử lý thông điệp nhận được
  */
 export function setupMessageListener(callback) {
+  const channel = getPhaserChannel();
+  
+  // Register event handlers for different message types
+  channel.on('start_map', (data) => {
+    console.log(`📥 Received START_MAP event:`, data);
+    if (typeof callback === "function") {
+      callback({ type: 'START_MAP', data });
+    }
+  });
+  
+  channel.on('load_map', (data) => {
+    console.log(`📥 Received LOAD_MAP event:`, data);
+    if (typeof callback === "function") {
+      callback({ type: 'LOAD_MAP', data });
+    }
+  });
+  
+  channel.on('run_program', (data) => {
+    console.log(`📥 Received RUN_PROGRAM event:`, data);
+    if (typeof callback === "function") {
+      callback({ type: 'RUN_PROGRAM', data });
+    }
+  });
+  
+  channel.on('get_status', (data) => {
+    console.log(`📥 Received GET_STATUS event:`, data);
+    if (typeof callback === "function") {
+      callback({ type: 'GET_STATUS', data });
+    }
+  });
+  
+  // Legacy message listener for backward compatibility
   window.addEventListener("message", (event) => {
-    // Kiểm tra nguồn thông điệp để đảm bảo an toàn
-    // Trong môi trường thực tế, nên kiểm tra origin
     try {
       const message = event.data;
 
       // Kiểm tra xem thông điệp có đúng định dạng không
       if (message && message.source === "parent-website") {
-        console.log(`📥 Received message from parent:`, message);
+        console.log(`📥 Received legacy message from parent:`, message);
 
         // Gọi callback để xử lý thông điệp
         if (typeof callback === "function") {
@@ -131,6 +178,12 @@ export function sendBatteryCollectionResult(scene, victoryResult) {
  * @param {Object} game - Đối tượng game Phaser
  */
 export function initWebViewCommunication(game) {
+  // Initialize PhaserChannel with game instance
+  const channel = getPhaserChannel({ debug: true });
+  
+  // Store game reference globally for channel methods
+  window.game = game;
+
   // Gửi thông báo sẵn sàng khi game khởi tạo xong
   sendReadyMessage();
 
@@ -222,4 +275,7 @@ export function initWebViewCommunication(game) {
       return null;
     },
   };
+
+  // Expose PhaserChannel globally for advanced usage
+  window.PhaserChannel = channel;
 }

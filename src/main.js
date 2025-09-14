@@ -3,6 +3,7 @@ import Phaser from "phaser";
 import MenuScene from "./scenes/MenuScene";
 import Scene from "./scenes/basics/Scene";
 import { initWebViewCommunication } from "./utils/WebViewMessenger";
+import { initPhaserChannel } from "./utils/PhaserChannel";
 
 const sizes = {
   width: 1400,
@@ -33,7 +34,16 @@ const game = new Phaser.Game(config);
 window.addEventListener("load", () => {
   // Đợi game khởi tạo xong
   setTimeout(() => {
+    // Initialize PhaserChannel first
+    const channel = initPhaserChannel(game, { 
+      debug: true,
+      channelName: 'phaserChannel'
+    });
+    
+    // Initialize WebView communication (which uses PhaserChannel)
     initWebViewCommunication(game);
-    console.log("🔄 WebView communication initialized");
+    
+    console.log("🔄 PhaserChannel and WebView communication initialized");
+    console.log("📡 Channel available at window.PhaserChannel:", channel);
   }, 1000);
 });
