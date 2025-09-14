@@ -1,7 +1,7 @@
 import "./style.css";
 import Phaser from "phaser";
 import MenuScene from "./scenes/MenuScene";
-import Scene from "./scenes/basics/Scene";
+import Scene from "./scenes/Scene";
 import { initWebViewCommunication } from "./utils/WebViewMessenger";
 
 const sizes = {

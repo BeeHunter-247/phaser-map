@@ -2,9 +2,9 @@
  * VictoryConditions.js
  *
  * Hệ thống đánh giá tiêu chí thắng thua cho từng map dựa trên việc thu thập pin
+ * Sử dụng challenge.json config thông qua MapModel
  */
 
-import { mapConfigs } from "../data/mapConfigs.js";
 import { sendBatteryCollectionResult } from "./WebViewMessenger.js";
 
 /**
@@ -13,15 +13,18 @@ import { sendBatteryCollectionResult } from "./WebViewMessenger.js";
 export class VictoryConditions {
   /**
    * Tính tổng số pin cần thu thập trong một map
-   * @param {string} mapKey - Key của map (basic1, basic2, etc.)
+   * @param {Object} scene - Scene hiện tại (chứa mapModel)
    * @returns {Object} Thông tin về số lượng pin cần thu thập
    */
-  static getRequiredBatteries(mapKey) {
-    const config = mapConfigs[mapKey];
+  static getRequiredBatteries(scene) {
+    if (!scene || !scene.mapModel) {
+      return undefined;
+    }
+
+    const victory = scene.mapModel.victoryConditions;
 
     // Ưu tiên sử dụng cấu hình victory mới nếu có
-    if (config && config.victory) {
-      const victory = config.victory;
+    if (victory) {
       const byType = { red: 0, yellow: 0, green: 0 };
 
       // Xử lý cấu trúc byType mới: [{ red: 0, yellow: 0, green: 1 }]
@@ -58,12 +61,13 @@ export class VictoryConditions {
    * Lấy yêu cầu về box được đặt tại các vị trí chỉ định (nếu có)
    * Dùng cùng trường victory.byType nhưng mỗi phần tử có {x,y,count}
    */
-  static getRequiredBoxes(mapKey) {
-    const config = mapConfigs[mapKey];
-    if (!config || !config.victory) return undefined;
-    const arr = Array.isArray(config.victory.byType)
-      ? config.victory.byType
-      : [];
+  static getRequiredBoxes(scene) {
+    if (!scene || !scene.mapModel) return undefined;
+
+    const victory = scene.mapModel.victoryConditions;
+    if (!victory) return undefined;
+
+    const arr = Array.isArray(victory.byType) ? victory.byType : [];
     const targets = arr.filter(
       (v) => typeof v.x === "number" && typeof v.y === "number"
     );
@@ -76,7 +80,7 @@ export class VictoryConditions {
    * @returns {Object} Kết quả kiểm tra { isVictory, progress, message }
    */
   static checkVictory(scene) {
-    if (!scene.mapKey) {
+    if (!scene || !scene.mapModel) {
       return {
         isVictory: false,
         progress: 0,
@@ -90,7 +94,7 @@ export class VictoryConditions {
     }
 
     // Ưu tiên kiểm tra theo box nếu cấu hình victory dùng toạ độ
-    const requiredBoxes = this.getRequiredBoxes(scene.mapKey);
+    const requiredBoxes = this.getRequiredBoxes(scene);
     if (requiredBoxes && scene.boxManager) {
       const detailsBoxes = [];
       let allMet = true;
@@ -113,7 +117,7 @@ export class VictoryConditions {
     }
 
     // Lấy thông tin pin cần thu thập
-    const required = this.getRequiredBatteries(scene.mapKey);
+    const required = this.getRequiredBatteries(scene);
 
     // Mặc định: kiểm tra theo pin
     if (!scene.batteryManager || !required) {
@@ -176,39 +180,40 @@ export class VictoryConditions {
 
   /**
    * Tạo thông tin tổng quan về map
-   * @param {string} mapKey - Key của map (basic1, basic2, etc.)
+   * @param {Object} scene - Scene hiện tại (chứa mapModel)
    * @returns {Object} Thông tin tổng quan
    */
-  static getMapSummary(mapKey) {
-    const config = mapConfigs[mapKey];
-    if (!config) return null;
+  static getMapSummary(scene) {
+    if (!scene || !scene.mapModel) return null;
 
-    const required = this.getRequiredBatteries(mapKey);
+    const mapModel = scene.mapModel;
+    const required = this.getRequiredBatteries(scene);
 
-    // Lấy thông tin robot
-    const robot = config.robot || {};
-    const robotPos = robot.tile || { x: 0, y: 0 };
-    const robotDirection = robot.direction || "north";
+    // Lấy thông tin robot từ mapModel
+    const robotPos = { x: 0, y: 0 };
+    const robotDirection = "north";
 
-    // Tạo mảng vị trí pin
+    // Tìm robot đầu tiên trong mapModel
+    for (const robot of mapModel.robots.values()) {
+      robotPos.x = robot.tileX || 0;
+      robotPos.y = robot.tileY || 0;
+      robotDirection = robot.direction || "north";
+      break;
+    }
+
+    // Tạo mảng vị trí pin từ mapModel
     const batteryPositions = [];
-    if (config.batteries) {
-      config.batteries.forEach((batteryConfig) => {
-        if (batteryConfig.tiles) {
-          batteryConfig.tiles.forEach((tileConfig) => {
-            batteryPositions.push({
-              position: { x: tileConfig.x, y: tileConfig.y },
-              count: tileConfig.count || 1,
-              type: tileConfig.type || batteryConfig.type || "green",
-              types: tileConfig.types,
-            });
-          });
-        }
+    for (const battery of mapModel.batteries.values()) {
+      batteryPositions.push({
+        position: { x: battery.tileX, y: battery.tileY },
+        count: battery.count || 1,
+        type: battery.type || "green",
+        types: battery.types,
       });
     }
 
     return {
-      mapKey,
+      mapKey: mapModel.mapKey,
       robotPosition: robotPos,
       robotDirection,
       batteryPositions,
@@ -218,14 +223,15 @@ export class VictoryConditions {
 
   /**
    * Lấy thông tin tổng quan cho tất cả các map
+   * @param {Object} scene - Scene hiện tại (chứa mapModel)
    * @returns {Object} Thông tin tổng quan cho mỗi map
    */
-  static getAllMapsSummary() {
+  static getAllMapsSummary(scene) {
     const summary = {};
 
-    Object.keys(mapConfigs).forEach((mapKey) => {
-      summary[mapKey] = this.getMapSummary(mapKey);
-    });
+    if (scene && scene.mapModel) {
+      summary[scene.mapModel.mapKey] = this.getMapSummary(scene);
+    }
 
     return summary;
   }
@@ -297,7 +303,8 @@ export function updateBatteryStatusText(scene, statusText) {
   const result = VictoryConditions.checkVictory(scene);
 
   // Tạo nội dung text
-  let content = `Map: ${scene.mapKey}\n`;
+  const mapKey = scene.mapModel ? scene.mapModel.mapKey : "Unknown";
+  let content = `Map: ${mapKey}\n`;
   if (result.isVictory) {
     content += `Chiến thắng!\n`;
   } else {

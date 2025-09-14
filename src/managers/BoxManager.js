@@ -14,12 +14,12 @@ export class BoxManager {
 
   /**
    * Khởi tạo BoxManager
-   * @param {Object} robotController - Robot controller instance
-   * @param {Object} objectConfig - Config từ mapConfigs
+   * @param {Object} robotManager - Robot manager instance
+   * @param {Object} challengeConfig - Config từ challenge.json
    * @param {Array} loadedBoxes - Boxes đã load từ MapLoader
    */
-  initialize(robotController, objectConfig, loadedBoxes = []) {
-    this.robotController = robotController;
+  initialize(robotManager, challengeConfig, loadedBoxes = []) {
+    this.robotManager = robotManager;
     this.boxes.clear();
     this.totalBoxes = 0;
     this.collectedBoxes = 0;
@@ -31,18 +31,18 @@ export class BoxManager {
 
     // Nếu có config boxes và có sprites đã load, gán mỗi sprite vào tile gần nhất trong config
     if (
-      objectConfig &&
-      objectConfig.boxes &&
+      challengeConfig &&
+      challengeConfig.boxes &&
       loadedBoxes &&
       loadedBoxes.length > 0
     ) {
       // Chuẩn bị danh sách tâm tile theo config
       const centers = [];
-      objectConfig.boxes.forEach((boxConfig) => {
+      challengeConfig.boxes.forEach((boxConfig) => {
         if (boxConfig.tiles) {
           boxConfig.tiles.forEach((tilePos) => {
             const key = `${tilePos.x},${tilePos.y}`;
-            const center = this.robotController.getTileWorldCenter(
+            const center = this.robotManager.getTileWorldCenter(
               tilePos.x,
               tilePos.y
             );
@@ -71,12 +71,12 @@ export class BoxManager {
         this.registerBoxAtTile(best.key, sprite);
       });
     } else if (
-      objectConfig &&
-      objectConfig.boxes &&
+      challengeConfig &&
+      challengeConfig.boxes &&
       (!loadedBoxes || loadedBoxes.length === 0)
     ) {
       // Không có sprites sẵn: chỉ đăng ký theo số lượng từ config
-      objectConfig.boxes.forEach((boxConfig) => {
+      challengeConfig.boxes.forEach((boxConfig) => {
         if (boxConfig.tiles) {
           boxConfig.tiles.forEach((tilePos) => {
             const tileKey = `${tilePos.x},${tilePos.y}`;
@@ -99,16 +99,44 @@ export class BoxManager {
   }
 
   /**
+   * Khởi tạo BoxManager với Models
+   * @param {Object} robotManager - Robot manager instance
+   * @param {MapModel} mapModel - Map model
+   * @param {Array} loadedBoxes - Box sprites từ Scene
+   */
+  initializeWithModels(robotManager, mapModel, loadedBoxes) {
+    this.robotManager = robotManager;
+    this.mapModel = mapModel;
+    this.boxes.clear();
+    this.totalBoxes = 0;
+    this.collectedBoxes = 0;
+    this.putBoxes = 0;
+    this.carriedBoxes = 0;
+
+    // Link sprites với models
+    loadedBoxes.forEach((sprite) => {
+      if (sprite.model) {
+        const tileKey = `${sprite.model.position.x},${sprite.model.position.y}`;
+        this.registerBoxAtTile(tileKey, sprite);
+      }
+    });
+
+    console.log("📦 BoxManager initialized with models");
+    console.log(`   Linked ${loadedBoxes.length} sprites to models`);
+    console.log(`   Total boxes: ${this.totalBoxes}`);
+  }
+
+  /**
    * Chuyển đổi world position thành tile key
    */
   getTileKeyFromPosition(worldX, worldY) {
-    if (!this.robotController || !this.robotController.map) {
-      console.error("❌ RobotController or map not available");
+    if (!this.robotManager || !this.robotManager.map) {
+      console.error("❌ RobotManager or map not available");
       return null;
     }
 
-    const map = this.robotController.map;
-    const layer = this.robotController.layer || this.scene.layer;
+    const map = this.robotManager.map;
+    const layer = this.robotManager.layer || this.scene.layer;
     // Dùng API của Phaser để quy đổi world -> tile theo layer thực tế
     const tileX = map.worldToTileX(
       worldX,
@@ -177,18 +205,18 @@ export class BoxManager {
    * @returns {Object} {x, y} coordinates of front tile
    */
   getFrontTilePosition() {
-    if (!this.robotController) {
-      console.error("❌ RobotController not initialized");
+    if (!this.robotManager) {
+      console.error("❌ RobotManager not initialized");
       return null;
     }
-    return this.robotController.getFrontTile();
+    return this.robotManager.getFrontTile();
   }
 
   /**
    * Lấy thông tin boxes tại tile hiện tại của robot
    */
   getBoxesAtCurrentTile() {
-    const currentTile = this.robotController.getCurrentTilePosition();
+    const currentTile = this.robotManager.getCurrentTilePosition();
     if (!currentTile) return null;
 
     const tileKey = `${currentTile.x},${currentTile.y}`;
@@ -258,7 +286,7 @@ export class BoxManager {
     }
 
     // Kiểm tra ô trước mặt có hợp lệ không
-    if (!this.robotController.isWithinBounds(frontTile.x, frontTile.y)) {
+    if (!this.robotManager.isWithinBounds(frontTile.x, frontTile.y)) {
       console.error(
         `❌ Front tile (${frontTile.x}, ${frontTile.y}) is out of bounds`
       );
@@ -340,7 +368,7 @@ export class BoxManager {
     }
 
     // Kiểm tra ô trước mặt có hợp lệ không
-    if (!this.robotController.isWithinBounds(frontTile.x, frontTile.y)) {
+    if (!this.robotManager.isWithinBounds(frontTile.x, frontTile.y)) {
       console.error(
         `❌ Front tile (${frontTile.x}, ${frontTile.y}) is out of bounds`
       );
@@ -351,9 +379,7 @@ export class BoxManager {
 
     // Ràng buộc: chỉ cho phép đặt box tại các vị trí mục tiêu (nếu map định nghĩa bằng toạ độ)
     try {
-      const requiredTargets = VictoryConditions.getRequiredBoxes(
-        this.scene.mapKey
-      );
+      const requiredTargets = VictoryConditions.getRequiredBoxes(this.scene);
       if (Array.isArray(requiredTargets) && requiredTargets.length > 0) {
         const allowed = new Set(requiredTargets.map((t) => `${t.x},${t.y}`));
         if (!allowed.has(tileKey)) {
@@ -419,7 +445,7 @@ export class BoxManager {
    */
   createBoxSprite(tileX, tileY, index, totalCount) {
     try {
-      const worldPos = this.robotController.getTileWorldCenter(tileX, tileY);
+      const worldPos = this.robotManager.getTileWorldCenter(tileX, tileY);
       if (!worldPos) return null;
       // Spawn at center; grid layout function will realign all sprites
       const BOX_Y_OFFSET = 14;
@@ -451,11 +477,11 @@ export class BoxManager {
     if (!data || data.sprites.length === 0) return;
 
     const [sx, sy] = tileKey.split(",").map((v) => parseInt(v, 10));
-    const center = this.robotController.getTileWorldCenter(sx, sy);
+    const center = this.robotManager.getTileWorldCenter(sx, sy);
     if (!center) return;
 
     const layer = this.scene.layer;
-    const map = this.robotController.map;
+    const map = this.robotManager.map;
     const tileW = map.tileWidth * (layer?.scaleX || 1);
     const tileH = map.tileHeight * (layer?.scaleY || 1);
 
@@ -495,12 +521,12 @@ export class BoxManager {
    * @returns {boolean} True nếu là warehouse
    */
   isWarehouseTile(tileKey) {
-    const mapConfig = this.scene.objectConfig;
-    if (!mapConfig || !mapConfig.boxes) {
+    const challengeConfig = this.scene.challengeConfig;
+    if (!challengeConfig || !challengeConfig.boxes) {
       return false;
     }
 
-    for (const boxConfig of mapConfig.boxes) {
+    for (const boxConfig of challengeConfig.boxes) {
       if (boxConfig.warehouse) {
         const warehouse = boxConfig.warehouse;
         const warehouseKey = `${warehouse.x},${warehouse.y}`;
@@ -517,15 +543,15 @@ export class BoxManager {
    * @returns {number} Số lượng box còn lại tại warehouse
    */
   checkWarehouse() {
-    // Lấy warehouse position từ map config
-    const mapConfig = this.scene.objectConfig;
-    if (!mapConfig || !mapConfig.boxes) {
+    // Lấy warehouse position từ challenge config
+    const challengeConfig = this.scene.challengeConfig;
+    if (!challengeConfig || !challengeConfig.boxes) {
       console.log(`🏭 No warehouse config found`);
       return 0;
     }
 
     // Tìm warehouse trong config
-    for (const boxConfig of mapConfig.boxes) {
+    for (const boxConfig of challengeConfig.boxes) {
       if (boxConfig.warehouse) {
         const warehouse = boxConfig.warehouse;
         const tileKey = `${warehouse.x},${warehouse.y}`;
