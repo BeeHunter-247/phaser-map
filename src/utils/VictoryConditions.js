@@ -5,7 +5,7 @@
  */
 
 import { mapConfigs } from "../data/mapConfigs.js";
-import { sendBatteryCollectionResult } from "./WebViewMessenger.js";
+import { sendBatteryCollectionResult } from "./PhaserChannel.js";
 
 /**
  * Lớp đánh giá điều kiện thắng

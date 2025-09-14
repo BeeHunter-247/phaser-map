@@ -6,10 +6,12 @@
  * Provides bidirectional communication with Flutter app
  */
 
+import { checkAndDisplayVictory } from "../utils/VictoryConditions.js";
+
 export class PhaserChannel {
   constructor(options = {}) {
     this.options = {
-      channelName: 'phaserChannel',
+      channelName: 'PhaserChannel',
       debug: false,
       timeout: 5000,
       retryAttempts: 3,
@@ -380,6 +382,7 @@ export class PhaserChannel {
    * @param {Object} data - Victory data
    */
   sendVictory(data = {}) {
+    this.log('🏆 PhaserChannel.sendVictory called with data:', data);
     this.sendEvent('victory', { isVictory: true, ...data });
   }
 
@@ -397,6 +400,44 @@ export class PhaserChannel {
    */
   sendProgress(data) {
     this.sendEvent('progress', data);
+  }
+
+  /**
+   * Send battery collection progress
+   * @param {Object} scene - Scene object
+   * @param {Object} additionalData - Additional progress data
+   */
+  sendBatteryProgress(scene, additionalData = {}) {
+    const progressData = {
+      mapKey: scene.mapKey,
+      collectedBatteries: scene.collectedBatteries || 0,
+      collectedBatteryTypes: scene.collectedBatteryTypes || { red: 0, yellow: 0, green: 0 },
+      robotPosition: scene.robot ? { x: scene.robot.x, y: scene.robot.y } : null,
+      isPaused: scene.scene ? scene.scene.isPaused() : false,
+      timestamp: Date.now(),
+      ...additionalData
+    };
+    
+    this.sendProgress(progressData);
+  }
+
+  /**
+   * Send robot movement progress
+   * @param {Object} scene - Scene object
+   * @param {Object} movementData - Movement data
+   */
+  sendMovementProgress(scene, movementData = {}) {
+    const progressData = {
+      mapKey: scene.mapKey,
+      collectedBatteries: scene.collectedBatteries || 0,
+      collectedBatteryTypes: scene.collectedBatteryTypes || { red: 0, yellow: 0, green: 0 },
+      robotPosition: scene.robot ? { x: scene.robot.x, y: scene.robot.y } : null,
+      isPaused: scene.scene ? scene.scene.isPaused() : false,
+      timestamp: Date.now(),
+      movement: movementData
+    };
+    
+    this.sendProgress(progressData);
   }
 
   /**
@@ -486,5 +527,205 @@ export function initPhaserChannel(game, options = {}) {
   
   return channel;
 }
+
+export function isRunningInIframe() {
+  try {
+    // Kiểm tra nếu đang trong Flutter WebView
+    if (window.parent && window.parent !== window.self) {
+      return true;
+    }
+    
+    // Kiểm tra nếu có FlutterFromPhaser channel (Flutter WebView)
+    if (window.FlutterFromPhaser) {
+      return true;
+    }
+    
+    // Kiểm tra nếu có PhaserChannel (đã được init)
+    if (window.PhaserChannel) {
+      return true;
+    }
+    
+    return false;
+  } catch (e) {
+    return true; // Nếu có lỗi cross-origin, có thể đang trong iframe
+  }
+}
+
+export function sendMessageToParent(type, data = {}) {
+  const channel = getPhaserChannel();
+  
+  // ✅ BỎ KIỂM TRA IFRAME - Luôn gửi message
+  try {
+    // Use PhaserChannel for structured communication
+    switch (type) {
+      case 'VICTORY':
+        channel.sendVictory(data);
+        break;
+      case 'LOSE':
+        channel.sendDefeat(data);
+        break;
+      case 'PROGRESS':
+        channel.sendProgress(data);
+        break;
+      case 'ERROR':
+        channel.sendError(data);
+        break;
+      case 'READY':
+        channel.sendReady(data);
+        break;
+      default:
+        channel.sendEvent(type.toLowerCase(), data);
+    }
+    
+    console.log(`📤 Sent message to parent: ${type}`, data);
+    return true;
+  } catch (e) {
+    console.error("❌ Error sending message to parent:", e);
+    return false;
+  }
+}
+
+export function sendBatteryCollectionResult(scene, victoryResult) {
+  console.log('🎯 sendBatteryCollectionResult called:', victoryResult);
+  console.log(' isRunningInIframe():', isRunningInIframe());
+  console.log(' PhaserChannel available:', !!getPhaserChannel());
+  
+  const messageType = victoryResult.isVictory ? "VICTORY" : "LOSE";
+  console.log('📤 Sending message type:', messageType);
+  
+  const statusData = {
+    isVictory: victoryResult.isVictory,
+    mapKey: scene.mapKey,
+    collectedBatteries: scene.collectedBatteries || 0,
+    collectedBatteryTypes: scene.collectedBatteryTypes || { red: 0, yellow: 0, green: 0 },
+    requiredBatteries: victoryResult.required || { red: 0, yellow: 0, green: 0 },
+    details: victoryResult.details || {},
+    robotPosition: scene.robot ? { x: scene.robot.x, y: scene.robot.y } : null,
+    isPaused: scene.scene ? scene.scene.isPaused() : false,
+    score: scene.collectedBatteries || 0,
+    timestamp: Date.now()
+  };
+
+  console.log('📤 Status data to send:', statusData);
+  
+  const result = sendMessageToParent(messageType, statusData);
+  console.log('📤 Message sent result:', result);
+  
+  return result;
+}
+
+/**
+ * Send battery collection progress
+ * @param {Object} scene - Scene object
+ * @param {Object} additionalData - Additional progress data
+ */
+export function sendBatteryProgress(scene, additionalData = {}) {
+  const channel = getPhaserChannel();
+  channel.sendBatteryProgress(scene, additionalData);
+}
+
+/**
+ * Send robot movement progress
+ * @param {Object} scene - Scene object
+ * @param {Object} movementData - Movement data
+ */
+export function sendMovementProgress(scene, movementData = {}) {
+  const channel = getPhaserChannel();
+  channel.sendMovementProgress(scene, movementData);
+}
+
+/**
+ * Send game progress update
+ * @param {Object} scene - Scene object
+ * @param {Object} progressData - Progress data
+ */
+export function sendGameProgress(scene, progressData = {}) {
+  const channel = getPhaserChannel();
+  const data = {
+    mapKey: scene.mapKey,
+    collectedBatteries: scene.collectedBatteries || 0,
+    collectedBatteryTypes: scene.collectedBatteryTypes || { red: 0, yellow: 0, green: 0 },
+    robotPosition: scene.robot ? { x: scene.robot.x, y: scene.robot.y } : null,
+    isPaused: scene.scene ? scene.scene.isPaused() : false,
+    timestamp: Date.now(),
+    ...progressData
+  };
+  
+  channel.sendProgress(data);
+}
+
+// Thêm vào console để test
+window.testVictory = function() {
+  console.log('🧪 Testing victory...');
+  if (window.PhaserChannel) {
+    window.PhaserChannel.sendVictory({ test: true, score: 1000 });
+  } else {
+    console.log('❌ PhaserChannel not found');
+  }
+};
+
+// Test victory với dữ liệu thật
+window.testRealVictory = function() {
+  console.log('🧪 Testing real victory...');
+  const scene = window.game?.scene?.getScene('Scene');
+  if (scene) {
+    const victoryResult = {
+      isVictory: true,
+      required: { red: 0, yellow: 3, green: 0 },
+      details: { red: "Đỏ: 0/0", yellow: "Vàng: 3/3", green: "Xanh lá: 0/0" }
+    };
+    sendBatteryCollectionResult(scene, victoryResult);
+  } else {
+    console.log('❌ Scene not found');
+  }
+};
+
+// Test victory check thủ công
+window.testVictoryCheck = function() {
+  console.log('🧪 Testing victory check...');
+  const scene = window.game?.scene?.getScene('Scene');
+  if (scene && typeof scene.checkVictory === 'function') {
+    const result = scene.checkVictory();
+    console.log('Victory check result:', result);
+  } else {
+    console.log('❌ Scene or checkVictory function not found');
+  }
+};
+
+// Test defeat status
+window.testDefeat = function() {
+  console.log('🧪 Testing defeat...');
+  const scene = window.game?.scene?.getScene('Scene');
+  if (scene && typeof scene.lose === 'function') {
+    scene.lose("Test defeat message");
+  } else {
+    console.log('❌ Scene or lose function not found');
+  }
+};
+
+// Test error status
+window.testError = function() {
+  console.log('🧪 Testing error...');
+  const scene = window.game?.scene?.getScene('Scene');
+  if (scene && typeof scene.sendError === 'function') {
+    scene.sendError("Test error message", { test: true, code: 500 });
+  } else {
+    console.log('❌ Scene or sendError function not found');
+  }
+};
+
+// Test progress status
+window.testProgress = function() {
+  console.log('🧪 Testing progress...');
+  const scene = window.game?.scene?.getScene('Scene');
+  if (scene && typeof scene.sendProgress === 'function') {
+    scene.sendProgress({ action: 'test', message: 'Test progress update' });
+  } else {
+    console.log('❌ Scene or sendProgress function not found');
+  }
+};
+
+// Test ngay
+window.testVictory();
 
 export default PhaserChannel;

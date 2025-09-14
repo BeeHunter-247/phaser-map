@@ -12,6 +12,7 @@ import {
   updateBatteryStatusText,
   checkAndDisplayVictory,
 } from "../../utils/VictoryConditions.js";
+import { sendMessageToParent } from "../../utils/PhaserChannel.js";
 
 /**
  * BasicScene1 - Robot Programming Scene
@@ -170,7 +171,17 @@ export default class Scene extends Phaser.Scene {
    * @returns {boolean} Success/failure
    */
   moveForward() {
-    return this.robotController.moveForward();
+    const result = this.robotController.moveForward();
+    
+    if (result) {
+      // Gửi progress status khi di chuyển
+      this.sendProgress({
+        action: 'moveForward',
+        direction: this.robotController.getCurrentDirection()
+      });
+    }
+    
+    return result;
   }
 
   /**
@@ -281,8 +292,15 @@ export default class Scene extends Phaser.Scene {
     const result = this.batteryManager.collectBattery(preferredColor);
 
     if (result > 0) {
-      // Chỉ cập nhật UI trạng thái, không kiểm tra thắng/thua
+      // Cập nhật UI trạng thái
       this.uiManager.updateStatusUI();
+      
+      // Gửi progress status khi thu thập pin
+      this.sendProgress({
+        action: 'collectBattery',
+        color: preferredColor,
+        collectedCount: result
+      });
     }
 
     return result;
@@ -300,6 +318,12 @@ export default class Scene extends Phaser.Scene {
       // Cập nhật UI trạng thái
       this.uiManager.updateStatusUI();
       console.log(`📦 Put ${count} box(es) successfully`);
+      
+      // Gửi progress status khi đặt box
+      this.sendProgress({
+        action: 'putBox',
+        count: count
+      });
     }
 
     return result;
@@ -317,9 +341,86 @@ export default class Scene extends Phaser.Scene {
       // Cập nhật UI trạng thái
       this.uiManager.updateStatusUI();
       console.log(`📦 Took ${count} box(es) successfully`);
+      
+      // Gửi progress status khi lấy box
+      this.sendProgress({
+        action: 'takeBox',
+        count: count
+      });
     }
 
     return result;
+  }
+
+  /**
+   * Kiểm tra điều kiện thắng thủ công
+   * @returns {Object} Kết quả kiểm tra victory
+   */
+  checkVictory() {
+    return checkAndDisplayVictory(this);
+  }
+
+  /**
+   * Gửi thông báo thua cuộc
+   * @param {string} reason - Lý do thua cuộc
+   */
+  lose(reason = "Game Over") {
+    console.log(`💥 Defeat: ${reason}`);
+    
+    // Gửi defeat status
+    const defeatData = {
+      isVictory: false,
+      mapKey: this.mapKey,
+      collectedBatteries: this.collectedBatteries || 0,
+      collectedBatteryTypes: this.collectedBatteryTypes || { red: 0, yellow: 0, green: 0 },
+      robotPosition: this.robot ? { x: this.robot.x, y: this.robot.y } : null,
+      isPaused: this.scene ? this.scene.isPaused() : false,
+      score: this.collectedBatteries || 0,
+      reason: reason,
+      timestamp: Date.now()
+    };
+    
+    // Gửi qua PhaserChannel
+    sendMessageToParent("LOSE", defeatData);
+  }
+
+  /**
+   * Gửi thông báo lỗi
+   * @param {string} error - Thông báo lỗi
+   * @param {Object} details - Chi tiết lỗi
+   */
+  sendError(error, details = {}) {
+    console.error(`❌ Error: ${error}`, details);
+    
+    const errorData = {
+      error: error,
+      details: details,
+      mapKey: this.mapKey,
+      robotPosition: this.robot ? { x: this.robot.x, y: this.robot.y } : null,
+      timestamp: Date.now()
+    };
+    
+    // Gửi qua PhaserChannel
+    sendMessageToParent("ERROR", errorData);
+  }
+
+  /**
+   * Gửi thông báo tiến độ
+   * @param {Object} progressData - Dữ liệu tiến độ
+   */
+  sendProgress(progressData = {}) {
+    const data = {
+      mapKey: this.mapKey,
+      collectedBatteries: this.collectedBatteries || 0,
+      collectedBatteryTypes: this.collectedBatteryTypes || { red: 0, yellow: 0, green: 0 },
+      robotPosition: this.robot ? { x: this.robot.x, y: this.robot.y } : null,
+      isPaused: this.scene ? this.scene.isPaused() : false,
+      timestamp: Date.now(),
+      ...progressData
+    };
+    
+    // Gửi qua PhaserChannel
+    sendMessageToParent("PROGRESS", data);
   }
 
   // ========================================

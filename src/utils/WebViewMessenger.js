@@ -167,10 +167,22 @@ export function sendReadyMessage() {
  */
 export function sendBatteryCollectionResult(scene, victoryResult) {
   const messageType = victoryResult.isVictory ? "VICTORY" : "LOSE";
-
-  return sendMessageToParent(messageType, {
+  
+  // Sử dụng cùng cấu trúc dữ liệu như PhaserChannel
+  const statusData = {
     isVictory: victoryResult.isVictory,
-  });
+    mapKey: scene.mapKey,
+    collectedBatteries: scene.collectedBatteries || 0,
+    collectedBatteryTypes: scene.collectedBatteryTypes || { red: 0, yellow: 0, green: 0 },
+    requiredBatteries: victoryResult.required || { red: 0, yellow: 0, green: 0 },
+    details: victoryResult.details || {},
+    robotPosition: scene.robot ? { x: scene.robot.x, y: scene.robot.y } : null,
+    isPaused: scene.scene ? scene.scene.isPaused() : false,
+    score: scene.collectedBatteries || 0,
+    timestamp: Date.now()
+  };
+
+  return sendMessageToParent(messageType, statusData);
 }
 
 /**

@@ -141,6 +141,33 @@ class PhaserGameController {
     }
   }
 
+  // Enhanced status handling with detailed data structure
+  void handleDetailedStatus(Map<String, dynamic> statusData) {
+    final isVictory = statusData['isVictory'] ?? false;
+    final mapKey = statusData['mapKey'];
+    final collectedBatteries = statusData['collectedBatteries'] ?? 0;
+    final collectedBatteryTypes = Map<String, int>.from(
+      statusData['collectedBatteryTypes'] ?? {'red': 0, 'yellow': 0, 'green': 0}
+    );
+    final requiredBatteries = Map<String, int>.from(
+      statusData['requiredBatteries'] ?? {'red': 0, 'yellow': 0, 'green': 0}
+    );
+    final robotPosition = statusData['robotPosition'];
+    final isPaused = statusData['isPaused'] ?? false;
+    final score = statusData['score'] ?? 0;
+    final timestamp = statusData['timestamp'];
+
+    print('Game Status Update:');
+    print('  Map: $mapKey');
+    print('  Batteries: $collectedBatteries');
+    print('  Types: $collectedBatteryTypes');
+    print('  Required: $requiredBatteries');
+    print('  Robot Position: $robotPosition');
+    print('  Paused: $isPaused');
+    print('  Score: $score');
+    print('  Timestamp: $timestamp');
+  }
+
   void _handleGameResponse(String requestId, Map<String, dynamic> data) {
     // Xử lý response từ game
     print('Game response for $requestId: $data');

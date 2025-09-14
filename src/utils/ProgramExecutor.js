@@ -464,20 +464,17 @@ export class ProgramExecutor {
     if (this.currentStep >= this.program.actions.length) {
       console.log("✅ Program completed!");
 
-      // KIỂM TRA THUA KHI CHƯƠNG TRÌNH KẾT THÚC
+      // KIỂM TRA VICTORY KHI CHƯƠNG TRÌNH KẾT THÚC
+      console.log("🏁 Program completed! Checking victory conditions...");
       const victoryResult = checkAndDisplayVictory(this.scene);
-      if (!victoryResult.isVictory) {
-        // Chương trình kết thúc nhưng chưa đủ pin = THUA
-        this.scene.lose("Chương trình kết thúc thua cuộc!");
+      
+      if (victoryResult.isVictory) {
+        console.log("🏆 Victory! Program completed successfully!");
+        // Victory message đã được gửi trong checkAndDisplayVictory()
       } else {
-        // Gửi thông báo chiến thắng ra webview (không blocking)
-        import("./WebViewMessenger.js")
-          .then(({ sendVictoryMessage }) => {
-            if (typeof sendVictoryMessage === "function") {
-              sendVictoryMessage();
-            }
-          })
-          .catch((e) => console.warn("Cannot send victory message:", e));
+        console.log("💥 Defeat! Program completed but victory conditions not met!");
+        // Defeat message đã được gửi trong checkAndDisplayVictory()
+        this.scene.lose("Chương trình kết thúc thua cuộc!");
       }
 
       this.stopProgram();
@@ -507,6 +504,16 @@ export class ProgramExecutor {
       // Lệnh forward sẽ tự xử lý việc chuyển sang lệnh tiếp theo
     } else {
       console.error(`❌ Command failed at step ${this.currentStep + 1}`);
+      
+      // Gửi error status
+      if (this.scene && typeof this.scene.sendError === 'function') {
+        this.scene.sendError(`Command failed at step ${this.currentStep + 1}`, {
+          step: this.currentStep + 1,
+          action: action.type,
+          programLength: this.program.actions.length
+        });
+      }
+      
       this.stopProgram();
     }
   }
