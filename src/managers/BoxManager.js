@@ -1,101 +1,27 @@
 /**
  * BoxManager - Quản lý boxes trên map
+ * Sử dụng EntityManager thay vì hardcode
  */
 import { VictoryConditions } from "../utils/VictoryConditions.js";
+import { EntityManager } from "../models/EntityManager.js";
+
 export class BoxManager {
   constructor(scene) {
     this.scene = scene;
-    this.boxes = new Map(); // Map<"x,y", {count: number, sprites: Phaser.GameObjects.Image[]}>
-    this.totalBoxes = 0;
-    this.collectedBoxes = 0;
-    this.putBoxes = 0; // Số box đã đặt
-    this.carriedBoxes = 0; // Số box robot đang mang theo
+    this.entityManager = null;
   }
 
   /**
    * Khởi tạo BoxManager
-   * @param {Object} robotController - Robot controller instance
-   * @param {Object} objectConfig - Config từ mapConfigs
-   * @param {Array} loadedBoxes - Boxes đã load từ MapLoader
+   * @param {Array} boxSprites - Array of box sprites from MapLoader
+   * @param {GameState} gameState - Game state instance
    */
-  initialize(robotController, objectConfig, loadedBoxes = []) {
-    this.robotController = robotController;
-    this.boxes.clear();
-    this.totalBoxes = 0;
-    this.collectedBoxes = 0;
-    this.carriedBoxes = 0;
-
+  initialize(boxSprites, gameState) {
+    this.boxSprites = boxSprites || [];
+    this.gameState = gameState;
     console.log(
-      `📦 BoxManager initializing with ${loadedBoxes.length} loaded boxes`
+      `📦 BoxManager initialized with ${this.boxSprites.length} boxes`
     );
-
-    // Nếu có config boxes và có sprites đã load, gán mỗi sprite vào tile gần nhất trong config
-    if (
-      objectConfig &&
-      objectConfig.boxes &&
-      loadedBoxes &&
-      loadedBoxes.length > 0
-    ) {
-      // Chuẩn bị danh sách tâm tile theo config
-      const centers = [];
-      objectConfig.boxes.forEach((boxConfig) => {
-        if (boxConfig.tiles) {
-          boxConfig.tiles.forEach((tilePos) => {
-            const key = `${tilePos.x},${tilePos.y}`;
-            const center = this.robotController.getTileWorldCenter(
-              tilePos.x,
-              tilePos.y
-            );
-            if (center) centers.push({ key, x: center.x, y: center.y });
-          });
-        }
-      });
-
-      loadedBoxes.forEach((sprite) => {
-        if (centers.length === 0) return;
-        // Tìm tile center gần nhất
-        let best = centers[0];
-        let bestD2 =
-          (sprite.x - best.x) * (sprite.x - best.x) +
-          (sprite.y - best.y) * (sprite.y - best.y);
-        for (let i = 1; i < centers.length; i++) {
-          const c = centers[i];
-          const d2 =
-            (sprite.x - c.x) * (sprite.x - c.x) +
-            (sprite.y - c.y) * (sprite.y - c.y);
-          if (d2 < bestD2) {
-            best = c;
-            bestD2 = d2;
-          }
-        }
-        this.registerBoxAtTile(best.key, sprite);
-      });
-    } else if (
-      objectConfig &&
-      objectConfig.boxes &&
-      (!loadedBoxes || loadedBoxes.length === 0)
-    ) {
-      // Không có sprites sẵn: chỉ đăng ký theo số lượng từ config
-      objectConfig.boxes.forEach((boxConfig) => {
-        if (boxConfig.tiles) {
-          boxConfig.tiles.forEach((tilePos) => {
-            const tileKey = `${tilePos.x},${tilePos.y}`;
-            const count = tilePos.count || 1;
-            this.registerBoxesAtTile(tileKey, count);
-          });
-        }
-      });
-    } else if (loadedBoxes && loadedBoxes.length > 0) {
-      // Không có config: fallback theo vị trí sprite
-      loadedBoxes.forEach((box) => {
-        const tileKey = this.getTileKeyFromPosition(box.x, box.y);
-        if (tileKey) {
-          this.registerBoxAtTile(tileKey, box);
-        }
-      });
-    }
-
-    console.log(`📦 BoxManager initialized: ${this.totalBoxes} boxes total`);
   }
 
   /**
@@ -251,72 +177,8 @@ export class BoxManager {
    * @returns {boolean} Success/failure
    */
   takeBox(count = 1) {
-    const frontTile = this.getFrontTilePosition();
-    if (!frontTile) {
-      console.error("❌ No front tile for robot");
-      return false;
-    }
-
-    // Kiểm tra ô trước mặt có hợp lệ không
-    if (!this.robotController.isWithinBounds(frontTile.x, frontTile.y)) {
-      console.error(
-        `❌ Front tile (${frontTile.x}, ${frontTile.y}) is out of bounds`
-      );
-      return false;
-    }
-
-    const tileKey = `${frontTile.x},${frontTile.y}`;
-    const tileData = this.boxes.get(tileKey);
-
-    console.log(`📦 frontTile: ${frontTile}`);
-    console.log(`📦 boxes: ${this.boxes}`);
-    console.log(`📦 tileKey: ${tileKey}`);
-    console.log(`📦 tileData: ${tileData}`);
-
-    if (!tileData || tileData.count < count) {
-      console.error(
-        `❌ Not enough boxes at front tile ${tileKey}. Available: ${
-          tileData?.count || 0
-        }, Requested: ${count}`
-      );
-      return false;
-    }
-
-    // Cập nhật số lượng
-    tileData.count -= count;
-    this.totalBoxes -= count;
-    this.collectedBoxes += count;
-    this.carriedBoxes += count;
-
-    // Xóa sprites nếu có
-    console.log(
-      `📦 tileData.sprites.length: ${tileData.sprites.length} at ${tileKey}`
-    );
-    if (tileData.sprites.length > 0) {
-      const spritesToRemove = tileData.sprites.splice(0, count);
-      console.log(
-        `📦 Removing ${spritesToRemove.length} sprites from ${tileKey}`
-      );
-      spritesToRemove.forEach((sprite) => {
-        if (sprite && sprite.destroy) {
-          sprite.destroy();
-        }
-      });
-    } else {
-      console.log(`📦 No sprites to remove at ${tileKey}`);
-    }
-
-    console.log(
-      `📦 Took ${count} box(es) from front tile ${tileKey}. Remaining: ${tileData.count}`
-    );
-
-    // Kiểm tra thắng thua
-    this.checkVictoryConditions();
-
-    // Re-layout after removal
-    this.layoutTileSpritesGrid(tileKey);
-
-    return true;
+    if (!this.entityManager) return false;
+    return this.entityManager.takeBox(count);
   }
 
   /**
@@ -325,93 +187,8 @@ export class BoxManager {
    * @returns {boolean} Success/failure
    */
   putBox(count = 1) {
-    // Không cho đặt vượt quá số lượng đang mang
-    if (this.carriedBoxes < count) {
-      console.error(
-        `❌ Cannot put ${count} box(es). Carried: ${this.carriedBoxes}`
-      );
-      return false;
-    }
-
-    const frontTile = this.getFrontTilePosition();
-    if (!frontTile) {
-      console.error("❌ No front tile for robot");
-      return false;
-    }
-
-    // Kiểm tra ô trước mặt có hợp lệ không
-    if (!this.robotController.isWithinBounds(frontTile.x, frontTile.y)) {
-      console.error(
-        `❌ Front tile (${frontTile.x}, ${frontTile.y}) is out of bounds`
-      );
-      return false;
-    }
-
-    const tileKey = `${frontTile.x},${frontTile.y}`;
-
-    // Ràng buộc: chỉ cho phép đặt box tại các vị trí mục tiêu (nếu map định nghĩa bằng toạ độ)
-    try {
-      const requiredTargets = VictoryConditions.getRequiredBoxes(
-        this.scene.mapKey
-      );
-      if (Array.isArray(requiredTargets) && requiredTargets.length > 0) {
-        const allowed = new Set(requiredTargets.map((t) => `${t.x},${t.y}`));
-        if (!allowed.has(tileKey)) {
-          console.error(
-            `❌ Cannot put box at ${tileKey}. Not a target position.`
-          );
-          if (this.scene && typeof this.scene.lose === "function") {
-            this.scene.lose(`Đặt hộp sai vị trí mục tiêu (${tileKey}).`);
-          }
-          return false;
-        }
-      }
-    } catch (e) {
-      // Bỏ qua nếu không có cấu hình victory phù hợp
-    }
-
-    // Khởi tạo tile nếu chưa có
-    if (!this.boxes.has(tileKey)) {
-      this.boxes.set(tileKey, {
-        count: 0,
-        sprites: [],
-        types: [],
-      });
-    }
-
-    const tileData = this.boxes.get(tileKey);
-
-    // Tạo sprites cho boxes mới
-    for (let i = 0; i < count; i++) {
-      const boxSprite = this.createBoxSprite(
-        frontTile.x,
-        frontTile.y,
-        i,
-        tileData.count + i
-      );
-      if (boxSprite) {
-        tileData.sprites.push(boxSprite);
-        tileData.types.push("box");
-      }
-    }
-
-    // Cập nhật số lượng
-    tileData.count += count;
-    // Chỉ tăng totalBoxes nếu không phải warehouse
-    if (!this.isWarehouseTile(tileKey)) {
-      this.totalBoxes += count;
-    }
-    this.putBoxes += count; // Tăng số box đã đặt
-    this.carriedBoxes -= count; // Giảm số đang mang
-
-    console.log(
-      `📦 Put ${count} box(es) at front tile ${tileKey}. Total: ${tileData.count}`
-    );
-
-    // Re-layout after placing
-    this.layoutTileSpritesGrid(tileKey);
-
-    return true;
+    if (!this.entityManager) return false;
+    return this.entityManager.placeBox(count);
   }
 
   /**

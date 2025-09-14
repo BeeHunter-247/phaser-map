@@ -139,29 +139,24 @@ export function initWebViewCommunication(game) {
     // Xử lý các loại thông điệp từ trang web chứa
     switch (message.type) {
       case "START_MAP": {
-        // Bắt đầu trực tiếp Scene với mapKey (bỏ qua menu)
-        const mapKey = message.data && message.data.mapKey;
-        if (mapKey) {
-          console.log(`▶️ START_MAP: ${mapKey}`);
-          game.scene.start("Scene", { mapKey });
-        }
+        // Bắt đầu trực tiếp Scene (không cần mapKey nữa)
+        console.log(`▶️ START_MAP: Starting challenge mode`);
+        game.scene.start("GameScene");
         break;
       }
       case "LOAD_MAP":
-        // Xử lý yêu cầu tải map
-        if (message.data && message.data.mapKey) {
-          const scene = game.scene.getScene("Scene");
-          if (scene) {
-            // Khởi động lại scene với mapKey mới
-            scene.scene.restart({ mapKey: message.data.mapKey });
-          }
+        // Xử lý yêu cầu tải map (restart scene)
+        const scene = game.scene.getScene("GameScene");
+        if (scene) {
+          // Khởi động lại scene
+          scene.scene.restart();
         }
         break;
 
       case "RUN_PROGRAM":
         // Xử lý yêu cầu chạy chương trình
         if (message.data && message.data.program) {
-          const scene = game.scene.getScene("Scene");
+          const scene = game.scene.getScene("GameScene");
           if (scene) {
             scene.loadProgram(message.data.program, true);
           }
@@ -170,10 +165,9 @@ export function initWebViewCommunication(game) {
 
       case "GET_STATUS":
         // Gửi trạng thái hiện tại
-        const scene = game.scene.getScene("Scene");
         if (scene) {
           const status = {
-            mapKey: scene.mapKey,
+            mapKey: "challenge_mode",
             collectedBatteries: scene.collectedBatteries || 0,
             collectedBatteryTypes: scene.collectedBatteryTypes || {
               red: 0,
@@ -189,17 +183,17 @@ export function initWebViewCommunication(game) {
 
   // Thêm API toàn cục cho webview gọi trực tiếp (tùy chọn)
   window.RobotGameAPI = {
-    loadMap: (mapKey) => {
-      const scene = game.scene.getScene("Scene");
+    loadMap: () => {
+      const scene = game.scene.getScene("GameScene");
       if (scene) {
-        scene.scene.restart({ mapKey });
+        scene.scene.restart();
         return true;
       }
       return false;
     },
 
     runProgram: (program) => {
-      const scene = game.scene.getScene("Scene");
+      const scene = game.scene.getScene("GameScene");
       if (scene) {
         return scene.loadProgram(program, true);
       }
@@ -207,10 +201,10 @@ export function initWebViewCommunication(game) {
     },
 
     getStatus: () => {
-      const scene = game.scene.getScene("Scene");
+      const scene = game.scene.getScene("GameScene");
       if (scene) {
         return {
-          mapKey: scene.mapKey,
+          mapKey: "challenge_mode",
           collectedBatteries: scene.collectedBatteries || 0,
           collectedBatteryTypes: scene.collectedBatteryTypes || {
             red: 0,

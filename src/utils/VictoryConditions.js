@@ -4,7 +4,6 @@
  * Hệ thống đánh giá tiêu chí thắng thua cho từng map dựa trên việc thu thập pin
  */
 
-import { mapConfigs } from "../data/mapConfigs.js";
 import { sendBatteryCollectionResult } from "./WebViewMessenger.js";
 
 /**
@@ -12,71 +11,61 @@ import { sendBatteryCollectionResult } from "./WebViewMessenger.js";
  */
 export class VictoryConditions {
   /**
-   * Tính tổng số pin cần thu thập trong một map
-   * @param {string} mapKey - Key của map (basic1, basic2, etc.)
-   * @returns {Object} Thông tin về số lượng pin cần thu thập
+   * Kiểm tra điều kiện thắng dựa trên pin được phép collect
+   * @param {Object} scene - Scene hiện tại
+   * @returns {Object} Kết quả kiểm tra { isVictory, progress, message }
    */
-  static getRequiredBatteries(mapKey) {
-    const config = mapConfigs[mapKey];
-
-    // Ưu tiên sử dụng cấu hình victory mới nếu có
-    if (config && config.victory) {
-      const victory = config.victory;
-      const byType = { red: 0, yellow: 0, green: 0 };
-
-      // Xử lý cấu trúc byType mới: [{ red: 0, yellow: 0, green: 1 }]
-      if (Array.isArray(victory.byType) && victory.byType.length > 0) {
-        const typeConfig = victory.byType[0];
-        // Nếu entry đầu là dạng box (có x,y) thì không có cấu hình pin
-        if (
-          typeof typeConfig.x === "number" &&
-          typeof typeConfig.y === "number"
-        ) {
-          return undefined;
-        }
-
-        byType.red = typeConfig.red || 0;
-        byType.yellow = typeConfig.yellow || 0;
-        byType.green = typeConfig.green || 0;
-
-        const totalRequired =
-          (byType.red || 0) + (byType.yellow || 0) + (byType.green || 0);
-        if (totalRequired === 0) {
-          // Không đặt mục tiêu pin
-          return undefined;
-        }
-      }
-
+  static checkVictoryByAllowedBatteries(scene) {
+    if (!scene.entityManager) {
       return {
-        byType,
-        description: victory.description || undefined,
+        isVictory: false,
+        progress: 0,
+        message: "Đang khởi tạo...",
+        details: {},
       };
     }
+
+    const totalAllowed = scene.entityManager.getTotalAllowedBatteries();
+    const totalCollected = scene.entityManager.totalCollectedBatteries;
+    const allowedByType = scene.entityManager.getAllowedBatteriesByType();
+    const collectedByType = scene.entityManager.collectedBatteries;
+
+    const isVictory = totalCollected >= totalAllowed;
+
+    // Thông tin chi tiết theo màu
+    const details = {
+      red: `Đỏ: ${collectedByType.red || 0}/${allowedByType.red || 0}`,
+      yellow: `Vàng: ${collectedByType.yellow || 0}/${
+        allowedByType.yellow || 0
+      }`,
+      green: `Xanh lá: ${collectedByType.green || 0}/${
+        allowedByType.green || 0
+      }`,
+    };
+
+    return {
+      isVictory,
+      progress: totalAllowed > 0 ? (totalCollected / totalAllowed) * 100 : 0,
+      message: isVictory
+        ? "Chiến thắng!"
+        : `Đang chơi... (${totalCollected}/${totalAllowed})`,
+      details,
+      totalAllowed,
+      totalCollected,
+      allowedByType,
+      collectedByType,
+    };
   }
 
   /**
-   * Lấy yêu cầu về box được đặt tại các vị trí chỉ định (nếu có)
-   * Dùng cùng trường victory.byType nhưng mỗi phần tử có {x,y,count}
-   */
-  static getRequiredBoxes(mapKey) {
-    const config = mapConfigs[mapKey];
-    if (!config || !config.victory) return undefined;
-    const arr = Array.isArray(config.victory.byType)
-      ? config.victory.byType
-      : [];
-    const targets = arr.filter(
-      (v) => typeof v.x === "number" && typeof v.y === "number"
-    );
-    return targets.length > 0 ? targets : undefined;
-  }
-
-  /**
-   * Kiểm tra điều kiện thắng dựa trên pin đã thu thập
+   * Kiểm tra điều kiện thắng dựa trên pin đã thu thập (legacy method)
    * @param {Object} scene - Scene hiện tại
    * @returns {Object} Kết quả kiểm tra { isVictory, progress, message }
    */
   static checkVictory(scene) {
-    if (!scene.mapKey) {
+    // Sử dụng challenge data từ JSON thay vì mapKey
+    const challengeData = scene.cache.json.get("challengeData");
+    if (!challengeData) {
       return {
         isVictory: false,
         progress: 0,
@@ -89,34 +78,8 @@ export class VictoryConditions {
       };
     }
 
-    // Ưu tiên kiểm tra theo box nếu cấu hình victory dùng toạ độ
-    const requiredBoxes = this.getRequiredBoxes(scene.mapKey);
-    if (requiredBoxes && scene.boxManager) {
-      const detailsBoxes = [];
-      let allMet = true;
-      for (const t of requiredBoxes) {
-        const key = `${t.x},${t.y}`;
-        const data = scene.boxManager.getBoxesAtTile
-          ? scene.boxManager.getBoxesAtTile(key)
-          : null;
-        const current = data ? data.count : 0;
-        const need = t.count || 0;
-        detailsBoxes.push(`Box (${t.x},${t.y}): ${current}/${need}`);
-        if (current !== need) allMet = false;
-      }
-      return {
-        isVictory: allMet,
-        details: { boxes: detailsBoxes },
-        required: { boxes: requiredBoxes },
-        collected: { boxes: detailsBoxes },
-      };
-    }
-
-    // Lấy thông tin pin cần thu thập
-    const required = this.getRequiredBatteries(scene.mapKey);
-
-    // Mặc định: kiểm tra theo pin
-    if (!scene.batteryManager || !required) {
+    // Mặc định: kiểm tra theo pin từ challenge data
+    if (!scene.batteryManager) {
       return {
         isVictory: false,
         progress: 0,
@@ -124,6 +87,10 @@ export class VictoryConditions {
         details: {},
       };
     }
+
+    // Tính toán required batteries từ challenge data
+    const required =
+      this.calculateRequiredBatteriesFromChallenge(challengeData);
 
     // Lấy thông tin pin đã thu thập từ BatteryManager
     const collected = scene.batteryManager
@@ -175,59 +142,30 @@ export class VictoryConditions {
   }
 
   /**
-   * Tạo thông tin tổng quan về map
-   * @param {string} mapKey - Key của map (basic1, basic2, etc.)
-   * @returns {Object} Thông tin tổng quan
+   * Tính toán required batteries từ challenge data
+   * @param {Object} challengeData - Challenge data từ JSON
+   * @returns {Object} Required batteries by type
    */
-  static getMapSummary(mapKey) {
-    const config = mapConfigs[mapKey];
-    if (!config) return null;
+  static calculateRequiredBatteriesFromChallenge(challengeData) {
+    const byType = { red: 0, yellow: 0, green: 0 };
 
-    const required = this.getRequiredBatteries(mapKey);
+    if (challengeData.batteries && Array.isArray(challengeData.batteries)) {
+      challengeData.batteries.forEach((batteryGroup) => {
+        if (batteryGroup.tiles && Array.isArray(batteryGroup.tiles)) {
+          batteryGroup.tiles.forEach((tile) => {
+            const count = tile.count || 1;
+            const type = tile.type || "green";
+            const allowed = tile.allowedCollect !== false;
 
-    // Lấy thông tin robot
-    const robot = config.robot || {};
-    const robotPos = robot.tile || { x: 0, y: 0 };
-    const robotDirection = robot.direction || "north";
-
-    // Tạo mảng vị trí pin
-    const batteryPositions = [];
-    if (config.batteries) {
-      config.batteries.forEach((batteryConfig) => {
-        if (batteryConfig.tiles) {
-          batteryConfig.tiles.forEach((tileConfig) => {
-            batteryPositions.push({
-              position: { x: tileConfig.x, y: tileConfig.y },
-              count: tileConfig.count || 1,
-              type: tileConfig.type || batteryConfig.type || "green",
-              types: tileConfig.types,
-            });
+            if (allowed && byType.hasOwnProperty(type)) {
+              byType[type] += count;
+            }
           });
         }
       });
     }
 
-    return {
-      mapKey,
-      robotPosition: robotPos,
-      robotDirection,
-      batteryPositions,
-      requiredBatteries: required,
-    };
-  }
-
-  /**
-   * Lấy thông tin tổng quan cho tất cả các map
-   * @returns {Object} Thông tin tổng quan cho mỗi map
-   */
-  static getAllMapsSummary() {
-    const summary = {};
-
-    Object.keys(mapConfigs).forEach((mapKey) => {
-      summary[mapKey] = this.getMapSummary(mapKey);
-    });
-
-    return summary;
+    return { byType };
   }
 }
 
@@ -237,13 +175,16 @@ export class VictoryConditions {
  * @returns {Object} Kết quả kiểm tra
  */
 export function checkAndDisplayVictory(scene) {
-  const result = VictoryConditions.checkVictory(scene);
+  // Ưu tiên sử dụng method mới dựa trên allowed batteries
+  const result = scene.entityManager
+    ? VictoryConditions.checkVictoryByAllowedBatteries(scene)
+    : VictoryConditions.checkVictory(scene);
 
   // Hiển thị thông tin trong console
   if (result.isVictory) {
-    console.log(`🏆 Chiến thắng! Đã thu thập đủ pin theo yêu cầu`);
+    console.log(`🏆 Chiến thắng! Đã thu thập đủ pin được phép collect`);
   } else {
-    console.log(`📊 Chưa thu thập đủ pin theo yêu cầu`);
+    console.log(`📊 Chưa thu thập đủ pin được phép collect`);
   }
 
   // Kiểm tra details có tồn tại không trước khi log
@@ -297,7 +238,7 @@ export function updateBatteryStatusText(scene, statusText) {
   const result = VictoryConditions.checkVictory(scene);
 
   // Tạo nội dung text
-  let content = `Map: ${scene.mapKey}\n`;
+  let content = `Challenge Mode\n`;
   if (result.isVictory) {
     content += `Chiến thắng!\n`;
   } else {

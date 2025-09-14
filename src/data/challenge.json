@@ -1,0 +1,22 @@
+{"robot": {
+    "tile": { "x": 2, "y": 3 },
+    "direction": "east"
+  },
+  "batteries": [
+    {
+      "tiles": [
+        {
+          "x": 5,
+          "y": 4,
+          "count": 3,
+          "type": "yellow",
+          "allowedCollect": "true"
+        }
+      ]
+    }
+  ],
+  "statement": ["if", "while", "condition"],
+  "description": "Collect allowed batteries using if statements",
+  "statementNumber": 7
+}
+

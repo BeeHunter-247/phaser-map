@@ -1,7 +1,7 @@
 import "./style.css";
 import Phaser from "phaser";
-import MenuScene from "./scenes/MenuScene";
-import Scene from "./scenes/basics/Scene";
+import MenuScene from "./scenes/MenuScene.js";
+import GameScene from "./scenes/GameScene.js";
 import { initWebViewCommunication } from "./utils/WebViewMessenger";
 
 const sizes = {
@@ -24,16 +24,20 @@ const config = {
       gravity: { y: 0 },
     },
   },
-  scene: [MenuScene, Scene],
+  scene: [MenuScene, GameScene],
 };
 
 const game = new Phaser.Game(config);
+
+// Đảm bảo MenuScene được start ngay lập tức
+setTimeout(() => {
+  game.scene.start("MenuScene");
+}, 100);
 
 // Khởi tạo hệ thống giao tiếp với webview
 window.addEventListener("load", () => {
   // Đợi game khởi tạo xong
   setTimeout(() => {
     initWebViewCommunication(game);
-    console.log("🔄 WebView communication initialized");
   }, 1000);
 });

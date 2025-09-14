@@ -8,99 +8,83 @@ export default class MenuScene extends Phaser.Scene {
   create() {
     this.cameras.main.setBackgroundColor("#f4f4f9");
 
-    // Gọi hàm để vẽ menu cho Basic (8 maps)
-    this.drawCategory("Basic", 8, 420, 120);
-
-    // Gọi hàm để vẽ menu cho Boolean (8 maps)
-    this.drawCategory("Boolean", 8, 420, 240);
-
-    // Gọi hàm để vẽ menu cho ForLoop (8 maps)
-    this.drawCategory("ForLoop", 8, 420, 360);
-
-    // Gọi hàm để vẽ menu cho Repeat (8 maps)
-    this.drawCategory("Repeat", 8, 420, 480);
-
-    // Gọi hàm để vẽ menu cho WhileLoop (8 maps)
-    this.drawCategory("WhileLoop", 8, 420, 600);
-
-    this.drawCategory("Conditional", 8, 420, 720);
-
-    this.drawCategory("Function", 8, 420, 840);
-
-    this.drawCategory("Variable", 8, 420, 960);
-
-    // Enable vertical scrolling (mouse wheel + drag to pan)
-    const camera = this.cameras.main;
-    const totalHeight = 1200; // enough to contain all categories below
-    camera.setBounds(0, 0, this.scale.width, totalHeight);
-
-    // Mouse wheel scroll
-    this.input.on("wheel", (_pointer, _objects, _dx, dy) => {
-      const maxScroll = Math.max(0, totalHeight - camera.height);
-      camera.scrollY = Phaser.Math.Clamp(
-        camera.scrollY + dy * 0.5,
-        0,
-        maxScroll
-      );
-    });
-
-    // Drag to pan
-    let isDragging = false;
-    let dragStartY = 0;
-    let startScrollY = 0;
-    this.input.on("pointerdown", (p) => {
-      isDragging = true;
-      dragStartY = p.y;
-      startScrollY = camera.scrollY;
-    });
-    this.input.on("pointerup", () => {
-      isDragging = false;
-    });
-    this.input.on("pointermove", (p) => {
-      if (!isDragging) return;
-      const dy = p.y - dragStartY;
-      const maxScroll = Math.max(0, totalHeight - camera.height);
-      camera.scrollY = Phaser.Math.Clamp(startScrollY - dy, 0, maxScroll);
-    });
-    // Removed duplicate categories to prevent overlaps
-
-    // Sau này bạn có thể gọi thêm:
-    // this.drawCategory("Variable", 5, 100, 720);
-    // this.drawCategory("Loop", 10, 100, 840);
-  }
-
-  // Hàm generic vẽ menu cho 1 category
-  drawCategory(prefix, totalMaps, startX, startY) {
-    const mapsPerRow = 8;
-    const spacingX = 70;
-    const spacingY = 70;
-
+    // Title
     this.add
-      .text(this.scale.width / 2, startY - 40, `${prefix} Maps`, {
-        fontSize: "28px",
+      .text(this.scale.width / 2, 100, "Robot Programming Game", {
+        fontSize: "36px",
         fill: "#000",
+        fontStyle: "bold",
       })
       .setOrigin(0.5);
 
-    for (let i = 1; i <= totalMaps; i++) {
-      const col = (i - 1) % mapsPerRow;
-      const row = Math.floor((i - 1) / mapsPerRow);
+    // Subtitle
+    this.add
+      .text(
+        this.scale.width / 2,
+        150,
+        "Load data from map.json and challenge.json",
+        {
+          fontSize: "18px",
+          fill: "#666",
+        }
+      )
+      .setOrigin(0.5);
 
-      const x = startX + col * spacingX;
-      const y = startY + row * spacingY;
+    // Load button
+    const loadButton = this.add
+      .rectangle(this.scale.width / 2, 250, 200, 60, 0x4caf50)
+      .setInteractive()
+      .setStrokeStyle(2, 0x2e7d32);
 
-      const mapText = this.add
-        .text(x, y, `${i}`, {
-          fontSize: "24px",
-          fill: "#00f",
+    const loadText = this.add
+      .text(this.scale.width / 2, 250, "LOAD GAME", {
+        fontSize: "20px",
+        fill: "#fff",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+
+    // Button hover effects
+    loadButton.on("pointerover", () => {
+      loadButton.setFillStyle(0x66bb6a);
+      loadText.setStyle({ fontSize: "22px" });
+    });
+
+    loadButton.on("pointerout", () => {
+      loadButton.setFillStyle(0x4caf50);
+      loadText.setStyle({ fontSize: "20px" });
+    });
+
+    // Load button click
+    loadButton.on("pointerdown", () => {
+      console.log("🚀 Loading game from data files...");
+      this.scene.start("GameScene");
+    });
+
+    // Instructions
+    this.add
+      .text(this.scale.width / 2, 350, "Instructions:", {
+        fontSize: "24px",
+        fill: "#000",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+
+    const instructions = [
+      "• Map data is loaded from src/data/map.json",
+      "• Challenge data is loaded from src/data/challenge.json",
+      "• Robot, batteries, and boxes are placed according to challenge config",
+      "• Use programming blocks to control the robot",
+      "• Collect allowed batteries to complete the challenge",
+    ];
+
+    instructions.forEach((instruction, index) => {
+      this.add
+        .text(this.scale.width / 2, 400 + index * 25, instruction, {
+          fontSize: "16px",
+          fill: "#333",
         })
-        .setInteractive();
-
-      mapText.on("pointerdown", () => {
-        // Start the common Scene with selected mapKey
-        const mapKey = `${prefix.toLowerCase()}${i}`; // e.g., basic1..basic8, boolean1..boolean8, forloop1..forloop8
-        this.scene.start("Scene", { mapKey });
-      });
-    }
+        .setOrigin(0.5);
+    });
   }
 }
