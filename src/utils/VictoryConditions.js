@@ -382,6 +382,19 @@ export function checkAndDisplayVictory(scene) {
     isVictory: result.isVictory && statementCheck.isValid,
   };
 
+  // Tính số sao dựa trên statementNumber và tổng số block người dùng sử dụng (raw)
+  const starsInfo = computeStars(scene);
+  if (starsInfo) {
+    finalResult.stars = starsInfo.stars;
+    finalResult.starScore = starsInfo.score;
+    finalResult.starDetail = starsInfo.detail;
+    console.log(
+      `⭐ Stars: ${finalResult.stars} | score=${finalResult.starScore.toFixed(
+        2
+      )} | ${finalResult.starDetail}`
+    );
+  }
+
   // Hiển thị thông tin trong console
   if (finalResult.isVictory) {
     console.log(
@@ -429,6 +442,66 @@ export function checkAndDisplayVictory(scene) {
   sendBatteryCollectionResult(scene, finalResult);
 
   return finalResult;
+}
+
+/**
+ * Tính sao: score = (statementNumber * 3) / totalRawBlocks
+ * - 0 < score < 2 => 1 sao
+ * - 2 <= score < 3 => 2 sao
+ * - score >= 3 => 3 sao
+ * @param {Object} scene
+ * @returns {{stars:number, score:number, detail:string}|null}
+ */
+function computeStars(scene) {
+  try {
+    if (!scene) return null;
+
+    // Lấy statementNumber từ nhiều nguồn khả dĩ
+    const fromVictory = scene.mapModel?.victoryConditions?.statementNumber;
+    const fromChallengeJson = scene.challengeJson?.statementNumber;
+    const fromChallengeCfgVictory =
+      scene.challengeConfig?.victory?.statementNumber;
+    const statementNumber =
+      typeof fromVictory === "number"
+        ? fromVictory
+        : typeof fromChallengeCfgVictory === "number"
+        ? fromChallengeCfgVictory
+        : typeof fromChallengeJson === "number"
+        ? fromChallengeJson
+        : 0;
+
+    // Tổng block raw được đếm trước khi parse
+    const totalBlocks = scene.programExecutor?.totalRawBlocks || 0;
+
+    if (statementNumber <= 0 || totalBlocks <= 0) {
+      return {
+        stars: 0,
+        score: 0,
+        detail: `statementNumber=${statementNumber}, totalBlocks=${totalBlocks}`,
+      };
+    }
+
+    const score = (statementNumber * 3) / totalBlocks;
+    let stars = 0;
+    if (score > 0 && score < 2) stars = 1;
+    else if (score >= 2 && score < 3) stars = 2;
+    else if (score >= 3) stars = 3;
+
+    console.log(
+      `🧮 computeStars: statementNumber=${statementNumber}, totalBlocks=${totalBlocks}, score=${score.toFixed(
+        2
+      )} => stars=${stars}`
+    );
+
+    return {
+      stars,
+      score,
+      detail: `score=(statementNumber*3)/totalBlocks = (${statementNumber}*3)/${totalBlocks}`,
+    };
+  } catch (e) {
+    console.warn("⚠️ computeStars failed:", e);
+    return null;
+  }
 }
 
 /**

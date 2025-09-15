@@ -14,6 +14,9 @@ export class ProgramExecutor {
     this.functions = new Map(); // Lưu trữ các hàm đã định nghĩa
     this.variableContext = {}; // Lưu giá trị biến hiện tại
     this.usedStatements = new Set(); // Lưu trữ các statement đã sử dụng
+    // Lưu trữ chương trình gốc (chưa parse) và thống kê block
+    this.originalProgramData = null;
+    this.totalRawBlocks = 0;
   }
 
   /**
@@ -34,6 +37,10 @@ export class ProgramExecutor {
 
       // Reset used statements khi load program mới
       this.usedStatements.clear();
+
+      // Lưu chương trình gốc và đếm tổng số block raw trước khi parse/flatten
+      this.originalProgramData = JSON.parse(JSON.stringify(programData));
+      this.totalRawBlocks = this.countRawBlocks(this.originalProgramData);
 
       // Xử lý function definitions trước
       this.functions.clear();
@@ -61,12 +68,103 @@ export class ProgramExecutor {
       console.log(`   Version: ${this.program.version}`);
       console.log(`   Actions: ${this.program.actions.length}`);
       console.log(`   Functions: ${this.functions.size}`);
+      console.log(`   Raw blocks (pre-parse): ${this.totalRawBlocks}`);
+      console.log(
+        `🧮 Star inputs preview -> statementNumber: ${
+          this.scene?.mapModel?.victoryConditions?.statementNumber ??
+          this.scene?.challengeConfig?.victory?.statementNumber ??
+          this.scene?.challengeJson?.statementNumber ??
+          0
+        }, totalRawBlocks: ${this.totalRawBlocks}`
+      );
 
       return true;
     } catch (error) {
       console.error("❌ Failed to load program:", error.message);
       return false;
     }
+  }
+
+  /**
+   * Đếm tổng số block (loại) trong JSON chương trình gốc trước khi parse
+   * - Tính tất cả action có trường 'type' (vd: repeat, if, repeatRange, while, forward, collect, ...)
+   * - Bao gồm cả block bên trong body/then/else/elseIf và function body
+   * - Không tính các đối tượng điều kiện (cond) như variableComparison/and/or là block riêng
+   * @param {Object} program - JSON chương trình gốc
+   * @returns {number} Tổng số block
+   */
+  countRawBlocks(program) {
+    if (!program || typeof program !== "object") return 0;
+
+    let total = 0;
+
+    // Đếm trong phần định nghĩa hàm nếu có
+    if (Array.isArray(program.functions)) {
+      for (const func of program.functions) {
+        if (Array.isArray(func.body)) {
+          total += this.countBlocksInActions(func.body);
+        }
+      }
+    }
+
+    // Đếm trong actions chính
+    if (Array.isArray(program.actions)) {
+      total += this.countBlocksInActions(program.actions);
+    }
+
+    return total;
+  }
+
+  /**
+   * Đếm block trong mảng actions (raw) đệ quy theo cấu trúc
+   * @param {Array} actions
+   * @returns {number}
+   */
+  countBlocksInActions(actions) {
+    if (!Array.isArray(actions)) return 0;
+    let count = 0;
+
+    for (const action of actions) {
+      if (!action || typeof action !== "object") continue;
+      if (action.type) {
+        count += 1; // Bản thân block hiện tại
+      }
+
+      // Mở rộng theo từng loại để duyệt phần thân
+      // repeat: body
+      if (action.type === "repeat" && Array.isArray(action.body)) {
+        count += this.countBlocksInActions(action.body);
+      }
+
+      // repeatRange: body
+      if (action.type === "repeatRange" && Array.isArray(action.body)) {
+        count += this.countBlocksInActions(action.body);
+      }
+
+      // if: then, elseIf[].then, else
+      if (action.type === "if") {
+        if (Array.isArray(action.then)) {
+          count += this.countBlocksInActions(action.then);
+        }
+        if (Array.isArray(action.elseIf)) {
+          for (const clause of action.elseIf) {
+            if (clause && Array.isArray(clause.then)) {
+              count += this.countBlocksInActions(clause.then);
+            }
+          }
+        }
+        if (Array.isArray(action.else)) {
+          count += this.countBlocksInActions(action.else);
+        }
+      }
+
+      // while: body
+      if (action.type === "while" && Array.isArray(action.body)) {
+        count += this.countBlocksInActions(action.body);
+      }
+    }
+
+    return count;
   }
 
   /**
