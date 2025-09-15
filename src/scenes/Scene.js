@@ -85,7 +85,6 @@ export default class Scene extends Phaser.Scene {
     this.load.image("robot_east", "assets/tiles/robot_east.png");
     this.load.image("robot_south", "assets/tiles/robot_south.png");
     this.load.image("robot_west", "assets/tiles/robot_west.png");
-    this.load.image("robot_position", "assets/tiles/robot_position.png");
 
     // Load pin/battery variants
     this.load.image("pin_red", "assets/tiles/pin_red.png");
