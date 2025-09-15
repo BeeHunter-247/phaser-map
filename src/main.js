@@ -1,6 +1,5 @@
 import "./style.css";
 import Phaser from "phaser";
-import MenuScene from "./scenes/MenuScene";
 import Scene from "./scenes/Scene";
 import { initWebViewCommunication } from "./utils/WebViewMessenger";
 
@@ -13,13 +12,13 @@ class PhaserChannelEmitter {
   // Method để Flutter gọi: window.PhaserChannel.sendEvent('load_map', { mapKey: 'map1' })
   sendEvent(eventType, data) {
     console.log(`📨 PhaserChannel received event: ${eventType}`, data);
-    
+
     // Emit event để WebViewMessenger có thể lắng nghe
     this.emit(eventType, {
       source: "flutter",
       type: eventType,
       data: data,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
@@ -28,9 +27,9 @@ class PhaserChannelEmitter {
     console.log(`📨 PhaserChannel received message:`, message);
     try {
       const parsed = JSON.parse(message);
-      this.emit('message', parsed);
+      this.emit("message", parsed);
     } catch (e) {
-      console.error('❌ Failed to parse PhaserChannel message:', e);
+      console.error("❌ Failed to parse PhaserChannel message:", e);
     }
   }
 
@@ -40,7 +39,7 @@ class PhaserChannelEmitter {
       this.listeners.set(eventType, []);
     }
     this.listeners.get(eventType).push(callback);
-    
+
     // Return cleanup function
     return () => {
       const callbacks = this.listeners.get(eventType);
@@ -55,19 +54,22 @@ class PhaserChannelEmitter {
 
   emit(eventType, data) {
     const callbacks = this.listeners.get(eventType) || [];
-    const wildcardCallbacks = this.listeners.get('*') || [];
-    
+    const wildcardCallbacks = this.listeners.get("*") || [];
+
     // Call specific event listeners
-    callbacks.forEach(callback => {
+    callbacks.forEach((callback) => {
       try {
         callback(data);
       } catch (e) {
-        console.error(`❌ Error in PhaserChannel listener for ${eventType}:`, e);
+        console.error(
+          `❌ Error in PhaserChannel listener for ${eventType}:`,
+          e
+        );
       }
     });
-    
+
     // Call wildcard listeners
-    wildcardCallbacks.forEach(callback => {
+    wildcardCallbacks.forEach((callback) => {
       try {
         callback(data);
       } catch (e) {
@@ -79,7 +81,7 @@ class PhaserChannelEmitter {
 
 // Tạo PhaserChannel ngay khi script load
 window.PhaserChannel = new PhaserChannelEmitter();
-console.log('✅ PhaserChannel created and available globally');
+console.log("✅ PhaserChannel created and available globally");
 
 const sizes = {
   width: 1400,
@@ -101,7 +103,7 @@ const config = {
       gravity: { y: 0 },
     },
   },
-  scene: [MenuScene, Scene],
+  scene: [Scene],
 };
 
 const game = new Phaser.Game(config);
