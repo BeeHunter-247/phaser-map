@@ -582,7 +582,11 @@ export class ProgramExecutor {
         import("./WebViewMessenger.js")
           .then(({ sendVictoryMessage }) => {
             if (typeof sendVictoryMessage === "function") {
-              sendVictoryMessage();
+              const payload = {};
+              if (typeof victoryResult?.starScore === "number") {
+                payload.score = victoryResult.starScore;
+              }
+              sendVictoryMessage(payload);
             }
           })
           .catch((e) => console.warn("Cannot send victory message:", e));

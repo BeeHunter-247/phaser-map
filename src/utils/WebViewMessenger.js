@@ -59,10 +59,10 @@ export function sendMessageToParent(type, data = {}) {
 
 /**
  * Gửi thông báo thắng đến trang web chứa iframe
- * @param {Object} victoryData - Dữ liệu về kết quả thắng
+ * @param {Object} [victoryData] - Dữ liệu về kết quả thắng (ví dụ: { score })
  */
-export function sendVictoryMessage() {
-  return sendMessageToParent("VICTORY", { isVictory: true });
+export function sendVictoryMessage(victoryData = {}) {
+  return sendMessageToParent("VICTORY", { isVictory: true, ...victoryData });
 }
 
 /**
@@ -241,7 +241,11 @@ export function sendReadyMessage() {
  */
 export function sendBatteryCollectionResult(scene, victoryResult) {
   if (victoryResult.isVictory) {
-    return sendVictoryMessage();
+    const payload = {};
+    if (typeof victoryResult.starScore === "number") {
+      payload.score = victoryResult.starScore;
+    }
+    return sendVictoryMessage(payload);
   } else {
     // Truyền chi tiết lý do thua từ victoryResult
     const loseData = {
