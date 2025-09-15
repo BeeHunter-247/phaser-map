@@ -547,7 +547,12 @@ export default class Scene extends Phaser.Scene {
     try {
       import("../utils/WebViewMessenger.js").then(({ sendLoseMessage }) => {
         if (typeof sendLoseMessage === "function") {
-          sendLoseMessage();
+          const loseData = {
+            reason: reason || "UNKNOWN",
+            message: typeof reason === "string" ? reason : "Game over",
+            details: {}
+          };
+          sendLoseMessage(loseData);
         }
       });
     } catch (e) {

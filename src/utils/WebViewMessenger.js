@@ -23,26 +23,38 @@ export function isRunningInIframe() {
  * @param {Object} data - Dữ liệu kèm theo
  */
 export function sendMessageToParent(type, data = {}) {
-  if (isRunningInIframe()) {
-    try {
-      const message = {
-        source: "phaser-robot-game",
-        type: type,
-        data: data,
-        timestamp: Date.now(),
-      };
+  const message = {
+    source: "phaser-robot-game",
+    type,
+    data,
+    timestamp: Date.now(),
+  };
 
-      window.parent.postMessage(message, "*");
-      console.log(`📤 Sent message to parent: ${type}`, data);
-      return true;
-    } catch (e) {
-      console.error("❌ Error sending message to parent:", e);
-      return false;
-    }
-  } else {
-    console.log(`📝 Would send message (not in iframe): ${type}`, data);
-    return false;
+  let sent = false;
+
+  // 1) Nếu có Flutter JS channel (webview_flutter)
+  if (window.PhaserChannel?.postMessage) {
+    window.PhaserChannel.postMessage(JSON.stringify(message));
+    sent = true;
   }
+
+  // 2) Emit event qua PhaserChannel để Flutter có thể lắng nghe bằng .on()
+  if (window.PhaserChannel?.emit) {
+    window.PhaserChannel.emit(type, message.data);
+    sent = true;
+  }
+
+  // 3) Nếu đang ở trong iframe → gửi cho trang web parent
+  if (isRunningInIframe && isRunningInIframe()) {
+    window.parent.postMessage(message, "*"); // TODO: đặt origin cụ thể
+    sent = true;
+  }
+
+  if (!sent) {
+    console.log("📝 Would send (no bridge/iframe):", message);
+  }
+
+  return sent;
 }
 
 /**
@@ -64,9 +76,17 @@ export function sendProgressMessage(progressData) {
 /**
  * Gửi thông báo thua đến trang web chứa iframe
  * @param {Object} loseData - Dữ liệu về thua cuộc
+ * @param {string} loseData.reason - Lý do thua (ví dụ: "OUT_OF_BATTERY", "COLLISION", "OUT_OF_BOUNDS", "TIMEOUT")
+ * @param {string} [loseData.message] - Thông báo chi tiết về lý do thua
+ * @param {Object} [loseData.details] - Thông tin bổ sung về lý do thua
  */
-export function sendLoseMessage() {
-  return sendMessageToParent("LOSE", { isVictory: false });
+export function sendLoseMessage(loseData = {}) {
+  return sendMessageToParent("LOSE", { 
+    isVictory: false,
+    reason: loseData.reason || "UNKNOWN",
+    message: loseData.message || "Game over",
+    details: loseData.details || {}
+  });
 }
 
 /**
@@ -78,30 +98,120 @@ export function sendErrorMessage(errorData) {
 }
 
 /**
- * Thiết lập lắng nghe thông điệp từ trang web chứa iframe
+ * Lắng nghe thông điệp từ parent (postMessage) và từ PhaserChannel (emit)
  * @param {Function} callback - Hàm xử lý thông điệp nhận được
+ * @param {Object} [options]
+ * @param {string[]} [options.allowedOrigins=[]] - Whitelist origin cho postMessage
+ * @param {string[]} [options.channelEvents=["*"]] - Các sự kiện muốn nghe từ PhaserChannel (mặc định wildcard)
+ * @param {number}   [options.waitMs=5000] - Thời gian chờ PhaserChannel sẵn sàng
+ * @param {number}   [options.pollMs=100]  - Tần suất kiểm tra PhaserChannel
+ * @returns {Function} cleanup - gọi để gỡ tất cả listener
  */
-export function setupMessageListener(callback) {
-  window.addEventListener("message", (event) => {
-    // Kiểm tra nguồn thông điệp để đảm bảo an toàn
-    // Trong môi trường thực tế, nên kiểm tra origin
+export function setupMessageListener(callback, options = {}) {
+  const {
+    allowedOrigins = [],
+    channelEvents = ["*"],
+    waitMs = 5000,
+    pollMs = 100,
+  } = options;
+
+  // --- 1) Listener cho postMessage từ parent website ---
+  const messageHandler = (event) => {
     try {
+      // Bảo mật origin (nếu cấu hình)
+      if (Array.isArray(allowedOrigins) && allowedOrigins.length > 0) {
+        if (!allowedOrigins.includes(event.origin)) return; // Bỏ qua nguồn lạ
+      }
+
       const message = event.data;
-
-      // Kiểm tra xem thông điệp có đúng định dạng không
+      // Chỉ nhận đúng schema mong muốn từ parent website
       if (message && message.source === "parent-website") {
-        console.log(`📥 Received message from parent:`, message);
-
-        // Gọi callback để xử lý thông điệp
-        if (typeof callback === "function") {
-          callback(message);
-        }
+        // Chuẩn hoá payload cho đồng nhất
+        const normalized = {
+          source: "parent-website",
+          type: message.type,
+          data: message.data,
+          timestamp: typeof message.timestamp === "number" ? message.timestamp : Date.now(),
+          _raw: message,
+        };
+        if (typeof callback === "function") callback(normalized);
       }
     } catch (e) {
       console.error("❌ Error processing message from parent:", e);
     }
-  });
+  };
+  window.addEventListener("message", messageHandler);
+
+  // --- 2) Listener cho sự kiện đi vào từ PhaserChannel ---
+  const offFns = [];
+  let pollId = null;
+  let timeoutId = null;
+
+  const attachPhaserChannelListeners = (pc) => {
+    try {
+      if (!pc) return;
+      // Ưu tiên API dạng .on(type, handler)
+      if (typeof pc.on === "function") {
+        channelEvents.forEach((evt) => {
+          const off = pc.on(evt, (payload) => {
+            // payload kỳ vọng dạng { source, type, data, timestamp } do bên emit truyền vào
+            const normalized = {
+              source: "phaser-channel",
+              type: payload?.type ?? evt,
+              data: payload?.data ?? payload,
+              timestamp: typeof payload?.timestamp === "number" ? payload.timestamp : Date.now(),
+              _raw: payload,
+            };
+            if (typeof callback === "function") callback(normalized);
+          });
+          // Nếu .on trả về hàm off thì lưu lại, nếu không thì tạo off rỗng
+          offFns.push(typeof off === "function" ? off : () => {});
+        });
+        return true;
+      }
+
+      // Trường hợp không có .on/.emit (kênh tự triển khai khác) thì bạn có thể
+      // bổ sung nhánh này để thích ứng, ví dụ: pc.addEventListener(...)
+      // Ở đây mình chỉ hỗ trợ chuẩn .on/.emit để tối giản như yêu cầu “chỉ sửa trong setupMessageListener”.
+      console.warn("[setupMessageListener] PhaserChannel không có .on(); bỏ qua.");
+      return false;
+    } catch (e) {
+      console.error("❌ Error attaching PhaserChannel listeners:", e);
+      return false;
+    }
+  };
+
+  // Gắn ngay nếu đã có sẵn
+  if (window.PhaserChannel) {
+    attachPhaserChannelListeners(window.PhaserChannel);
+  } else {
+    // Poll chờ PhaserChannel xuất hiện (khi bundle khởi tạo xong)
+    pollId = setInterval(() => {
+      if (window.PhaserChannel) {
+        clearInterval(pollId);
+        pollId = null;
+        attachPhaserChannelListeners(window.PhaserChannel);
+      }
+    }, pollMs);
+
+    timeoutId = setTimeout(() => {
+      if (pollId) clearInterval(pollId);
+      pollId = null;
+      timeoutId = null;
+      // Không có PhaserChannel trong khoảng waitMs – không sao, vẫn chỉ nghe postMessage
+      // console.debug("[setupMessageListener] Hết thời gian chờ PhaserChannel.");
+    }, waitMs);
+  }
+
+  // --- Cleanup ---
+  return function cleanup() {
+    window.removeEventListener("message", messageHandler);
+    offFns.forEach((off) => { try { off(); } catch {} });
+    if (pollId) clearInterval(pollId);
+    if (timeoutId) clearTimeout(timeoutId);
+  };
 }
+
 
 /**
  * Gửi thông báo sẵn sàng đến trang web chứa iframe
@@ -119,11 +229,17 @@ export function sendReadyMessage() {
  * @param {Object} victoryResult - Kết quả kiểm tra thắng thua
  */
 export function sendBatteryCollectionResult(scene, victoryResult) {
-  const messageType = victoryResult.isVictory ? "VICTORY" : "LOSE";
-
-  return sendMessageToParent(messageType, {
-    isVictory: victoryResult.isVictory,
-  });
+  if (victoryResult.isVictory) {
+    return sendVictoryMessage();
+  } else {
+    // Truyền chi tiết lý do thua từ victoryResult
+    const loseData = {
+      reason: victoryResult.reason || "GAME_OVER",
+      message: victoryResult.message || "Game over",
+      details: victoryResult.details || {}
+    };
+    return sendLoseMessage(loseData);
+  }
 }
 
 /**
