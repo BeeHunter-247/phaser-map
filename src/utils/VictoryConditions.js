@@ -233,7 +233,7 @@ export class VictoryConditions {
 
     // Lấy thông tin robot từ mapModel
     const robotPos = { x: 0, y: 0 };
-    const robotDirection = "north";
+    let robotDirection = "north";
 
     // Tìm robot đầu tiên trong mapModel
     for (const robot of mapModel.robots.values()) {

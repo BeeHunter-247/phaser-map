@@ -54,7 +54,7 @@ export class ConfigLoader {
    */
   static async loadChallengeConfig() {
     try {
-      const response = await fetch("/src/data/challenge.json");
+      const response = await fetch("/assets/maps/challenge.json");
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
