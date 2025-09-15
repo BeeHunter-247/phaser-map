@@ -35,6 +35,6 @@
     ],
     "description": "Collect all yellow batteries using if statements"
   },
-  "statement": ["if", "repeatRange"],
-  "statementNumber": 7
+  "statement": [],
+  "statementNumber": 4
 }

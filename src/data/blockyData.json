@@ -18,7 +18,7 @@
             "check": true
           },
           "then": [
-            { "type": "collect", "color": "yellow", "count": 2 }
+            { "type": "collect", "color": "yellow", "count": 3 }
           ]
         }
       ]

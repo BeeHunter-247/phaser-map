@@ -59,10 +59,10 @@ export function sendMessageToParent(type, data = {}) {
 
 /**
  * Gửi thông báo thắng đến trang web chứa iframe
- * @param {Object} victoryData - Dữ liệu về kết quả thắng
+ * @param {Object} [victoryData] - Dữ liệu về kết quả thắng (ví dụ: { score })
  */
-export function sendVictoryMessage() {
-  return sendMessageToParent("VICTORY", { isVictory: true });
+export function sendVictoryMessage(victoryData = {}) {
+  return sendMessageToParent("VICTORY", { isVictory: true, ...victoryData });
 }
 
 /**
@@ -81,11 +81,11 @@ export function sendProgressMessage(progressData) {
  * @param {Object} [loseData.details] - Thông tin bổ sung về lý do thua
  */
 export function sendLoseMessage(loseData = {}) {
-  return sendMessageToParent("LOSE", { 
+  return sendMessageToParent("LOSE", {
     isVictory: false,
     reason: loseData.reason || "UNKNOWN",
     message: loseData.message || "Game over",
-    details: loseData.details || {}
+    details: loseData.details || {},
   });
 }
 
@@ -131,7 +131,10 @@ export function setupMessageListener(callback, options = {}) {
           source: "parent-website",
           type: message.type,
           data: message.data,
-          timestamp: typeof message.timestamp === "number" ? message.timestamp : Date.now(),
+          timestamp:
+            typeof message.timestamp === "number"
+              ? message.timestamp
+              : Date.now(),
           _raw: message,
         };
         if (typeof callback === "function") callback(normalized);
@@ -159,7 +162,10 @@ export function setupMessageListener(callback, options = {}) {
               source: "phaser-channel",
               type: payload?.type ?? evt,
               data: payload?.data ?? payload,
-              timestamp: typeof payload?.timestamp === "number" ? payload.timestamp : Date.now(),
+              timestamp:
+                typeof payload?.timestamp === "number"
+                  ? payload.timestamp
+                  : Date.now(),
               _raw: payload,
             };
             if (typeof callback === "function") callback(normalized);
@@ -173,7 +179,9 @@ export function setupMessageListener(callback, options = {}) {
       // Trường hợp không có .on/.emit (kênh tự triển khai khác) thì bạn có thể
       // bổ sung nhánh này để thích ứng, ví dụ: pc.addEventListener(...)
       // Ở đây mình chỉ hỗ trợ chuẩn .on/.emit để tối giản như yêu cầu “chỉ sửa trong setupMessageListener”.
-      console.warn("[setupMessageListener] PhaserChannel không có .on(); bỏ qua.");
+      console.warn(
+        "[setupMessageListener] PhaserChannel không có .on(); bỏ qua."
+      );
       return false;
     } catch (e) {
       console.error("❌ Error attaching PhaserChannel listeners:", e);
@@ -206,12 +214,15 @@ export function setupMessageListener(callback, options = {}) {
   // --- Cleanup ---
   return function cleanup() {
     window.removeEventListener("message", messageHandler);
-    offFns.forEach((off) => { try { off(); } catch {} });
+    offFns.forEach((off) => {
+      try {
+        off();
+      } catch {}
+    });
     if (pollId) clearInterval(pollId);
     if (timeoutId) clearTimeout(timeoutId);
   };
 }
-
 
 /**
  * Gửi thông báo sẵn sàng đến trang web chứa iframe
@@ -230,13 +241,17 @@ export function sendReadyMessage() {
  */
 export function sendBatteryCollectionResult(scene, victoryResult) {
   if (victoryResult.isVictory) {
-    return sendVictoryMessage();
+    const payload = {};
+    if (typeof victoryResult.starScore === "number") {
+      payload.score = victoryResult.starScore;
+    }
+    return sendVictoryMessage(payload);
   } else {
     // Truyền chi tiết lý do thua từ victoryResult
     const loseData = {
       reason: victoryResult.reason || "GAME_OVER",
       message: victoryResult.message || "Game over",
-      details: victoryResult.details || {}
+      details: victoryResult.details || {},
     };
     return sendLoseMessage(loseData);
   }
