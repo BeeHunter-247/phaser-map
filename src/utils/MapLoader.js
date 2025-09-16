@@ -23,16 +23,14 @@ export class MapLoader {
     scene.cameras.main.setBackgroundColor(backgroundColor);
     scene.cameras.main.roundPixels = true;
 
-    // Create tilemap
-    let map;
-    if (mapJsonData) {
-      // Sử dụng mapJsonData từ webview
-      map = scene.make.tilemap({ data: mapJsonData });
-    } else {
-      // Sử dụng file map.json mặc định
-      const mapJsonPath = `assets/maps/map.json`;
-      map = scene.make.tilemap({ key: "default", data: mapJsonPath });
+    // Create tilemap - yêu cầu dữ liệu mapJsonData được cung cấp từ FE qua postMessage
+    if (!mapJsonData) {
+      throw new Error(
+        "MapLoader.loadMap requires mapJsonData provided via postMessage"
+      );
     }
+
+    const map = scene.make.tilemap({ data: mapJsonData });
 
     // Add tilesets (phù hợp với demo1.json từ Tiled)
     const tilesets = [

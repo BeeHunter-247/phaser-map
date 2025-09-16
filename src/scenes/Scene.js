@@ -59,14 +59,9 @@ export default class Scene extends Phaser.Scene {
   }
 
   preload() {
-    // Load map json từ file map.json hoặc từ webview
+    // Không còn preload map.json từ local. Dữ liệu mapJson sẽ đến từ postMessage bên FE
     if (this.mapJson) {
-      // Sử dụng mapJson từ webview - không cần preload vì đã có data
       console.log("📥 Using mapJson from webview");
-    } else {
-      // Sử dụng file map.json mặc định
-      const mapJsonPath = `assets/maps/map.json`;
-      this.load.tilemapTiledJSON("default", mapJsonPath);
     }
 
     // Load example Blockly JSON program
@@ -97,16 +92,16 @@ export default class Scene extends Phaser.Scene {
 
   async create() {
     try {
-      // Load map model từ config hoặc từ webview
-      if (this.challengeJson) {
-        // Sử dụng challengeJson từ webview
-        this.mapModel = await this.loadMapModelFromWebview();
-        this.challengeConfig = this.challengeJson;
-      } else {
-        // Sử dụng config mặc định
-        this.mapModel = await ConfigLoader.loadMapModel("default");
-        this.challengeConfig = await ConfigLoader.loadChallengeConfig();
+      // Yêu cầu bắt buộc phải có cả mapJson và challengeJson từ FE
+      if (!this.mapJson || !this.challengeJson) {
+        throw new Error(
+          "Missing mapJson or challengeJson. Provide both via postMessage from parent."
+        );
       }
+
+      // Sử dụng dữ liệu từ webview
+      this.mapModel = await this.loadMapModelFromWebview();
+      this.challengeConfig = this.challengeJson;
 
       console.log(`🗺️ Loaded map model`, this.mapModel.getStatistics());
 
@@ -137,8 +132,17 @@ export default class Scene extends Phaser.Scene {
       console.log("✅ Scene created successfully with map model");
     } catch (error) {
       console.error("❌ Failed to create scene:", error);
-      // Fallback to old method if model loading fails
-      await this.createFallback();
+      try {
+        const { sendErrorMessage } = await import(
+          "../utils/WebViewMessenger.js"
+        );
+        if (typeof sendErrorMessage === "function") {
+          sendErrorMessage({
+            type: "INIT_ERROR",
+            message: error?.message || "Failed to initialize scene",
+          });
+        }
+      } catch (_) {}
     }
   }
 
@@ -148,14 +152,11 @@ export default class Scene extends Phaser.Scene {
    */
   async loadMapModelFromWebview() {
     try {
-      // Load map data từ webview hoặc file mặc định
-      let mapData;
-      if (this.mapJson) {
-        mapData = this.mapJson;
-      } else {
-        const response = await fetch("/assets/maps/map.json");
-        mapData = await response.json();
+      // Yêu cầu mapJson được cung cấp từ webview
+      if (!this.mapJson) {
+        throw new Error("mapJson is required from webview");
       }
+      const mapData = this.mapJson;
 
       // Transform challenge config để phù hợp với MapModel
       const transformedConfig = ConfigLoader.transformChallengeConfig(
@@ -383,79 +384,8 @@ export default class Scene extends Phaser.Scene {
    * Fallback method nếu model loading thất bại
    */
   async createFallback() {
-    console.warn("⚠️ Using fallback creation method");
-
-    // Load map sử dụng MapLoader (old method)
-    const mapData = MapLoader.loadMap(
-      this,
-      {
-        offsetX: 500,
-        offsetY: 0,
-        scale: 1,
-      },
-      this.mapJson
-    );
-
-    this.map = mapData.map;
-    this.layer = mapData.layer;
-    this.mapData = mapData;
-
-    // Load challenge config thay vì objectConfig
-    try {
-      let challengeConfig;
-      if (this.challengeJson) {
-        // Sử dụng challengeJson từ webview
-        challengeConfig = this.challengeJson;
-        this.challengeConfig = challengeConfig;
-      } else {
-        // Sử dụng config mặc định
-        challengeConfig = await ConfigLoader.loadChallengeConfig();
-        this.challengeConfig = challengeConfig;
-      }
-
-      const loadedObjects = MapLoader.loadObjects(
-        this,
-        mapData,
-        challengeConfig
-      );
-
-      this.robot = loadedObjects.robot;
-
-      // Initialize Managers với challenge config
-      this.robotManager = new RobotManager(
-        this,
-        this.robot,
-        this.map,
-        this.layer
-      );
-      this.robotManager.initialize(challengeConfig);
-
-      this.batteryManager = new BatteryManager(this);
-      this.batteryManager.initialize(
-        this.robotManager,
-        challengeConfig,
-        loadedObjects.batteries
-      );
-
-      this.boxManager = new BoxManager(this);
-      this.boxManager.initialize(
-        this.robotManager,
-        challengeConfig,
-        loadedObjects.boxes
-      );
-
-      this.inputHandler = new GameInputHandler(this);
-      this.uiManager = new GameUIManager(this);
-      this.uiManager.initialize();
-      this.uiManager.showVictoryRequirements();
-
-      this.programExecutor = new ProgramExecutor(this);
-      this.inputHandler.setupInput();
-    } catch (error) {
-      console.error("❌ Failed to load challenge config in fallback:", error);
-      // Nếu không load được challenge config, tạo empty config
-      this.challengeConfig = { boxes: [], batteries: [], robot: {} };
-    }
+    // Fallback bị vô hiệu hoá trong chế độ chỉ-nhận-dữ-liệu-từ-webview
+    throw new Error("Fallback disabled: map/challenge must come from webview");
   }
 
   // ========================================
@@ -550,7 +480,7 @@ export default class Scene extends Phaser.Scene {
           const loseData = {
             reason: reason || "UNKNOWN",
             message: typeof reason === "string" ? reason : "Game over",
-            details: {}
+            details: {},
           };
           sendLoseMessage(loseData);
         }
