@@ -295,6 +295,85 @@ export function loadMapAndChallenge(game, mapJson, challengeJson) {
   }
 }
 
+// --- Simple queue/retry for starting the Scene with backend data ---
+let __latestStartPayload = null;
+let __startRetryCount = 0;
+const __MAX_START_RETRIES = 20;
+const __RETRY_DELAY_MS = 200;
+
+function __tryStartScene(game) {
+  if (!__latestStartPayload) return;
+  try {
+    const { mapJson, challengeJson } = __latestStartPayload;
+    const scene = game.scene.getScene("Scene");
+    if (scene) {
+      scene.scene.restart({ mapJson, challengeJson });
+    } else {
+      game.scene.start("Scene", { mapJson, challengeJson });
+    }
+    return true;
+  } catch (e) {
+    console.warn("⏳ Retry start Scene later due to error:", e?.message || e);
+    return false;
+  }
+}
+
+function __ensureSceneStart(game) {
+  if (!__latestStartPayload) return;
+  const ok = __tryStartScene(game);
+  if (!ok && __startRetryCount < __MAX_START_RETRIES) {
+    __startRetryCount++;
+    setTimeout(() => __ensureSceneStart(game), __RETRY_DELAY_MS);
+  }
+}
+
+/**
+ * Tải challenge từ BE bằng challengeId và Bearer token
+ * @param {string} apiBase - API base URL (ví dụ: https://ottobit-be.felixtien.dev)
+ * @param {string} challengeId - Challenge ID
+ * @param {string} token - Bearer token (không cần prefix "Bearer ")
+ * @returns {Promise<{ mapJson: Object, challengeJson: Object, raw: Object }>} Parsed data
+ */
+async function fetchChallengeById(apiBase, challengeId, token) {
+  const url = `${apiBase.replace(/\/$/, "")}/api/v1/challenges/${challengeId}`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      accept: "*/*",
+      Authorization: token.startsWith("Bearer ") ? token : `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`HTTP ${res.status}: ${res.statusText} ${text}`.trim());
+  }
+
+  const json = await res.json();
+  const payload = json?.data || {};
+
+  // mapJson và challengeJson có thể là string JSON ⇒ parse
+  let mapJsonParsed = payload.mapJson;
+  if (typeof mapJsonParsed === "string") {
+    mapJsonParsed = JSON.parse(mapJsonParsed);
+  }
+  console.log("mapJsonParsed", mapJsonParsed);
+  let challengeJsonParsed = payload.challengeJson;
+  if (typeof challengeJsonParsed === "string") {
+    challengeJsonParsed = JSON.parse(challengeJsonParsed);
+  }
+
+  if (!mapJsonParsed || !challengeJsonParsed) {
+    throw new Error("Missing mapJson or challengeJson in response");
+  }
+
+  return {
+    mapJson: mapJsonParsed,
+    challengeJson: challengeJsonParsed,
+    raw: json,
+  };
+}
+
 /**
  * Khởi tạo hệ thống giao tiếp với webview
  * @param {Object} game - Đối tượng game Phaser
@@ -364,6 +443,45 @@ export function initWebViewCommunication(game) {
         }
         break;
 
+      case "LOAD_CHALLENGE": {
+        // Tải challenge từ BE bằng id + token
+        const data = message.data || {};
+        const challengeId = data.challengeId || data.id;
+        const token = data.token || data.authorization || data.authToken;
+        const apiBase = data.apiBase || "https://ottobit-be.felixtien.dev";
+
+        if (!challengeId || !token) {
+          sendErrorMessage({
+            type: "MISSING_DATA",
+            message: "LOAD_CHALLENGE requires challengeId and token",
+          });
+          break;
+        }
+
+        console.log(`🌐 LOAD_CHALLENGE: Fetching ${challengeId} from API...`);
+        fetchChallengeById(apiBase, challengeId, token)
+          .then(({ mapJson, challengeJson }) => {
+            console.log("✅ Challenge fetched. Starting scene...");
+            console.log("🗺️ mapJson (parsed):", mapJson);
+            __latestStartPayload = { mapJson, challengeJson };
+            __startRetryCount = 0;
+            __ensureSceneStart(game);
+            sendMessageToParent("CHALLENGE_LOADED", {
+              challengeId,
+              ok: true,
+            });
+          })
+          .catch((err) => {
+            console.error("❌ Failed to fetch challenge:", err);
+            sendErrorMessage({
+              type: "LOAD_CHALLENGE_ERROR",
+              message: err?.message || String(err),
+              challengeId,
+            });
+          });
+        break;
+      }
+
       case "RUN_PROGRAM":
         // Xử lý yêu cầu chạy chương trình
         if (message.data && message.data.program) {
@@ -421,5 +539,28 @@ export function initWebViewCommunication(game) {
       }
       return null;
     },
+
+    loadChallengeById: async ({
+      challengeId,
+      token,
+      apiBase = "https://ottobit-be.felixtien.dev",
+    }) => {
+      const { mapJson, challengeJson } = await fetchChallengeById(
+        apiBase,
+        challengeId,
+        token
+      );
+      console.log("🗺️ mapJson (parsed):", mapJson);
+      __latestStartPayload = { mapJson, challengeJson };
+      __startRetryCount = 0;
+      __ensureSceneStart(game);
+      return true;
+    },
   };
+
+  // Nếu payload đã đến trước khi init hệ thống, đảm bảo khởi động scene
+  if (__latestStartPayload) {
+    __startRetryCount = 0;
+    __ensureSceneStart(game);
+  }
 }

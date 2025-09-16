@@ -25,13 +25,65 @@ export class MapLoader {
 
     // Create tilemap
     let map;
+    let layerName = "background";
     if (mapJsonData) {
-      // Sử dụng mapJsonData từ webview
-      map = scene.make.tilemap({ data: mapJsonData });
+      // Sử dụng mapJsonData từ webview (Tiled JSON)
+      let parsed = mapJsonData;
+      if (typeof parsed === "string") {
+        try {
+          parsed = JSON.parse(parsed);
+        } catch (e) {
+          console.error(
+            "❌ MapLoader.loadMap: Failed to parse mapJsonData string:",
+            e
+          );
+        }
+      }
+
+      // Lấy tên tilelayer đầu tiên từ dữ liệu nhận được
+      if (parsed && Array.isArray(parsed.layers)) {
+        const firstTileLayer = parsed.layers.find(
+          (l) => l && l.type === "tilelayer"
+        );
+        if (firstTileLayer && firstTileLayer.name) {
+          layerName = firstTileLayer.name;
+        }
+      }
+
+      try {
+        const dynamicKey = `webview_map_${Date.now()}`;
+        // Một số bản build có thể không expose Phaser.Tilemaps.Formats → dùng hằng số 1
+        const TILEMAP_TILED_JSON =
+          (Phaser &&
+            Phaser.Tilemaps &&
+            Phaser.Tilemaps.Formats &&
+            Phaser.Tilemaps.Formats.TILEMAP_TILED_JSON) ||
+          1;
+        scene.cache.tilemap.add(dynamicKey, {
+          data: parsed,
+          format: TILEMAP_TILED_JSON,
+        });
+        map = scene.make.tilemap({ key: dynamicKey });
+      } catch (e) {
+        console.error(
+          "❌ MapLoader.loadMap: Failed to create tilemap from parsed data:",
+          e
+        );
+      }
     } else {
-      // Sử dụng file map.json mặc định
-      const mapJsonPath = `assets/maps/map.json`;
-      map = scene.make.tilemap({ key: "default", data: mapJsonPath });
+      // Sử dụng file map.json mặc định (đã preload với key 'default')
+      try {
+        map = scene.make.tilemap({ key: "default" });
+      } catch (e) {
+        console.error(
+          "❌ MapLoader.loadMap: No map data found for key 'default'",
+          e
+        );
+      }
+    }
+
+    if (!map) {
+      throw new Error("Tilemap not created from provided mapJson data");
     }
 
     // Add tilesets (phù hợp với demo1.json từ Tiled)
@@ -45,7 +97,32 @@ export class MapLoader {
     ];
 
     // Create layer với offset (sử dụng tên layer từ Tiled)
-    const layer = map.createLayer("Tile Layer 1", tilesets, offsetX, offsetY);
+    // Nếu layerName hiện tại không tồn tại trong map, chọn layer tile đầu tiên khả dụng
+    let resolvedLayerName = layerName;
+    try {
+      if (typeof map.getLayerIndex === "function") {
+        const idx = map.getLayerIndex(resolvedLayerName);
+        if (idx === -1) {
+          const names =
+            typeof map.getLayerNames === "function" ? map.getLayerNames() : [];
+          if (Array.isArray(names) && names.length > 0) {
+            resolvedLayerName = names[0];
+          } else if (Array.isArray(map.layers) && map.layers.length > 0) {
+            resolvedLayerName = map.layers[0].name || resolvedLayerName;
+          }
+          console.warn(
+            `⚠️ Layer '${layerName}' not found. Using '${resolvedLayerName}' instead.`
+          );
+        }
+      }
+    } catch {}
+
+    const layer = map.createLayer(
+      resolvedLayerName,
+      tilesets,
+      offsetX,
+      offsetY
+    );
     layer.setScale(scale);
 
     return {

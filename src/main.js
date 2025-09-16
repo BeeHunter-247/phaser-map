@@ -103,7 +103,8 @@ const config = {
       gravity: { y: 0 },
     },
   },
-  scene: [Scene],
+  // Không autostart Scene; sẽ add thủ công và chỉ start khi đã có dữ liệu backend
+  scene: [],
 };
 
 const game = new Phaser.Game(config);
@@ -112,6 +113,17 @@ const game = new Phaser.Game(config);
 window.addEventListener("load", () => {
   // Đợi game khởi tạo xong
   setTimeout(() => {
+    // Đăng ký Scene nhưng không tự chạy
+    if (!game.scene.getScene("Scene")) {
+      try {
+        game.scene.add("Scene", Scene, false);
+        console.log(
+          "🧩 Scene registered but not started (waiting for backend data)"
+        );
+      } catch (e) {
+        console.error("❌ Failed to register Scene:", e);
+      }
+    }
     initWebViewCommunication(game);
     console.log("🔄 WebView communication initialized");
   }, 1000);
