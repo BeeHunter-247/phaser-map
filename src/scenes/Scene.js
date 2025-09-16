@@ -13,22 +13,6 @@ import {
 } from "../utils/VictoryConditions.js";
 import { ConfigLoader } from "../utils/ConfigLoader.js";
 
-/**
- * BasicScene1 - Robot Programming Scene
- *
- * Chỉ hỗ trợ điều khiển robot thông qua chương trình Blockly JSON
- * Không có điều khiển thủ công bằng phím
- *
- * Program Controls:
- * - L: Load example program
- * - Enter: Start program execution
- * - P: Pause/Resume program
- * - R: Stop program
- *
- * To load custom program:
- * scene.loadProgram(programData)
- * scene.startProgram()
- */
 export default class Scene extends Phaser.Scene {
   constructor() {
     super("Scene");
@@ -59,20 +43,9 @@ export default class Scene extends Phaser.Scene {
   }
 
   preload() {
-    // Load map json từ file map.json hoặc từ webview
-    if (this.mapJson) {
-      // Sử dụng mapJson từ webview - không cần preload vì đã có data
-      console.log("📥 Using mapJson from webview");
-    } else {
-      // Sử dụng file map.json mặc định
-      const mapJsonPath = `assets/maps/map.json`;
-      this.load.tilemapTiledJSON("default", mapJsonPath);
-    }
-
+    this.mapJson
     // Load example Blockly JSON program
     this.load.json("blockyData", "src/data/blockyData.json");
-
-    // Load tile assets để phù hợp với tileset trong demo1.json
     this.load.image("wood", "assets/tiles/wood.png");
     this.load.image("road_h", "assets/tiles/road_h.png");
     this.load.image("road_v", "assets/tiles/road_v.png");
