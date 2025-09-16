@@ -56,6 +56,12 @@ export default class Scene extends Phaser.Scene {
   init(data) {
     this.mapJson = data && data.mapJson ? data.mapJson : null;
     this.challengeJson = data && data.challengeJson ? data.challengeJson : null;
+    try {
+      console.log("🧩 Scene.init received:", {
+        hasMapJson: !!this.mapJson,
+        hasChallengeJson: !!this.challengeJson,
+      });
+    } catch (_) {}
   }
 
   preload() {

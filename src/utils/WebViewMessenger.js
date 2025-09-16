@@ -124,6 +124,13 @@ export function setupMessageListener(callback, options = {}) {
       }
 
       const message = event.data;
+      // DEBUG: log tất cả message nhận từ parent
+      try {
+        console.log("🛰️ [POSTMESSAGE] Received from parent:", {
+          origin: event.origin,
+          raw: message,
+        });
+      } catch (_) {}
       // Chỉ nhận đúng schema mong muốn từ parent website
       if (message && message.source === "parent-website") {
         // Chuẩn hoá payload cho đồng nhất
@@ -137,6 +144,10 @@ export function setupMessageListener(callback, options = {}) {
               : Date.now(),
           _raw: message,
         };
+        // DEBUG: log message đã chuẩn hoá
+        try {
+          console.log("🛰️ [POSTMESSAGE] Normalized:", normalized);
+        } catch (_) {}
         if (typeof callback === "function") callback(normalized);
       }
     } catch (e) {
@@ -305,12 +316,29 @@ export function initWebViewCommunication(game) {
 
   // Thiết lập lắng nghe thông điệp từ trang web chứa iframe
   setupMessageListener((message) => {
+    // DEBUG: log mọi message đi qua bridge
+    try {
+      console.log("📨 [BRIDGE] Incoming message:", message.type, message.data);
+    } catch (_) {}
     // Xử lý các loại thông điệp từ trang web chứa
     switch (message.type) {
       case "START_MAP": {
         // Bắt đầu trực tiếp Scene với mapJson và challengeJson
         const mapJson = message.data && message.data.mapJson;
         const challengeJson = message.data && message.data.challengeJson;
+        try {
+          console.log("▶️ START_MAP payload:", {
+            hasMap: !!mapJson,
+            hasChallenge: !!challengeJson,
+            mapPreview: mapJson
+              ? {
+                  width: mapJson.width,
+                  height: mapJson.height,
+                  layers: mapJson.layers?.length,
+                }
+              : null,
+          });
+        } catch (_) {}
         if (mapJson && challengeJson) {
           console.log(`▶️ START_MAP with mapJson and challengeJson`);
           game.scene.start("Scene", { mapJson, challengeJson });
@@ -333,7 +361,19 @@ export function initWebViewCommunication(game) {
         // Xử lý yêu cầu tải mapJson và challengeJson
         const mapJsonData = message.data && message.data.mapJson;
         const challengeJsonData = message.data && message.data.challengeJson;
-
+        try {
+          console.log("📥 LOAD_MAP_AND_CHALLENGE payload:", {
+            hasMap: !!mapJsonData,
+            hasChallenge: !!challengeJsonData,
+            mapPreview: mapJsonData
+              ? {
+                  width: mapJsonData.width,
+                  height: mapJsonData.height,
+                  layers: mapJsonData.layers?.length,
+                }
+              : null,
+          });
+        } catch (_) {}
         if (mapJsonData && challengeJsonData) {
           console.log(
             `📥 LOAD_MAP_AND_CHALLENGE: Received mapJson and challengeJson`
@@ -342,12 +382,14 @@ export function initWebViewCommunication(game) {
           const scene = game.scene.getScene("Scene");
           if (scene) {
             // Khởi động lại scene với mapJson và challengeJson mới
+            console.log("🔄 Restarting Scene with new data");
             scene.scene.restart({
               mapJson: mapJsonData,
               challengeJson: challengeJsonData,
             });
           } else {
             // Nếu scene chưa tồn tại, tạo mới
+            console.log("▶️ Starting Scene with data");
             game.scene.start("Scene", {
               mapJson: mapJsonData,
               challengeJson: challengeJsonData,

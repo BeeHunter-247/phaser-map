@@ -25,10 +25,20 @@ export class MapLoader {
 
     // Create tilemap - yêu cầu dữ liệu mapJsonData được cung cấp từ FE qua postMessage
     if (!mapJsonData) {
+      console.error("❌ MapLoader.loadMap: missing mapJsonData");
       throw new Error(
         "MapLoader.loadMap requires mapJsonData provided via postMessage"
       );
     }
+
+    try {
+      console.log("🗺️ MapLoader: incoming mapJson", {
+        type: typeof mapJsonData,
+        hasLayers: !!mapJsonData.layers,
+        width: mapJsonData.width,
+        height: mapJsonData.height,
+      });
+    } catch (_) {}
 
     const map = scene.make.tilemap({ data: mapJsonData });
 
@@ -44,6 +54,12 @@ export class MapLoader {
 
     // Create layer với offset (sử dụng tên layer từ Tiled)
     const layer = map.createLayer("Tile Layer 1", tilesets, offsetX, offsetY);
+    if (!layer) {
+      console.error("❌ MapLoader: createLayer returned null");
+      throw new Error(
+        "Could not create any layer from map data. Check map format and layer structure."
+      );
+    }
     layer.setScale(scale);
 
     return {
