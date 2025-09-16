@@ -70,11 +70,16 @@ export class ProgramExecutor {
       console.log(`   Functions: ${this.functions.size}`);
       console.log(`   Raw blocks (pre-parse): ${this.totalRawBlocks}`);
       console.log(
-        `🧮 Star inputs preview -> statementNumber: ${
-          this.scene?.mapModel?.victoryConditions?.statementNumber ??
-          this.scene?.challengeConfig?.victory?.statementNumber ??
-          this.scene?.challengeJson?.statementNumber ??
-          0
+        `🧮 Star inputs preview -> minCards: ${
+          this.scene?.mapModel?.victoryConditions?.minCards ??
+          this.scene?.challengeConfig?.victory?.minCards ??
+          this.scene?.challengeJson?.minCards ??
+          "undefined"
+        }, maxCards: ${
+          this.scene?.mapModel?.victoryConditions?.maxCards ??
+          this.scene?.challengeConfig?.victory?.maxCards ??
+          this.scene?.challengeJson?.maxCards ??
+          "undefined"
         }, totalRawBlocks: ${this.totalRawBlocks}`
       );
 

@@ -122,7 +122,15 @@ export class ConfigLoader {
       victory: {
         description: challengeConfig.description || "Complete the challenge",
         statement: challengeConfig.statement || [],
-        statementNumber: challengeConfig.statementNumber || 0,
+        // Propagate min/max cards if present at root for new scoring
+        minCards:
+          typeof challengeConfig.minCards === "number"
+            ? challengeConfig.minCards
+            : undefined,
+        maxCards:
+          typeof challengeConfig.maxCards === "number"
+            ? challengeConfig.maxCards
+            : undefined,
       },
     };
 

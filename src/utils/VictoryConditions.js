@@ -382,7 +382,7 @@ export function checkAndDisplayVictory(scene) {
     isVictory: result.isVictory && statementCheck.isValid,
   };
 
-  // Tính số sao dựa trên statementNumber và tổng số block người dùng sử dụng (raw)
+  // Tính số sao dựa trên minCards/maxCards và tổng số block người dùng sử dụng (raw)
   const starsInfo = computeStars(scene);
   if (starsInfo) {
     finalResult.stars = starsInfo.stars;
@@ -445,50 +445,79 @@ export function checkAndDisplayVictory(scene) {
 }
 
 /**
- * Tính sao: score = (statementNumber * 3) / totalRawBlocks
- * - 0 < score < 2 => 1 sao
- * - 2 <= score < 3 => 2 sao
- * - score >= 3 => 3 sao
+ * Tính sao theo công thức mới (0–1):
+ *   cardScore = clamp((maxCards - usedCards) / (maxCards - minCards), 0, 1)
+ * - Ngưỡng sao (0–1):
+ *   - 0 < score < 2/3 => 1 sao
+ *   - 2/3 <= score < 1 => 2 sao
+ *   - score >= 1 => 3 sao
+ * - Fallback: nếu thiếu min/max thì dùng công thức cũ để tránh hỏng UI
  * @param {Object} scene
  * @returns {{stars:number, score:number, detail:string}|null}
  */
+function clamp(v, min, max) {
+  return Math.max(min, Math.min(max, v));
+}
+
 function computeStars(scene) {
   try {
     if (!scene) return null;
 
-    // Lấy statementNumber từ nhiều nguồn khả dĩ
-    const fromVictory = scene.mapModel?.victoryConditions?.statementNumber;
-    const fromChallengeJson = scene.challengeJson?.statementNumber;
-    const fromChallengeCfgVictory =
-      scene.challengeConfig?.victory?.statementNumber;
-    const statementNumber =
-      typeof fromVictory === "number"
-        ? fromVictory
-        : typeof fromChallengeCfgVictory === "number"
-        ? fromChallengeCfgVictory
-        : typeof fromChallengeJson === "number"
-        ? fromChallengeJson
-        : 0;
+    // usedCards: lấy từ tổng block raw
+    const usedCards = scene.programExecutor?.totalRawBlocks || 0;
 
-    // Tổng block raw được đếm trước khi parse
-    const totalBlocks = scene.programExecutor?.totalRawBlocks || 0;
+    // Lấy min/max từ nhiều nguồn khả dĩ
+    const vMin1 = scene.mapModel?.victoryConditions?.minCards;
+    const vMax1 = scene.mapModel?.victoryConditions?.maxCards;
+    const vMin2 = scene.challengeConfig?.victory?.minCards;
+    const vMax2 = scene.challengeConfig?.victory?.maxCards;
+    const vMin3 = scene.challengeJson?.minCards;
+    const vMax3 = scene.challengeJson?.maxCards;
 
-    if (statementNumber <= 0 || totalBlocks <= 0) {
+    const minCards =
+      typeof vMin1 === "number"
+        ? vMin1
+        : typeof vMin2 === "number"
+        ? vMin2
+        : typeof vMin3 === "number"
+        ? vMin3
+        : undefined;
+
+    const maxCards =
+      typeof vMax1 === "number"
+        ? vMax1
+        : typeof vMax2 === "number"
+        ? vMax2
+        : typeof vMax3 === "number"
+        ? vMax3
+        : undefined;
+
+    // Dùng công thức mới; nếu không hợp lệ thì trả về 0
+    if (
+      typeof minCards !== "number" ||
+      typeof maxCards !== "number" ||
+      maxCards <= minCards ||
+      usedCards <= 0
+    ) {
       return {
         stars: 0,
         score: 0,
-        detail: `statementNumber=${statementNumber}, totalBlocks=${totalBlocks}`,
+        detail: `invalid inputs for new scoring: usedCards=${usedCards}, minCards=${minCards}, maxCards=${maxCards}`,
       };
     }
 
-    const score = (statementNumber * 3) / totalBlocks;
+    const denominator = maxCards - minCards;
+    const raw = (maxCards - usedCards) / denominator;
+    const score = clamp(raw, 0, 1);
+
+    // Map về sao theo thang 0–1
     let stars = 0;
-    if (score > 0 && score < 2) stars = 1;
-    else if (score >= 2 && score < 3) stars = 2;
-    else if (score >= 3) stars = 3;
+    if (score > 0 && score < 2 / 3) stars = 1;
+    else if (score >= 2 / 3 && score < 1) stars = 2;
+    else if (score >= 1) stars = 3;
 
     console.log(
-      `🧮 computeStars: statementNumber=${statementNumber}, totalBlocks=${totalBlocks}, score=${score.toFixed(
+      `🧮 computeStars:new: usedCards=${usedCards}, minCards=${minCards}, maxCards=${maxCards}, score=${score.toFixed(
         2
       )} => stars=${stars}`
     );
@@ -496,7 +525,7 @@ function computeStars(scene) {
     return {
       stars,
       score,
-      detail: `score=(statementNumber*3)/totalBlocks = (${statementNumber}*3)/${totalBlocks}`,
+      detail: `score=clamp((maxCards-usedCards)/(maxCards-minCards),0,1) = clamp((${maxCards}-${usedCards})/(${maxCards}-${minCards}),0,1)`,
     };
   } catch (e) {
     console.warn("⚠️ computeStars failed:", e);
