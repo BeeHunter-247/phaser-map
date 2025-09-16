@@ -36,5 +36,6 @@
     "description": "Collect all yellow batteries using if statements"
   },
   "statement": [],
-  "statementNumber": 4
+  "minCards": 4,
+  "maxCards": 6
 }
