@@ -59,10 +59,10 @@ export class MapLoader {
   
     let layer = null;
     try {
-      layer = map.createLayer(layerName, tilesets, offsetX, offsetY);
+      layer = map.createLayer(layerName, tilesets, offsetX + 150, offsetY);
     } catch {
       // fallback lần cuối theo index 0
-      layer = map.createLayer(0, tilesets, offsetX, offsetY);
+      layer = map.createLayer(0, tilesets, offsetX + 150, offsetY);
     }
 
   

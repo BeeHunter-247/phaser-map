@@ -60,26 +60,29 @@
       document.getElementById('btnStart').onclick = async () => {
         console.log('🔄 START button clicked!');
         try {
-          const mapJson = await fetch('/assets/maps/test.json').then(r => r.json());
+          // Load từ mapString - CẬP NHẬT ĐỂ KHỚP VỚI test.json
+          const mapString = "{\"compressionlevel\":-1,\"height\":10,\"infinite\":false,\"layers\":[{\"data\":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,5,5,5,5,5,0,0,0,0,5,6,6,6,6,4,0,0,0,0,5,6,4,4,4,4,0,0,0,0,5,6,4,4,4,4,0,0,0,0,5,6,6,6,6,5,0,0,0,0,5,5,5,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],\"height\":10,\"id\":1,\"name\":\"Tile Layer 1\",\"opacity\":1,\"type\":\"tilelayer\",\"visible\":true,\"width\":10,\"x\":0,\"y\":0}],\"nextlayerid\":2,\"nextobjectid\":1,\"orientation\":\"isometric\",\"renderorder\":\"right-down\",\"tiledversion\":\"1.11.2\",\"tileheight\":80,\"tilesets\":[{\"columns\":1,\"firstgid\":1,\"image\":\"C:/Users/tquan/Downloads/Enviroment/road_v.png\",\"imageheight\":128,\"imagewidth\":128,\"margin\":0,\"name\":\"road_v\",\"spacing\":0,\"tilecount\":1,\"tileheight\":128,\"tilewidth\":128},{\"columns\":1,\"firstgid\":2,\"image\":\"C:/Users/tquan/Downloads/Enviroment/road_h.png\",\"imageheight\":128,\"imagewidth\":128,\"margin\":0,\"name\":\"road_h\",\"spacing\":0,\"tilecount\":1,\"tileheight\":128,\"tilewidth\":128},{\"columns\":1,\"firstgid\":3,\"image\":\"C:/Users/tquan/Downloads/Enviroment/wood.png\",\"imageheight\":128,\"imagewidth\":128,\"margin\":0,\"name\":\"wood\",\"spacing\":0,\"tilecount\":1,\"tileheight\":128,\"tilewidth\":128},{\"columns\":1,\"firstgid\":4,\"image\":\"C:/Users/tquan/Downloads/Enviroment/water.png\",\"imageheight\":128,\"imagewidth\":128,\"margin\":0,\"name\":\"water\",\"spacing\":0,\"tilecount\":1,\"tileheight\":128,\"tilewidth\":128},{\"columns\":1,\"firstgid\":5,\"image\":\"C:/Users/tquan/Downloads/Enviroment/grass.png\",\"imageheight\":128,\"imagewidth\":128,\"margin\":0,\"name\":\"grass\",\"spacing\":0,\"tilecount\":1,\"tileheight\":128,\"tilewidth\":128},{\"columns\":1,\"firstgid\":6,\"image\":\"C:/Users/tquan/Downloads/Enviroment/crossroad.png\",\"imageheight\":128,\"imagewidth\":128,\"margin\":0,\"name\":\"crossroad\",\"spacing\":0,\"tilecount\":1,\"tileheight\":128,\"tilewidth\":128}],\"tilewidth\":128,\"type\":\"map\",\"version\":\"1.10\",\"width\":10}";
+          const mapJsonFromString = JSON.parse(mapString);
+          
+          // Sử dụng mapJsonFromString (từ string) để test
+          const mapJson = mapJsonFromString;
           const challengeJson = await fetch('/assets/maps/challenge.json').then(r => r.json());
           
-          // Log để kiểm tra dữ liệu trước khi gửi
-          console.log('📤 Sending mapJson:', {
+          console.log('📤 Sending mapJson from string:', {
             type: typeof mapJson,
             orientation: mapJson.orientation,
             layers: mapJson.layers?.length,
             tilesets: mapJson.tilesets?.length,
-            firstLayerName: mapJson.layers?.[0]?.name
+            firstLayerName: mapJson.layers?.[0]?.name,
+            tileheight: mapJson.tileheight,
+            tilewidth: mapJson.tilewidth
           });
           
-          // Fix: Phaser không hỗ trợ isometric tốt, đổi sang orthogonal
-        //   if (mapJson.orientation === 'isometric') {
-        //     mapJson.orientation = 'orthogonal';
-        //     console.log('🔧 Changed orientation to orthogonal for Phaser compatibility');
-        //   }
+          console.log('📤 Full mapJson object:', mapJson);
           
           sendToGame('LOAD_MAP_AND_CHALLENGE', { mapJson, challengeJson });
         } catch (e) {
+          console.error('❌ Error details:', e);
           log('⚠️ Failed to load map/challenge:', e.message || e);
         }
       };
