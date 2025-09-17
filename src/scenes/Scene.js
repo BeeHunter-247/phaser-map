@@ -108,7 +108,7 @@ export default class Scene extends Phaser.Scene {
       console.log("✅ Scene created successfully with webview data");
     } catch (error) {
       console.error("❌ Failed to create scene:", error);
-      this.showLoadingScreen("Đang chờ dữ liệu từ webview");
+      this.showLoadingScreen("Loading data");
     }
   }
 
@@ -320,7 +320,7 @@ export default class Scene extends Phaser.Scene {
    * Show loading screen khi chưa có dữ liệu từ webview
    * @param {string} message - Loading message
    */
-  showLoadingScreen(message = "Đang tải dữ liệu từ webview...") {
+  showLoadingScreen(message = "Loading data") {
     console.log("🔄 Showing loading screen:", message);
 
     // Set background màu trắng
@@ -376,20 +376,6 @@ export default class Scene extends Phaser.Scene {
       repeat: -1,
     });
 
-    // Tạo thông báo chi tiết
-    const detailText = this.add.text(
-      0,
-      120,
-      "Cần dữ liệu mapJson và challengeJson để tải map",
-      {
-        fontSize: "16px",
-        color: "#888888",
-        align: "center",
-      }
-    );
-    detailText.setOrigin(0.5);
-    loadingContainer.add(detailText);
-
     // Lưu reference để có thể xóa sau
     this.loadingScreen = loadingContainer;
 
@@ -430,7 +416,7 @@ export default class Scene extends Phaser.Scene {
     console.error("❌ Scene Error:", message);
 
     // Thay vì hiển thị error message, hiển thị loading screen đẹp hơn
-    this.showLoadingScreen("Đang chờ dữ liệu từ webview...");
+    this.showLoadingScreen("Loading data");
 
     // Gửi error message ra webview nếu có thể
     try {
