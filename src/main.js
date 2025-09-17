@@ -94,7 +94,7 @@ const config = {
   height: sizes.height,
   parent: "app",
   scale: {
-    mode: Phaser.Scale.RESIZE,
+    mode: Phaser.Scale.ENVELOP,
   },
   physics: {
     default: "arcade",
