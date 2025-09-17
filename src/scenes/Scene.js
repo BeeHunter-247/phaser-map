@@ -324,7 +324,7 @@ export default class Scene extends Phaser.Scene {
     console.log("🔄 Showing loading screen:", message);
 
     // Set background màu trắng
-    this.cameras.main.setBackgroundColor("#ffffff");
+    this.cameras.main.setBackgroundColor("#F3F5F2");
 
     // Tạo container cho loading content
     const loadingContainer = this.add.container(
