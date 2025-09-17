@@ -10,30 +10,33 @@ import { MapModel } from "../models/MapModel.js";
 
 export class ConfigLoader {
   /**
-   * Load map config từ map.json và challenge.json
+   * Load map config từ webview data only
+   * @param {Object} mapData - Map JSON data từ webview
+   * @param {Object} challengeData - Challenge JSON data từ webview
    * @returns {Promise<MapModel>} Map model instance
    */
-  static async loadMapModel() {
+  static async loadMapModel(mapData, challengeData) {
     try {
-      console.log(`🗺️ Loading map config`);
+      if (!mapData || !challengeData) {
+        throw new Error("MapData and challengeData are required from webview");
+      }
 
-      // Load challenge config
-      const challengeConfig = await this.loadChallengeConfig();
+      console.log(`🗺️ Loading map config from webview data`);
 
-      // Load map data (Tiled JSON)
-      const mapData = await this.loadMapData();
+      // Transform challenge config để phù hợp với MapModel
+      const transformedConfig = this.transformChallengeConfig(challengeData);
 
       // Merge configs và tạo MapModel
       const fullConfig = {
-        mapKey: "default",
+        mapKey: "webview",
         width: mapData.width || 10,
         height: mapData.height || 10,
         tileSize: mapData.tilewidth || 128,
-        ...challengeConfig,
+        ...transformedConfig,
         mapData: mapData, // Lưu map data để sử dụng sau
       };
 
-      console.log("✅ Loaded config:", {
+      console.log("✅ Loaded config from webview:", {
         width: fullConfig.width,
         height: fullConfig.height,
         robot: !!fullConfig.robot,
@@ -41,61 +44,57 @@ export class ConfigLoader {
         boxes: fullConfig.boxes?.length || 0,
       });
 
-      return MapModel.fromConfig("default", fullConfig);
+      return MapModel.fromConfig("webview", fullConfig);
     } catch (error) {
-      console.error(`❌ Failed to load map config:`, error);
+      console.error(`❌ Failed to load map config from webview:`, error);
       throw error;
     }
   }
 
   /**
-   * Load challenge config từ challenge.json
-   * @returns {Promise<Object>} Challenge config
+   * Process challenge config từ webview data
+   * @param {Object} challengeData - Challenge data từ webview
+   * @returns {Object} Processed challenge config
    */
-  static async loadChallengeConfig() {
+  static processWebviewChallengeConfig(challengeData) {
     try {
-      const response = await fetch("/assets/maps/challenge.json");
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      if (!challengeData) {
+        throw new Error("Challenge data is required from webview");
       }
 
-      const challengeConfig = await response.json();
-
       // Validate basic structure
-      if (!challengeConfig.robot) {
+      if (!challengeData.robot) {
         throw new Error("Challenge config missing robot configuration");
       }
 
       // Transform config để phù hợp với MapModel
-      const transformedConfig = this.transformChallengeConfig(challengeConfig);
+      const transformedConfig = this.transformChallengeConfig(challengeData);
 
-      console.log("✅ Loaded challenge config:", transformedConfig);
+      console.log("✅ Processed webview challenge config:", transformedConfig);
       return transformedConfig;
     } catch (error) {
-      console.error("❌ Failed to load challenge config:", error);
-      throw new Error(`Failed to load challenge.json: ${error.message}`);
+      console.error("❌ Failed to process webview challenge config:", error);
+      throw new Error(`Failed to process challenge data: ${error.message}`);
     }
   }
 
   /**
-   * Load map data từ map.json
-   * @returns {Promise<Object>} Map data
+   * Process map data từ webview
+   * @param {Object} mapData - Map data từ webview
+   * @returns {Object} Processed map data
    */
-  static async loadMapData() {
+  static processWebviewMapData(mapData) {
     try {
-      const response = await fetch("/assets/maps/map.json");
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      if (!mapData) {
+        throw new Error("Map data is required from webview");
       }
-
-      const mapData = await response.json();
 
       // Validate basic Tiled structure
       if (!mapData.layers || !Array.isArray(mapData.layers)) {
         throw new Error("Invalid map data: missing layers");
       }
 
-      console.log("✅ Loaded map data:", {
+      console.log("✅ Processed webview map data:", {
         width: mapData.width,
         height: mapData.height,
         layers: mapData.layers.length,
@@ -104,8 +103,8 @@ export class ConfigLoader {
 
       return mapData;
     } catch (error) {
-      console.error("❌ Failed to load map data:", error);
-      throw new Error(`Failed to load map.json: ${error.message}`);
+      console.error("❌ Failed to process webview map data:", error);
+      throw new Error(`Failed to process map data: ${error.message}`);
     }
   }
 
@@ -214,10 +213,12 @@ export class ConfigLoader {
   }
 
   /**
-   * Load map model (tương thích với code cũ)
+   * Create map model từ webview data (thay thế cho loadDefaultMapModel)
+   * @param {Object} mapData - Map JSON data từ webview
+   * @param {Object} challengeData - Challenge JSON data từ webview
    * @returns {Promise<MapModel>} Map model
    */
-  static async loadDefaultMapModel() {
-    return await this.loadMapModel();
+  static async createMapModelFromWebview(mapData, challengeData) {
+    return await this.loadMapModel(mapData, challengeData);
   }
 }

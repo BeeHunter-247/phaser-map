@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WebView Test Harness</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 0; padding: 12px; }
+      header { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+      button { padding: 8px 12px; cursor: pointer; }
+      iframe { width: 100%; height: 75vh; border: 1px solid #ccc; margin-top: 12px; }
+      pre { background: #f6f8fa; padding: 8px; max-height: 200px; overflow: auto; }
+      .row { display: flex; gap: 8px; align-items: center; }
+      .spacer { flex: 1; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>Parent Host (WebView/iframe)</strong>
+      <div class="spacer"></div>
+      <div class="row">
+        <button id="btnStart">START (LOAD_MAP_AND_CHALLENGE)</button>
+        <button id="btnRun">RUN_PROGRAM</button>
+        <button id="btnStatus">GET_STATUS</button>
+        <button id="btnClear">Clear Log</button>
+      </div>
+    </header>
+
+    <pre id="log"></pre>
+
+    <!-- Game loads here; ensure src points to your app entry (Vite index.html) -->
+    <iframe id="game" src="/index.html"></iframe>
+
+    <script>
+      const logEl = document.getElementById('log');
+      const gameFrame = document.getElementById('game');
+
+      function log(...args) {
+        const line = args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' ');
+        logEl.textContent += line + '\n';
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      document.getElementById('btnClear').onclick = () => (logEl.textContent = '');
+
+      // Receive messages from the game
+      window.addEventListener('message', (event) => {
+        const msg = event.data;
+        if (!msg || msg.source !== 'phaser-robot-game') return;
+        log('← from game:', msg.type, msg.data || {});
+      });
+
+      function sendToGame(type, data = {}) {
+        const message = { source: 'parent-website', type, data, timestamp: Date.now() };
+        gameFrame.contentWindow?.postMessage(message, '*');
+        log('→ to game:', type);
+      }
+
+      // Buttons
+      document.getElementById('btnStart').onclick = async () => {
+        console.log('🔄 START button clicked!');
+        try {
+          const mapJson = await fetch('/assets/maps/test.json').then(r => r.json());
+          const challengeJson = await fetch('/assets/maps/challenge.json').then(r => r.json());
+          
+          // Log để kiểm tra dữ liệu trước khi gửi
+          console.log('📤 Sending mapJson:', {
+            type: typeof mapJson,
+            orientation: mapJson.orientation,
+            layers: mapJson.layers?.length,
+            tilesets: mapJson.tilesets?.length,
+            firstLayerName: mapJson.layers?.[0]?.name
+          });
+          
+          // Fix: Phaser không hỗ trợ isometric tốt, đổi sang orthogonal
+        //   if (mapJson.orientation === 'isometric') {
+        //     mapJson.orientation = 'orthogonal';
+        //     console.log('🔧 Changed orientation to orthogonal for Phaser compatibility');
+        //   }
+          
+          sendToGame('LOAD_MAP_AND_CHALLENGE', { mapJson, challengeJson });
+        } catch (e) {
+          log('⚠️ Failed to load map/challenge:', e.message || e);
+        }
+      };
+
+      document.getElementById('btnRun').onclick = () => {
+        // Adjust payload to match your Scene.loadProgram format
+        const program = ['moveForward', 'turnLeft', 'moveForward'];
+        sendToGame('RUN_PROGRAM', { program });
+      };
+
+      document.getElementById('btnStatus').onclick = () => {
+        sendToGame('GET_STATUS');
+      };
+
+      // Optional: Mock a Flutter-like channel for quick testing (shown in console)
+      window.PhaserChannel = window.PhaserChannel || {
+        postMessage: (s) => console.log('PhaserChannel.postMessage →', s),
+        emit: (type, data) => console.log('PhaserChannel.emit →', type, data),
+        on: () => (() => {})
+      };
+    </script>
+  </body>
+  </html>
+
+
