@@ -22,6 +22,7 @@
         <button id="btnStart">START (LOAD_MAP_AND_CHALLENGE)</button>
         <button id="btnRun">RUN_PROGRAM</button>
         <button id="btnStatus">GET_STATUS</button>
+        <button id="btnReplay">REPLAY</button>
         <button id="btnClear">Clear Log</button>
       </div>
     </header>
@@ -107,6 +108,11 @@
 
       document.getElementById('btnStatus').onclick = () => {
         sendToGame('GET_STATUS');
+      };
+
+      // Replay: ask the game to restart/reload the scene
+      document.getElementById('btnReplay').onclick = () => {
+        sendToGame('RESTART_SCENE');
       };
 
       // Optional: Mock a Flutter-like channel for quick testing (shown in console)

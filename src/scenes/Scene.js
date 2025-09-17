@@ -70,7 +70,9 @@ export default class Scene extends Phaser.Scene {
     try {
       // Chỉ hoạt động với data từ webview
       if (!this.challengeJson || !this.mapJson) {
-        throw new Error("Scene requires mapJson and challengeJson from webview");
+        throw new Error(
+          "Scene requires mapJson and challengeJson from webview"
+        );
       }
 
       // Load map model từ webview data
@@ -106,7 +108,7 @@ export default class Scene extends Phaser.Scene {
       console.log("✅ Scene created successfully with webview data");
     } catch (error) {
       console.error("❌ Failed to create scene:", error);
-      this.showErrorMessage("Không thể tải scene. Cần có mapJson và challengeJson từ webview.");
+      this.showLoadingScreen("Đang chờ dữ liệu từ webview");
     }
   }
 
@@ -315,25 +317,120 @@ export default class Scene extends Phaser.Scene {
   }
 
   /**
-   * Show error message khi không thể load scene
+   * Show loading screen khi chưa có dữ liệu từ webview
+   * @param {string} message - Loading message
+   */
+  showLoadingScreen(message = "Đang tải dữ liệu từ webview...") {
+    console.log("🔄 Showing loading screen:", message);
+
+    // Set background màu trắng
+    this.cameras.main.setBackgroundColor("#ffffff");
+
+    // Tạo container cho loading content
+    const loadingContainer = this.add.container(
+      this.cameras.main.width / 2,
+      this.cameras.main.height / 2
+    );
+
+    // Tạo robot sprite ở giữa màn hình
+    const robot = this.add.image(0, -50, "robot_east");
+    robot.setOrigin(0.5, 0.5);
+    robot.setScale(1);
+    loadingContainer.add(robot);
+
+    // Tạo animation robot chạy
+    this.tweens.add({
+      targets: robot,
+      x: 50,
+      duration: 1000,
+      ease: "Power2",
+      yoyo: true,
+      repeat: -1,
+    });
+
+    // Tạo loading text
+    const loadingText = this.add.text(0, 50, message, {
+      fontSize: "20px",
+      color: "#333333",
+      align: "center",
+      fontFamily: "Arial, sans-serif",
+    });
+    loadingText.setOrigin(0.5);
+    loadingContainer.add(loadingText);
+
+    // Tạo dots animation
+    const dotsText = this.add.text(0, 80, "...", {
+      fontSize: "24px",
+      color: "#666666",
+      align: "center",
+    });
+    dotsText.setOrigin(0.5);
+    loadingContainer.add(dotsText);
+
+    // Animation cho dots
+    this.tweens.add({
+      targets: dotsText,
+      alpha: 0.3,
+      duration: 500,
+      yoyo: true,
+      repeat: -1,
+    });
+
+    // Tạo thông báo chi tiết
+    const detailText = this.add.text(
+      0,
+      120,
+      "Cần dữ liệu mapJson và challengeJson để tải map",
+      {
+        fontSize: "16px",
+        color: "#888888",
+        align: "center",
+      }
+    );
+    detailText.setOrigin(0.5);
+    loadingContainer.add(detailText);
+
+    // Lưu reference để có thể xóa sau
+    this.loadingScreen = loadingContainer;
+
+    // Gửi loading status ra webview nếu có thể
+    try {
+      import("../utils/WebViewMessenger.js").then(({ sendLoadingStatus }) => {
+        if (typeof sendLoadingStatus === "function") {
+          sendLoadingStatus({
+            type: "SCENE_LOADING",
+            message: message,
+            details: {
+              hasMapJson: !!this.mapJson,
+              hasChallengeJson: !!this.challengeJson,
+            },
+          });
+        }
+      });
+    } catch (e) {
+      // ignore webview communication errors
+    }
+  }
+
+  /**
+   * Hide loading screen
+   */
+  hideLoadingScreen() {
+    if (this.loadingScreen) {
+      this.loadingScreen.destroy();
+      this.loadingScreen = null;
+    }
+  }
+
+  /**
+   * Show error message khi không thể load scene (fallback)
    * @param {string} message - Error message
    */
   showErrorMessage(message) {
     console.error("❌ Scene Error:", message);
-    
-    // Hiển thị error message trên màn hình
-    const errorText = this.add.text(
-      this.cameras.main.width / 2,
-      this.cameras.main.height / 2,
-      message,
-      {
-        fontSize: "24px",
-        color: "#ff0000",
-        align: "center",
-        wordWrap: { width: this.cameras.main.width - 100 }
-      }
-    );
-    errorText.setOrigin(0.5);
+
+    // Thay vì hiển thị error message, hiển thị loading screen đẹp hơn
+    this.showLoadingScreen("Đang chờ dữ liệu từ webview...");
 
     // Gửi error message ra webview nếu có thể
     try {
@@ -344,8 +441,8 @@ export default class Scene extends Phaser.Scene {
             message: message,
             details: {
               hasMapJson: !!this.mapJson,
-              hasChallengeJson: !!this.challengeJson
-            }
+              hasChallengeJson: !!this.challengeJson,
+            },
           });
         }
       });
@@ -446,7 +543,7 @@ export default class Scene extends Phaser.Scene {
           const loseData = {
             reason: reason || "UNKNOWN",
             message: typeof reason === "string" ? reason : "Game over",
-            details: {}
+            details: {},
           };
           sendLoseMessage(loseData);
         }

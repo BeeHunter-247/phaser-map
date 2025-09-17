@@ -94,8 +94,8 @@ const config = {
   height: sizes.height,
   parent: "app",
   scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_HORIZONTALLY,
+    mode: Phaser.Scale.HEIGHT_CONTROLS_WIDTH,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
   },
   physics: {
     default: "arcade",

@@ -390,6 +390,23 @@ export function initWebViewCommunication(game) {
           sendMessageToParent("STATUS", status);
         }
         break;
+
+      case "RESTART_SCENE":
+        // Khởi động lại scene hiện tại với dữ liệu đang có
+        {
+          const current = game.scene.getScene("Scene");
+          if (current) {
+            const payload = {
+              mapJson: current.mapJson || null,
+              challengeJson: current.challengeJson || null,
+            };
+            current.scene.restart(payload);
+          } else {
+            // Nếu scene chưa chạy, chỉ cần start (sẽ hiện loading UI nếu thiếu data)
+            game.scene.start("Scene", {});
+          }
+        }
+        break;
     }
   });
 
@@ -420,6 +437,19 @@ export function initWebViewCommunication(game) {
         };
       }
       return null;
+    },
+
+    restart: () => {
+      const scene = game.scene.getScene("Scene");
+      if (scene) {
+        scene.scene.restart({
+          mapJson: scene.mapJson || null,
+          challengeJson: scene.challengeJson || null,
+        });
+        return true;
+      }
+      game.scene.start("Scene", {});
+      return true;
     },
   };
 }
