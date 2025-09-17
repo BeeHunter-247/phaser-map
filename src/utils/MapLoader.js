@@ -15,47 +15,66 @@ export class MapLoader {
     const {
       offsetX = 300,
       offsetY = 0,
-      scale = 1,
+      scale   = 1,
       backgroundColor = 0xf3f5f2,
     } = config;
-
-    // Set background
-    scene.cameras.main.setBackgroundColor(backgroundColor);
-    scene.cameras.main.roundPixels = true;
-
-    // Create tilemap
+  
+    const cam = scene.cameras.main;
+    cam.setBackgroundColor(backgroundColor);
+    cam.roundPixels = true;
+  
+    // 1) Tạo map
     let map;
+  
     if (mapJsonData) {
-      // Sử dụng mapJsonData từ webview
-      map = scene.make.tilemap({ data: mapJsonData });
+      // JSON từ WebView
+      const tiledJson = typeof mapJsonData === "string"
+        ? JSON.parse(mapJsonData)
+        : mapJsonData;
+
+      
+  
+      // Bảo vệ: phải có ít nhất 1 tilelayer
+      const firstTL = tiledJson.layers?.find(l => l.type === "tilelayer");
+      if (!firstTL) throw new Error("Tiled JSON không có tilelayer.");
+  
+      // *** QUAN TRỌNG: add với { data, format } ***
+      const key = "webview-map";
+      scene.cache.tilemap.add(key, {
+        data: tiledJson,
+        format: Phaser.Tilemaps.Formats.TILED_JSON
+      });
+      map = scene.make.tilemap({ key });
     } else {
-      // Sử dụng file map.json mặc định
-      const mapJsonPath = `assets/maps/map.json`;
-      map = scene.make.tilemap({ key: "default", data: mapJsonPath });
+      map = scene.make.tilemap({ key: "default" });
+    }
+  
+    const tilesets = map.tilesets.map(ts => map.addTilesetImage(ts.name, ts.name));
+  
+    let layerName = "Tile Layer 1";
+    if (map.getLayerIndex(layerName) === -1) {
+      // nếu không có, dùng layer[0]
+      layerName = map.layers[0]?.name ?? 0;
+    }
+  
+    let layer = null;
+    try {
+      layer = map.createLayer(layerName, tilesets, offsetX + 150, offsetY);
+    } catch {
+      // fallback lần cuối theo index 0
+      layer = map.createLayer(0, tilesets, offsetX + 150, offsetY);
     }
 
-    // Add tilesets (phù hợp với demo1.json từ Tiled)
-    const tilesets = [
-      map.addTilesetImage("wood", "wood"),
-      map.addTilesetImage("road_h", "road_h"),
-      map.addTilesetImage("road_v", "road_v"),
-      map.addTilesetImage("water", "water"),
-      map.addTilesetImage("grass", "grass"),
-      map.addTilesetImage("crossroad", "crossroad"),
-    ];
-
-    // Create layer với offset (sử dụng tên layer từ Tiled)
-    const layer = map.createLayer("Tile Layer 1", tilesets, offsetX, offsetY);
-    layer.setScale(scale);
-
-    return {
-      map,
-      layer,
-      scale,
-      offsetX,
-      offsetY,
-    };
+  
+    if (!layer) throw new Error("Không tạo được Tilemap Layer (map.layers rỗng).");
+  
+    if (scale !== 1) layer.setScale(scale);
+    if (layer.setPipelineData) layer.setPipelineData("roundPixels", true);
+  
+  
+    return { map, layer, scale, offsetX, offsetY };
   }
+  
 
   /**
    * Load objects từ object layer hoặc custom data
@@ -104,82 +123,6 @@ export class MapLoader {
     return loadedObjects;
   }
 
-  /**
-   * Chuyển đổi tọa độ object từ Tiled sang world position
-   */
-  // static convertObjectToWorld(obj, mapData) {
-  //   const { map, layer, offsetX, offsetY } = mapData;
-
-  //   // Convert từ pixel projected sang tile coords
-  //   const tileX = obj.x / map.tileWidth;
-  //   const tileY = obj.y / map.tileHeight;
-
-  //   // Sử dụng map.tileToWorldXY để tránh double offset
-  //   const worldPoint = map.tileToWorldXY(tileX, tileY);
-
-  //   // Áp dụng offset của layer
-  //   const finalX = worldPoint.x + offsetX;
-  //   const finalY = worldPoint.y + offsetY;
-
-  //   return { x: finalX, y: finalY };
-  // }
-
-  /**
-   * Tạo object từ Tiled object
-   */
-  // static createObjectFromTiled(scene, tiledObj, worldPos, scale) {
-  //   let spriteKey = null;
-  //   let origin = { x: 0.5, y: 1 }; // Default isometric origin
-
-  //   // Xác định sprite key dựa trên tên object
-  //   switch (tiledObj.name) {
-  //     case "RobotPoint":
-  //       spriteKey = "robot_east";
-  //       break;
-  //     case "PinPoint":
-  //     case "BatteryPoint":
-  //       spriteKey = "pin_green"; // Default to green pin
-  //       break;
-  //     case "BoxPoint":
-  //       spriteKey = "box";
-  //       break;
-  //     default:
-  //       return null; // Unknown object type
-  //   }
-
-  //   // Tạo sprite
-  //   const sprite = scene.add.image(worldPos.x, worldPos.y, spriteKey);
-  //   sprite.setOrigin(origin.x, origin.y);
-  //   sprite.setScale(scale);
-
-  //   return {
-  //     sprite,
-  //     type: tiledObj.name,
-  //     originalData: tiledObj,
-  //   };
-  // }
-
-  /**
-   * Phân loại object vào categories
-   */
-  // static categorizeObject(loadedObj, tiledObj, loadedObjects) {
-  //   switch (tiledObj.name) {
-  //     case "RobotPoint":
-  //       loadedObjects.robot = loadedObj.sprite;
-  //       break;
-  //     case "PinPoint":
-  //     case "BatteryPoint":
-  //       loadedObjects.batteries.push(loadedObj.sprite);
-  //       break;
-  //     case "BoxPoint":
-  //       if (!loadedObjects.boxes) loadedObjects.boxes = [];
-  //       loadedObjects.boxes.push(loadedObj.sprite);
-  //       break;
-  //     default:
-  //       loadedObjects.others.push(loadedObj);
-  //       break;
-  //   }
-  // }
 
   /**
    * Load objects từ custom configuration
