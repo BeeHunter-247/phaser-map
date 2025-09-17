@@ -33,7 +33,7 @@
         {
          "columns":1,
          "firstgid":1,
-         "image":"C:\/Users\/manhc\/Downloads\/assetV3-20250906T140526Z-1-001\/assetV3\/Enviroment\/road_v.png",
+         "image":".",
          "imageheight":128,
          "imagewidth":128,
          "margin":0,
@@ -46,7 +46,7 @@
         {
          "columns":1,
          "firstgid":2,
-         "image":"C:\/Users\/manhc\/Downloads\/assetV3-20250906T140526Z-1-001\/assetV3\/Enviroment\/road_h.png",
+         "image":".",
          "imageheight":128,
          "imagewidth":128,
          "margin":0,
@@ -59,7 +59,7 @@
         {
          "columns":1,
          "firstgid":3,
-         "image":"C:\/Users\/manhc\/Downloads\/assetV3-20250906T140526Z-1-001\/assetV3\/Enviroment\/wood.png",
+         "image":.",
          "imageheight":128,
          "imagewidth":128,
          "margin":0,
@@ -72,7 +72,7 @@
         {
          "columns":1,
          "firstgid":4,
-         "image":"C:\/Users\/manhc\/Downloads\/assetV3-20250906T140526Z-1-001\/assetV3\/Enviroment\/water.png",
+         "image":".",
          "imageheight":128,
          "imagewidth":128,
          "margin":0,
@@ -85,7 +85,7 @@
         {
          "columns":1,
          "firstgid":5,
-         "image":"C:\/Users\/manhc\/Downloads\/assetV3-20250906T140526Z-1-001\/assetV3\/Enviroment\/grass.png",
+         "image":".",
          "imageheight":128,
          "imagewidth":128,
          "margin":0,
@@ -98,7 +98,7 @@
         {
          "columns":1,
          "firstgid":6,
-         "image":"C:\/Users\/manhc\/Downloads\/assetV3-20250906T140526Z-1-001\/assetV3\/Enviroment\/crossroad.png",
+         "image":".",
          "imageheight":128,
          "imagewidth":128,
          "margin":0,
