@@ -165,13 +165,14 @@ export class GameUIManager {
     const paddingY = 12;
 
     // Text nội dung (word-wrap + đậm + màu tối)
+    const wrapWidth = this.scene.cameras.main.width * 0.5; // 60% chiều rộng màn hình
     const text = this.scene.add.text(0, 0, message, {
       fontFamily: "Arial",
       fontSize: "18px",
       fontStyle: "bold",
       color: "#1f2937",
       align: "center",
-      wordWrap: { width: maxWidth - paddingX * 2 - 28, useAdvancedWrap: true },
+      wordWrap: { width: wrapWidth, useAdvancedWrap: true },
     });
     text.setName("messageText");
 
