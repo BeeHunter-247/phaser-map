@@ -841,16 +841,14 @@ export class ProgramExecutor {
 
     // Điều kiện so sánh biến (bao gồm biến đặc biệt)
     if (cond.type === "variableComparison") {
-      let variableValue = variableContext[cond.variable];
-
-      // Nếu không tìm thấy trong context, kiểm tra biến đặc biệt
-      if (variableValue === undefined) {
-        variableValue = this.getSpecialVariableValue(cond.variable);
-      }
-
+      const variableValue = this.resolveVariableValue(
+        cond.variable,
+        variableContext
+      );
       if (variableValue === undefined) {
         console.warn(
-          `⚠️ Variable "${cond.variable}" not found in context or special variables`
+          `⚠️ Variable not resolvable in variableComparison:`,
+          cond.variable
         );
         return false;
       }
@@ -861,7 +859,7 @@ export class ProgramExecutor {
         cond.value
       );
       console.log(
-        `🔍 Variable comparison: ${cond.variable}(${variableValue}) ${cond.operator} ${cond.value} => ${result}`
+        `🔍 Variable comparison => ${result} | left=${variableValue} op=${cond.operator} right=${cond.value}`
       );
       return result;
     }
@@ -919,6 +917,51 @@ export class ProgramExecutor {
         actual = false;
     }
     return cond.check ? actual : !actual;
+  }
+
+  /**
+   * Resolve a variable value for variableComparison conditions.
+   * Supports:
+   *  - string variables from provided context or special variables
+   *  - function variables like { type: "function", name: "warehouseCount" }
+   */
+  resolveVariableValue(variable, variableContext = {}) {
+    try {
+      // Simple string variable: check context first, then special variables
+      if (typeof variable === "string") {
+        if (Object.prototype.hasOwnProperty.call(variableContext, variable)) {
+          return variableContext[variable];
+        }
+        return this.getSpecialVariableValue(variable);
+      }
+
+      // Function-style variable object
+      if (variable && typeof variable === "object") {
+        const type = variable.type || variable.kind;
+        const name = variable.name || variable.functionName || variable.func;
+
+        if (type === "function") {
+          switch (name) {
+            case "warehouseCount": {
+              const bm = this.scene?.boxManager;
+              if (bm && typeof bm.checkWarehouse === "function") {
+                return bm.checkWarehouse();
+              }
+              return 0;
+            }
+            default:
+              console.warn(`⚠️ Unknown function variable: ${name}`);
+              return undefined;
+          }
+        }
+      }
+
+      // Not resolvable
+      return undefined;
+    } catch (e) {
+      console.warn("⚠️ resolveVariableValue failed:", e);
+      return undefined;
+    }
   }
 
   /**
