@@ -33,8 +33,12 @@ export class GameInputHandler {
           break;
 
         case "KeyL":
-          // Load example program (auto-starts)
-          this.scene.loadExampleProgram();
+          // Load example program (auto-starts) - chỉ khi game chưa thua
+          if (this.scene.gameState !== "lost") {
+            this.scene.loadExampleProgram();
+          } else {
+            console.warn("⚠️ Cannot load program: Game is in lost state");
+          }
           break;
       }
     });
@@ -75,7 +79,12 @@ export class GameInputHandler {
         break;
 
       case "KeyL":
-        this.scene.loadExampleProgram();
+        // Load example program - chỉ khi game chưa thua
+        if (this.scene.gameState !== "lost") {
+          this.scene.loadExampleProgram();
+        } else {
+          console.warn("⚠️ Cannot load program: Game is in lost state");
+        }
         break;
 
       default:
