@@ -419,6 +419,11 @@ export function initWebViewCommunication(game) {
     runProgram: (program) => {
       const scene = game.scene.getScene("Scene");
       if (scene) {
+        // Kiểm tra trạng thái game trước khi chạy program
+        if (scene.gameState === "lost") {
+          console.warn("⚠️ Cannot run program: Game is in lost state");
+          return false;
+        }
         return scene.loadProgram(program, true);
       }
       return false;

@@ -511,6 +511,12 @@ export class ProgramExecutor {
       return false;
     }
 
+    // Kiểm tra trạng thái game trước khi bắt đầu
+    if (this.scene.gameState === "lost") {
+      console.warn("⚠️ Cannot start program: Game is in lost state");
+      return false;
+    }
+
     this.currentStep = 0;
     this.isRunning = true;
     this.isPaused = false;
@@ -571,6 +577,13 @@ export class ProgramExecutor {
       console.log(
         `⏸️ Program paused or stopped. Current step: ${this.currentStep}`
       );
+      return;
+    }
+
+    // Kiểm tra trạng thái game trước khi thực thi lệnh
+    if (this.scene.gameState === "lost") {
+      console.warn("⚠️ Cannot execute command: Game is in lost state");
+      this.stopProgram();
       return;
     }
 

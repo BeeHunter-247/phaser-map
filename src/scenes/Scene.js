@@ -31,6 +31,9 @@ export default class Scene extends Phaser.Scene {
     // Program execution system
     this.programExecutor = null;
     this.programMode = false; // true = program mode, false = manual mode
+
+    // Game state tracking
+    this.gameState = "ready"; // "ready", "playing", "lost", "won"
   }
 
   /**
@@ -40,6 +43,9 @@ export default class Scene extends Phaser.Scene {
   init(data) {
     this.mapJson = data && data.mapJson ? data.mapJson : null;
     this.challengeJson = data && data.challengeJson ? data.challengeJson : null;
+
+    // Reset game state when restarting
+    this.gameState = "ready";
   }
 
   preload() {
@@ -104,6 +110,7 @@ export default class Scene extends Phaser.Scene {
 
       // Start game
       this.mapModel.startGame();
+      this.gameState = "ready"; // Reset game state when creating new scene
 
       console.log("✅ Scene created successfully with webview data");
     } catch (error) {
@@ -521,6 +528,7 @@ export default class Scene extends Phaser.Scene {
    * Thua cuộc với lý do cụ thể
    */
   lose(reason) {
+    this.gameState = "lost";
     this.uiManager.showLoseMessage(reason);
     // Gửi thông báo thua ra webview
     try {
@@ -532,6 +540,32 @@ export default class Scene extends Phaser.Scene {
             details: {},
           };
           sendLoseMessage(loseData);
+        }
+      });
+    } catch (e) {
+      // ignore
+    }
+    if (this.programExecutor) {
+      this.programExecutor.stopProgram();
+    }
+  }
+
+  /**
+   * Chiến thắng với lý do cụ thể
+   */
+  win(reason) {
+    this.gameState = "won";
+    this.uiManager.showBanner(reason || "Chiến thắng!", "#006600");
+    // Gửi thông báo thắng ra webview
+    try {
+      import("../utils/WebViewMessenger.js").then(({ sendVictoryMessage }) => {
+        if (typeof sendVictoryMessage === "function") {
+          const victoryData = {
+            reason: reason || "VICTORY",
+            message: typeof reason === "string" ? reason : "Victory!",
+            details: {},
+          };
+          sendVictoryMessage(victoryData);
         }
       });
     } catch (e) {
@@ -696,6 +730,12 @@ export default class Scene extends Phaser.Scene {
       return false;
     }
 
+    // Kiểm tra trạng thái game trước khi load program
+    if (this.gameState === "lost") {
+      console.warn("⚠️ Cannot load program: Game is in lost state");
+      return false;
+    }
+
     const success = this.programExecutor.loadProgram(programData);
     if (success) {
       this.programMode = true;
@@ -721,9 +761,16 @@ export default class Scene extends Phaser.Scene {
       return false;
     }
 
+    // Kiểm tra trạng thái game trước khi bắt đầu
+    if (this.gameState === "lost") {
+      console.warn("⚠️ Cannot start program: Game is in lost state");
+      return false;
+    }
+
     const success = this.programExecutor.startProgram();
     if (success) {
       this.programMode = true;
+      this.gameState = "playing";
       console.log("🚀 Program execution started");
     }
     return success;
@@ -771,6 +818,12 @@ export default class Scene extends Phaser.Scene {
    * @param {Object} programData - Program data từ webview
    */
   loadExampleProgram(programData = null) {
+    // Kiểm tra trạng thái game trước khi load program
+    if (this.gameState === "lost") {
+      console.warn("⚠️ Cannot load program: Game is in lost state");
+      return false;
+    }
+
     // Sử dụng program từ webview hoặc tạo demo program
     const exampleProgram = programData || {
       version: "1.0.0",
