@@ -581,9 +581,7 @@ export class ProgramExecutor {
       const victoryResult = checkAndDisplayVictory(this.scene);
       if (!victoryResult.isVictory) {
         // Chương trình kết thúc nhưng chưa đủ pin = THUA
-        // DỪNG CHƯƠNG TRÌNH NGAY LẬP TỨC trước khi gọi lose()
-        this.stopProgram();
-        this.scene.lose("Chương trình kết thúc thua cuộc!", false); // false = không gọi stopProgram() trùng lặp
+        this.scene.lose("Chương trình kết thúc thua cuộc!");
       } else {
         // Gửi thông báo chiến thắng ra webview (không blocking)
         import("./WebViewMessenger.js")
@@ -597,8 +595,9 @@ export class ProgramExecutor {
             }
           })
           .catch((e) => console.warn("Cannot send victory message:", e));
-        this.stopProgram();
       }
+
+      this.stopProgram();
       return;
     }
 
@@ -1077,7 +1076,7 @@ export class ProgramExecutor {
       console.error(
         `❌ Failed to move forward at step ${currentStep + 1}/${totalCount}`
       );
-      this.stopProgram(); // DỪNG CHƯƠNG TRÌNH NGAY LẬP TỨC
+      this.stopProgram();
       return;
     }
 
@@ -1110,8 +1109,7 @@ export class ProgramExecutor {
       count: perTileCount,
     } = this.scene.getBatteriesAtCurrentTile();
     if (perTileCount === 0) {
-      this.stopProgram(); // DỪNG CHƯƠNG TRÌNH NGAY LẬP TỨC
-      this.scene.lose("Không có pin tại ô hiện tại", false); // false = không gọi stopProgram() trùng lặp
+      this.scene.lose("Không có pin tại ô hiện tại");
       return false;
     }
 
@@ -1121,10 +1119,8 @@ export class ProgramExecutor {
 
     // Quy tắc: số lượng phải khớp CHÍNH XÁC với số pin trong ô
     if (perTileCount !== parsedCount) {
-      this.stopProgram(); // DỪNG CHƯƠNG TRÌNH NGAY LẬP TỨC
       this.scene.lose(
-        `Có ${perTileCount} pin tại ô, nhưng yêu cầu thu thập ${parsedCount} (phải khớp chính xác)`,
-        false // false = không gọi stopProgram() trùng lặp
+        `Có ${perTileCount} pin tại ô, nhưng yêu cầu thu thập ${parsedCount} (phải khớp chính xác)`
       );
       return false;
     }
@@ -1148,12 +1144,10 @@ export class ProgramExecutor {
     }
     for (const c of Object.keys(requiredByColor)) {
       if ((available[c] || 0) < requiredByColor[c]) {
-        this.stopProgram(); // DỪNG CHƯƠNG TRÌNH NGAY LẬP TỨC
         this.scene.lose(
           `Không đủ pin màu ${c}. Cần ${requiredByColor[c]}, có ${
             available[c] || 0
-          }`,
-          false // false = không gọi stopProgram() trùng lặp
+          }`
         );
         return false;
       }
@@ -1186,10 +1180,8 @@ export class ProgramExecutor {
       if (!success) {
         console.error(`❌ Failed to put ${count} box(es)`);
         if (this.scene && typeof this.scene.lose === "function") {
-          this.stopProgram(); // DỪNG CHƯƠNG TRÌNH NGAY LẬP TỨC
           this.scene.lose(
-            `Không thể đặt ${count} hộp (vượt quá số đang mang hoặc ô trước mặt không hợp lệ).`,
-            false // false = không gọi stopProgram() trùng lặp
+            `Không thể đặt ${count} hộp (vượt quá số đang mang hoặc ô trước mặt không hợp lệ).`
           );
         }
         return false;
@@ -1216,10 +1208,8 @@ export class ProgramExecutor {
       if (!success) {
         console.error(`❌ Failed to take ${count} box(es)`);
         if (this.scene && typeof this.scene.lose === "function") {
-          this.stopProgram(); // DỪNG CHƯƠNG TRÌNH NGAY LẬP TỨC
           this.scene.lose(
-            `Không thể lấy ${count} hộp (không đủ hộp tại ô trước mặt).`,
-            false // false = không gọi stopProgram() trùng lặp
+            `Không thể lấy ${count} hộp (không đủ hộp tại ô trước mặt).`
           );
         }
         return false;
