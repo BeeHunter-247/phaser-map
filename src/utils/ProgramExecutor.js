@@ -512,8 +512,8 @@ export class ProgramExecutor {
     }
 
     // Kiểm tra trạng thái game trước khi bắt đầu
-    if (this.scene.gameState === "lost") {
-      console.warn("⚠️ Cannot start program: Game is in lost state");
+    if (this.scene.gameState === "lost" || this.scene.gameState === "won") {
+      console.warn("⚠️ Cannot start program: Game is in lost or won state");
       return false;
     }
 
@@ -581,8 +581,8 @@ export class ProgramExecutor {
     }
 
     // Kiểm tra trạng thái game trước khi thực thi lệnh
-    if (this.scene.gameState === "lost") {
-      console.warn("⚠️ Cannot execute command: Game is in lost state");
+    if (this.scene.gameState === "lost" || this.scene.gameState === "won") {
+      console.warn("⚠️ Cannot execute command: Game is in lost or won state");
       this.stopProgram();
       return;
     }

@@ -731,8 +731,8 @@ export default class Scene extends Phaser.Scene {
     }
 
     // Kiểm tra trạng thái game trước khi load program
-    if (this.gameState === "lost") {
-      console.warn("⚠️ Cannot load program: Game is in lost state");
+    if (this.gameState === "lost" || this.gameState === "won") {
+      console.warn("⚠️ Cannot load program: Game is in lost or won state");
       return false;
     }
 
@@ -762,8 +762,8 @@ export default class Scene extends Phaser.Scene {
     }
 
     // Kiểm tra trạng thái game trước khi bắt đầu
-    if (this.gameState === "lost") {
-      console.warn("⚠️ Cannot start program: Game is in lost state");
+    if (this.gameState === "lost" || this.gameState === "won") {
+      console.warn("⚠️ Cannot start program: Game is in lost or won state");
       return false;
     }
 
@@ -819,8 +819,8 @@ export default class Scene extends Phaser.Scene {
    */
   loadExampleProgram(programData = null) {
     // Kiểm tra trạng thái game trước khi load program
-    if (this.gameState === "lost") {
-      console.warn("⚠️ Cannot load program: Game is in lost state");
+    if (this.gameState === "lost" || this.gameState === "won") {
+      console.warn("⚠️ Cannot load program: Game is in lost or won state");
       return false;
     }
 
