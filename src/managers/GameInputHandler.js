@@ -25,10 +25,9 @@ export class GameInputHandler {
           break;
 
         case "KeyR":
-          // Restart current scene (reload map)
-          if (this.scene && this.scene.scene) {
-            const currentMapKey = this.scene.mapKey;
-            this.scene.scene.restart({ mapKey: currentMapKey });
+          // Reset game state (không restart scene)
+          if (this.scene && typeof this.scene.resetGame === "function") {
+            this.scene.resetGame();
           }
           break;
 
@@ -43,7 +42,7 @@ export class GameInputHandler {
     console.log("🎮 Robot Program Controls:");
     console.log("  L   : Load & Auto-Start Example Program");
     console.log("  P   : Pause/Resume Program");
-    console.log("  R   : Restart (reload current map)");
+    console.log("  R   : Reset Game State (restart current game)");
     console.log("");
     console.log("📋 To load custom program, use:");
     console.log("  scene.loadProgram(yourProgramData, true)  // Auto-start");
@@ -68,9 +67,9 @@ export class GameInputHandler {
         break;
 
       case "KeyR":
-        if (this.scene && this.scene.scene) {
-          const currentMapKey = this.scene.mapKey;
-          this.scene.scene.restart({ mapKey: currentMapKey });
+        // Reset game state (không restart scene)
+        if (this.scene && typeof this.scene.resetGame === "function") {
+          this.scene.resetGame();
         }
         break;
 
@@ -112,7 +111,7 @@ export class GameInputHandler {
     return [
       "L   : Load & Auto-Start Example Program",
       "P   : Pause/Resume Program",
-      "R   : Restart (reload current map)",
+      "R   : Reset Game State (restart current game)",
     ];
   }
 

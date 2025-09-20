@@ -31,6 +31,9 @@ export default class Scene extends Phaser.Scene {
     // Program execution system
     this.programExecutor = null;
     this.programMode = false; // true = program mode, false = manual mode
+
+    // Game state tracking
+    this.gameState = "playing"; // "playing", "lost", "won"
   }
 
   /**
@@ -519,8 +522,13 @@ export default class Scene extends Phaser.Scene {
 
   /**
    * Thua cuộc với lý do cụ thể
+   * @param {string} reason - Lý do thua cuộc
+   * @param {boolean} stopProgram - Có dừng chương trình không (default: true)
    */
-  lose(reason) {
+  lose(reason, stopProgram = true) {
+    // Set game state to lost
+    this.gameState = "lost";
+
     this.uiManager.showLoseMessage(reason);
     // Gửi thông báo thua ra webview
     try {
@@ -537,7 +545,8 @@ export default class Scene extends Phaser.Scene {
     } catch (e) {
       // ignore
     }
-    if (this.programExecutor) {
+    // Chỉ dừng chương trình nếu được yêu cầu (tránh gọi trùng lặp)
+    if (stopProgram && this.programExecutor) {
       this.programExecutor.stopProgram();
     }
   }
@@ -696,6 +705,14 @@ export default class Scene extends Phaser.Scene {
       return false;
     }
 
+    // Kiểm tra trạng thái game - không cho phép load program khi đã thua
+    if (this.gameState === "lost") {
+      console.warn(
+        "⚠️ Cannot load program: Game has been lost. Please restart the game first."
+      );
+      return false;
+    }
+
     const success = this.programExecutor.loadProgram(programData);
     if (success) {
       this.programMode = true;
@@ -718,6 +735,14 @@ export default class Scene extends Phaser.Scene {
   startProgram() {
     if (!this.programExecutor) {
       console.error("❌ ProgramExecutor not initialized");
+      return false;
+    }
+
+    // Kiểm tra trạng thái game - không cho phép start program khi đã thua
+    if (this.gameState === "lost") {
+      console.warn(
+        "⚠️ Cannot start program: Game has been lost. Please restart the game first."
+      );
       return false;
     }
 
@@ -771,6 +796,14 @@ export default class Scene extends Phaser.Scene {
    * @param {Object} programData - Program data từ webview
    */
   loadExampleProgram(programData = null) {
+    // Kiểm tra trạng thái game - không cho phép load program khi đã thua
+    if (this.gameState === "lost") {
+      console.warn(
+        "⚠️ Cannot load example program: Game has been lost. Please restart the game first."
+      );
+      return false;
+    }
+
     // Sử dụng program từ webview hoặc tạo demo program
     const exampleProgram = programData || {
       version: "1.0.0",
@@ -801,6 +834,43 @@ export default class Scene extends Phaser.Scene {
     }
 
     return success;
+  }
+
+  /**
+   * Reset game state về trạng thái ban đầu
+   */
+  resetGame() {
+    console.log("🔄 Resetting game state...");
+    this.gameState = "playing";
+    this.programMode = false;
+
+    // Dừng chương trình hiện tại nếu có
+    if (this.programExecutor) {
+      this.programExecutor.stopProgram();
+    }
+
+    // Reset các managers về trạng thái ban đầu
+    if (this.batteryManager) {
+      this.batteryManager.reset();
+    }
+    if (this.boxManager) {
+      this.boxManager.reset();
+    }
+    if (this.robotManager) {
+      this.robotManager.reset();
+    }
+
+    // Reset map model về trạng thái ban đầu
+    if (this.mapModel) {
+      this.mapModel.reset();
+    }
+
+    // Cập nhật UI
+    if (this.uiManager) {
+      this.uiManager.updateStatusUI();
+    }
+
+    console.log("✅ Game state reset to playing");
   }
 
   update() {

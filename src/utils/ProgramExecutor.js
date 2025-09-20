@@ -581,7 +581,9 @@ export class ProgramExecutor {
       const victoryResult = checkAndDisplayVictory(this.scene);
       if (!victoryResult.isVictory) {
         // Chương trình kết thúc nhưng chưa đủ pin = THUA
-        this.scene.lose("Chương trình kết thúc thua cuộc!");
+        // DỪNG CHƯƠNG TRÌNH NGAY LẬP TỨC trước khi gọi lose()
+        this.stopProgram();
+        this.scene.lose("Chương trình kết thúc thua cuộc!", false); // false = không gọi stopProgram() trùng lặp
       } else {
         // Gửi thông báo chiến thắng ra webview (không blocking)
         import("./WebViewMessenger.js")
@@ -595,9 +597,8 @@ export class ProgramExecutor {
             }
           })
           .catch((e) => console.warn("Cannot send victory message:", e));
+        this.stopProgram();
       }
-
-      this.stopProgram();
       return;
     }
 
@@ -899,13 +900,6 @@ export class ProgramExecutor {
       case "isGreen":
         actual = this.hasBatteryColorAtCurrentTile("green");
         break;
-      case "warehouseCount":
-        // Number box block - gọi checkWarehouse() và so sánh với giá trị
-        const warehouseCount = this.scene.boxManager.checkWarehouse();
-        const operator = cond.operator || "==";
-        const compareValue = parseInt(cond.value) || 0;
-        actual = this.compareValues(warehouseCount, operator, compareValue);
-        break;
       case "isRed":
         actual = this.hasBatteryColorAtCurrentTile("red");
         break;
@@ -1083,7 +1077,7 @@ export class ProgramExecutor {
       console.error(
         `❌ Failed to move forward at step ${currentStep + 1}/${totalCount}`
       );
-      this.stopProgram();
+      this.stopProgram(); // DỪNG CHƯƠNG TRÌNH NGAY LẬP TỨC
       return;
     }
 
@@ -1116,7 +1110,8 @@ export class ProgramExecutor {
       count: perTileCount,
     } = this.scene.getBatteriesAtCurrentTile();
     if (perTileCount === 0) {
-      this.scene.lose("Không có pin tại ô hiện tại");
+      this.stopProgram(); // DỪNG CHƯƠNG TRÌNH NGAY LẬP TỨC
+      this.scene.lose("Không có pin tại ô hiện tại", false); // false = không gọi stopProgram() trùng lặp
       return false;
     }
 
@@ -1126,8 +1121,10 @@ export class ProgramExecutor {
 
     // Quy tắc: số lượng phải khớp CHÍNH XÁC với số pin trong ô
     if (perTileCount !== parsedCount) {
+      this.stopProgram(); // DỪNG CHƯƠNG TRÌNH NGAY LẬP TỨC
       this.scene.lose(
-        `Có ${perTileCount} pin tại ô, nhưng yêu cầu thu thập ${parsedCount} (phải khớp chính xác)`
+        `Có ${perTileCount} pin tại ô, nhưng yêu cầu thu thập ${parsedCount} (phải khớp chính xác)`,
+        false // false = không gọi stopProgram() trùng lặp
       );
       return false;
     }
@@ -1151,10 +1148,12 @@ export class ProgramExecutor {
     }
     for (const c of Object.keys(requiredByColor)) {
       if ((available[c] || 0) < requiredByColor[c]) {
+        this.stopProgram(); // DỪNG CHƯƠNG TRÌNH NGAY LẬP TỨC
         this.scene.lose(
           `Không đủ pin màu ${c}. Cần ${requiredByColor[c]}, có ${
             available[c] || 0
-          }`
+          }`,
+          false // false = không gọi stopProgram() trùng lặp
         );
         return false;
       }
@@ -1187,8 +1186,10 @@ export class ProgramExecutor {
       if (!success) {
         console.error(`❌ Failed to put ${count} box(es)`);
         if (this.scene && typeof this.scene.lose === "function") {
+          this.stopProgram(); // DỪNG CHƯƠNG TRÌNH NGAY LẬP TỨC
           this.scene.lose(
-            `Không thể đặt ${count} hộp (vượt quá số đang mang hoặc ô trước mặt không hợp lệ).`
+            `Không thể đặt ${count} hộp (vượt quá số đang mang hoặc ô trước mặt không hợp lệ).`,
+            false // false = không gọi stopProgram() trùng lặp
           );
         }
         return false;
@@ -1215,8 +1216,10 @@ export class ProgramExecutor {
       if (!success) {
         console.error(`❌ Failed to take ${count} box(es)`);
         if (this.scene && typeof this.scene.lose === "function") {
+          this.stopProgram(); // DỪNG CHƯƠNG TRÌNH NGAY LẬP TỨC
           this.scene.lose(
-            `Không thể lấy ${count} hộp (không đủ hộp tại ô trước mặt).`
+            `Không thể lấy ${count} hộp (không đủ hộp tại ô trước mặt).`,
+            false // false = không gọi stopProgram() trùng lặp
           );
         }
         return false;
