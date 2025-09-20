@@ -441,6 +441,12 @@ export function initWebViewCommunication(game) {
 
     restart: () => {
       const scene = game.scene.getScene("Scene");
+      if (scene && typeof scene.resetGame === "function") {
+        // Gọi resetGame() thay vì restart scene
+        scene.resetGame();
+        return true;
+      }
+      // Fallback: restart scene nếu không có resetGame
       if (scene) {
         scene.scene.restart({
           mapJson: scene.mapJson || null,

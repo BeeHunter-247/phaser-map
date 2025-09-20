@@ -710,6 +710,7 @@ export default class Scene extends Phaser.Scene {
       console.warn(
         "⚠️ Cannot load program: Game has been lost. Please restart the game first."
       );
+      console.log("   Current gameState:", this.gameState);
       return false;
     }
 
@@ -743,6 +744,7 @@ export default class Scene extends Phaser.Scene {
       console.warn(
         "⚠️ Cannot start program: Game has been lost. Please restart the game first."
       );
+      console.log("   Current gameState:", this.gameState);
       return false;
     }
 
@@ -801,6 +803,7 @@ export default class Scene extends Phaser.Scene {
       console.warn(
         "⚠️ Cannot load example program: Game has been lost. Please restart the game first."
       );
+      console.log("   Current gameState:", this.gameState);
       return false;
     }
 
@@ -841,8 +844,10 @@ export default class Scene extends Phaser.Scene {
    */
   resetGame() {
     console.log("🔄 Resetting game state...");
+    console.log("   Previous gameState:", this.gameState);
     this.gameState = "playing";
     this.programMode = false;
+    console.log("   New gameState:", this.gameState);
 
     // Dừng chương trình hiện tại nếu có
     if (this.programExecutor) {
