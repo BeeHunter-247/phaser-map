@@ -596,6 +596,13 @@ export class ProgramExecutor {
         // Chương trình kết thúc nhưng chưa đủ pin = THUA
         this.scene.lose("Chương trình kết thúc thua cuộc!");
       } else {
+        // Chương trình kết thúc và thắng = THẮNG
+        console.log(
+          "🏆 Program completed successfully! Setting game state to WON"
+        );
+        this.scene.win("Chương trình hoàn thành thành công!");
+        console.log("🏆 Game state after win:", this.scene.gameState);
+
         // Gửi thông báo chiến thắng ra webview (không blocking)
         import("./WebViewMessenger.js")
           .then(({ sendVictoryMessage }) => {
