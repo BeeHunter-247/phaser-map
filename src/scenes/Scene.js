@@ -829,9 +829,10 @@ export default class Scene extends Phaser.Scene {
       version: "1.0.0",
       programName: "demo_program",
       actions: [
-        { type: "turnRight" },
         { type: "forward", count: "2" },
-        { type: "collect", color: "green", count: 1 },
+        { type: "collect", color: "yellow", count: 2 },
+        { type: "forward", count: "2" },
+        { type: "collect", color: "yellow", count: 3 },
       ],
     };
 
