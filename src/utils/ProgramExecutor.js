@@ -1137,10 +1137,10 @@ export class ProgramExecutor {
       `🔍 Collect pre-check at tile ${key}: available=${perTileCount}, requested=${parsedCount}`
     );
 
-    // Quy tắc: số lượng phải khớp CHÍNH XÁC với số pin trong ô
-    if (perTileCount !== parsedCount) {
+    // Quy tắc: số lượng yêu cầu không được vượt quá số pin có sẵn
+    if (perTileCount < parsedCount) {
       this.scene.lose(
-        `Có ${perTileCount} pin tại ô, nhưng yêu cầu thu thập ${parsedCount} (phải khớp chính xác)`
+        `Không đủ pin tại ô. Có ${perTileCount} pin, nhưng yêu cầu thu thập ${parsedCount}`
       );
       return false;
     }
@@ -1153,7 +1153,7 @@ export class ProgramExecutor {
     const available = { red: 0, yellow: 0, green: 0 };
     types.forEach((t) => (available[t] = (available[t] || 0) + 1));
 
-    // Kiểm tra theo màu yêu cầu nếu có
+    // Kiểm tra theo màu yêu cầu nếu có - chỉ kiểm tra số lượng cần nhặt
     let requiredByColor = { red: 0, yellow: 0, green: 0 };
     for (let i = 0; i < parsedCount; i++) {
       const c =
@@ -1162,8 +1162,10 @@ export class ProgramExecutor {
         "green";
       requiredByColor[c] = (requiredByColor[c] || 0) + 1;
     }
+
+    // Kiểm tra có đủ pin theo màu yêu cầu không
     for (const c of Object.keys(requiredByColor)) {
-      if ((available[c] || 0) < requiredByColor[c]) {
+      if (requiredByColor[c] > 0 && (available[c] || 0) < requiredByColor[c]) {
         this.scene.lose(
           `Không đủ pin màu ${c}. Cần ${requiredByColor[c]}, có ${
             available[c] || 0
