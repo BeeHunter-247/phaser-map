@@ -22,6 +22,8 @@
         <button id="btnStart">START (LOAD_MAP_AND_CHALLENGE)</button>
         <button id="btnRun">RUN_PROGRAM</button>
         <button id="btnStatus">GET_STATUS</button>
+        <button id="btnPhysRun">RUN PHYSICAL ACTIONS</button>
+        <button id="btnPhysStatus">GET PHYSICAL STATUS</button>
         <button id="btnReplay">REPLAY</button>
         <button id="btnClear">Clear Log</button>
       </div>
@@ -108,6 +110,22 @@
 
       document.getElementById('btnStatus').onclick = () => {
         sendToGame('GET_STATUS');
+      };
+
+      // Run a demo list of physical robot actions
+      document.getElementById('btnPhysRun').onclick = () => {
+        const actions = [
+          { type: 'forward', count: 2 },
+          { type: 'collect', color: 'yellow', count: 2 },
+          { type: 'forward', count: 2 },
+          { type: 'collect', color: 'yellow', count: 3 },
+        ];
+        sendToGame('EXECUTE_PHYSICAL_ROBOT_ACTIONS', { actions });
+      };
+
+      // Query physical robot execution status
+      document.getElementById('btnPhysStatus').onclick = () => {
+        sendToGame('GET_PHYSICAL_ROBOT_STATUS');
       };
 
       // Replay: ask the game to restart/reload the scene
