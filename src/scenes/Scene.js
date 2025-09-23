@@ -838,7 +838,7 @@ export default class Scene extends Phaser.Scene {
       programName: "demo_program",
       actions: [
         { type: "forward", count: "2" },
-        { type: "collect", color: "yellow", count: 2 },
+        { type: "collect", color: "yellow", count: 3 },
         { type: "forward", count: "2" },
         { type: "collect", color: "yellow", count: 3 },
       ],

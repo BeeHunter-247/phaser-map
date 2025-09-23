@@ -90,6 +90,31 @@ export function sendLoseMessage(loseData = {}) {
 }
 
 /**
+ * Gửi danh sách actions đã compile từ chương trình Blockly (headless)
+ * @param {Object} payload
+ * @param {Array}  payload.actions - Danh sách primitive actions
+ * @param {Object} [payload.result] - Kết quả tóm tắt (isVictory, message, etc.)
+ */
+export function sendCompiledActions(payload) {
+  const data = {
+    actions: Array.isArray(payload?.actions) ? payload.actions : [],
+    result: payload?.result || null,
+  };
+  try {
+    const preview = data.actions.slice(0, 10);
+    console.log(
+      `📤 PROGRAM_COMPILED_ACTIONS → sending ${data.actions.length} action(s)`,
+      preview
+    );
+    console.log("📤 Actions detail (full):", data.actions);
+    if (data.result) {
+      console.log("📤 Headless result:", data.result);
+    }
+  } catch (_) {}
+  return sendMessageToParent("PROGRAM_COMPILED_ACTIONS", data);
+}
+
+/**
  * Gửi thông báo lỗi đến trang web chứa iframe
  * @param {Object} errorData - Dữ liệu về lỗi
  */
@@ -373,6 +398,54 @@ export function initWebViewCommunication(game) {
           }
         }
         break;
+
+      case "RUN_PROGRAM_HEADLESS": {
+        // Thực thi ngầm: compile → simulate → trả actions + kết quả, KHÔNG cập nhật UI
+        const scene = game.scene.getScene("Scene");
+        const program = message.data && message.data.program;
+        if (scene && program) {
+          try {
+            const ok = scene.loadProgram(program, false);
+            if (!ok) {
+              sendErrorMessage({
+                type: "PROGRAM_LOAD_FAILED",
+                message: "Invalid program",
+              });
+              break;
+            }
+
+            // Chạy headless để lấy primitive actions và kết quả
+            const result =
+              scene.programExecutor?.compileProgramToPrimitiveActions?.();
+
+            try {
+              const count = Array.isArray(result?.actions)
+                ? result.actions.length
+                : 0;
+              console.log(
+                `✅ RUN_PROGRAM_HEADLESS compiled ${count} primitive action(s)`
+              );
+              console.log("✅ Actions detail (full):", result?.actions || []);
+            } catch (_) {}
+
+            if (result && Array.isArray(result.actions)) {
+              sendCompiledActions(result);
+            } else {
+              sendErrorMessage({
+                type: "HEADLESS_EXECUTION_FAILED",
+                message: "Compilation produced no actions",
+              });
+            }
+          } catch (e) {
+            console.error("❌ RUN_PROGRAM_HEADLESS error:", e);
+            sendErrorMessage({
+              type: "HEADLESS_EXECUTION_ERROR",
+              message: e?.message || String(e),
+            });
+          }
+        }
+        break;
+      }
 
       case "GET_STATUS":
         // Gửi trạng thái hiện tại
