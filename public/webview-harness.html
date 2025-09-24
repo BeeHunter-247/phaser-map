@@ -146,25 +146,10 @@
           version: "1.0.0",
           programName: "demo_headless",
           actions: [
-            {
-              type: "repeatRange",
-              variable: "i",
-              from: 1,
-              to: 4,
-              step: 1,
-              body: [
-                { type: "forward", count: 1 },
-                {
-                  type: "if",
-                  cond: {
-                    type: "condition",
-                    function: "isGreen",
-                    check: true,
-                  },
-                  then: [{ type: "collect", color: "yellow", count: 3 }],
-                },
-              ],
-            },
+            { type: "forward", count: 2 },
+            { type: "collect", color: "yellow", count: 3 },
+            { type: "forward", count: 2 },
+            { type: "collect", color: "yellow", count: 3 },
           ],
         };
         sendToGame("RUN_PROGRAM_HEADLESS", { program });

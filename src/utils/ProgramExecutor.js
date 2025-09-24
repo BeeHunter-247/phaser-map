@@ -702,89 +702,112 @@ export class ProgramExecutor {
     let idx = 0;
     const MAX_OPS = 10000; // tránh vòng lặp vô hạn
     let ops = 0;
-    while (idx < queue.length && ops < MAX_OPS) {
-      ops++;
-      const act = queue[idx];
-      if (!act || !act.type) {
-        idx++;
-        continue;
-      }
-
-      if (act.type === "if") {
-        const branches = [];
-        branches.push({ cond: act.condition, actions: act.thenActions || [] });
-        if (Array.isArray(act.elseIfClauses)) {
-          for (const cl of act.elseIfClauses) {
-            branches.push({
-              cond: cl?.condition,
-              actions: cl?.thenActions || [],
-            });
-          }
-        }
-        let chosen = null;
-        for (const br of branches) {
-          if (
-            headlessEvaluateCondition(br.cond, act._currentVariableValue || {})
-          ) {
-            chosen = br.actions;
-            break;
-          }
-        }
-        if (!chosen || chosen.length === 0) chosen = act.elseActions || [];
-        if (Array.isArray(chosen) && chosen.length > 0) {
-          queue.splice(idx + 1, 0, ...chosen.map((a) => ({ ...a })));
-        }
-        idx++;
-        continue;
-      }
-
-      if (act.type === "while") {
-        const MAX_LOOP = 1000;
-        let guard = 0;
-        while (
-          headlessEvaluateCondition(act.condition) &&
-          Array.isArray(act.bodyActions) &&
-          act.bodyActions.length > 0 &&
-          guard < MAX_LOOP
-        ) {
-          // chèn body ngay sau while hiện tại, và tiếp tục kiểm tra lại
-          queue.splice(idx + 1, 0, ...act.bodyActions.map((a) => ({ ...a })));
-          guard++;
+    let earlyFailure = null; // nếu có lỗi giữa chừng, lưu message tại đây
+    let failedActionSnapshot = null; // lưu action dẫn đến lỗi để có thể thêm vào list
+    try {
+      while (idx < queue.length && ops < MAX_OPS) {
+        ops++;
+        const act = queue[idx];
+        if (!act || !act.type) {
           idx++;
-          // thực thi các action trong body ngay sau đó ở các vòng lặp while của vòng while chính
-          // phần evaluate sẽ tiếp tục xử lý ở vòng while chính
+          continue;
         }
-        // Sau khi không còn thoả điều kiện, bỏ qua while
-        idx++;
-        continue;
-      }
 
-      if (act.type === "callFunction") {
-        const func = this.functions.get(act.functionName);
-        if (func && Array.isArray(func.actions) && func.actions.length > 0) {
-          queue.splice(idx + 1, 0, ...func.actions.map((a) => ({ ...a })));
+        if (act.type === "if") {
+          const branches = [];
+          branches.push({
+            cond: act.condition,
+            actions: act.thenActions || [],
+          });
+          if (Array.isArray(act.elseIfClauses)) {
+            for (const cl of act.elseIfClauses) {
+              branches.push({
+                cond: cl?.condition,
+                actions: cl?.thenActions || [],
+              });
+            }
+          }
+          let chosen = null;
+          for (const br of branches) {
+            if (
+              headlessEvaluateCondition(
+                br.cond,
+                act._currentVariableValue || {}
+              )
+            ) {
+              chosen = br.actions;
+              break;
+            }
+          }
+          if (!chosen || chosen.length === 0) chosen = act.elseActions || [];
+          if (Array.isArray(chosen) && chosen.length > 0) {
+            queue.splice(idx + 1, 0, ...chosen.map((a) => ({ ...a })));
+          }
+          idx++;
+          continue;
+        }
+
+        if (act.type === "while") {
+          const MAX_LOOP = 1000;
+          let guard = 0;
+          while (
+            headlessEvaluateCondition(act.condition) &&
+            Array.isArray(act.bodyActions) &&
+            act.bodyActions.length > 0 &&
+            guard < MAX_LOOP
+          ) {
+            // chèn body ngay sau while hiện tại, và tiếp tục kiểm tra lại
+            queue.splice(idx + 1, 0, ...act.bodyActions.map((a) => ({ ...a })));
+            guard++;
+            idx++;
+          }
+          // Sau khi không còn thoả điều kiện, bỏ qua while
+          idx++;
+          continue;
+        }
+
+        if (act.type === "callFunction") {
+          const func = this.functions.get(act.functionName);
+          if (func && Array.isArray(func.actions) && func.actions.length > 0) {
+            queue.splice(idx + 1, 0, ...func.actions.map((a) => ({ ...a })));
+          }
+          idx++;
+          continue;
+        }
+
+        // Primitive action: thực thi và ghi nhận trên mô hình
+        try {
+          executePrimitive(act);
+        } catch (e) {
+          // Ghi nhận action gây lỗi theo định dạng primitive thống nhất (không có count/color)
+          failedActionSnapshot = { type: act.type };
+          this._compiledPrimitiveActions.push({ ...failedActionSnapshot });
+          earlyFailure = e?.message || String(e);
+          break; // dừng mô phỏng tại đây
         }
         idx++;
-        continue;
       }
-
-      // Primitive action: thực thi và ghi nhận trên mô hình
-      executePrimitive(act);
-      idx++;
+    } catch (outer) {
+      earlyFailure = outer?.message || String(outer);
     }
 
-    // Thực thi xong, chấm điều kiện thắng/thua
+    // Thực thi xong (hoặc dừng sớm), chấm điều kiện thắng/thua
     let isVictory = false;
     let message = "";
-    try {
-      const victory = checkAndDisplayVictory(scene);
-      isVictory = !!victory.isVictory;
-      message = isVictory
-        ? "Program completed successfully (headless)"
-        : "Program failed to meet victory conditions (headless)";
-    } catch (e) {
+    if (earlyFailure) {
       isVictory = false;
-      message = e?.message || String(e);
+      message = earlyFailure;
+    } else {
+      try {
+        const victory = checkAndDisplayVictory(scene);
+        isVictory = !!victory.isVictory;
+        message = isVictory
+          ? "Program completed successfully (headless)"
+          : "Program failed to meet victory conditions (headless)";
+      } catch (e) {
+        isVictory = false;
+        message = e?.message || String(e);
+      }
     }
 
     // Khôi phục trạng thái ban đầu để không ảnh hưởng UI/game
