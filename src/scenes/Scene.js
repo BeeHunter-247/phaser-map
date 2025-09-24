@@ -12,6 +12,7 @@ import {
   checkAndDisplayVictory,
 } from "../utils/VictoryConditions.js";
 import { ConfigLoader } from "../utils/ConfigLoader.js";
+import { ActionExecutor } from "../utils/ActionExecutor.js";
 
 export default class Scene extends Phaser.Scene {
   constructor() {
@@ -31,6 +32,10 @@ export default class Scene extends Phaser.Scene {
     // Program execution system
     this.programExecutor = null;
     this.programMode = false; // true = program mode, false = manual mode
+
+    // Physical robot system
+    this.actionExecutor = null;
+    this.physicalRobotMode = false; // true = physical robot mode, false = code execution mode
 
     // Game state tracking
     this.gameState = "ready"; // "ready", "playing", "lost", "won"
@@ -107,6 +112,9 @@ export default class Scene extends Phaser.Scene {
 
       // Initialize Managers với map model
       this.initializeManagers(loadedObjects);
+
+      // Initialize ActionExecutor for physical robot mode
+      this.initializeActionExecutor();
 
       // Start game
       this.mapModel.startGame();
@@ -830,7 +838,7 @@ export default class Scene extends Phaser.Scene {
       programName: "demo_program",
       actions: [
         { type: "forward", count: "2" },
-        { type: "collect", color: "yellow", count: 2 },
+        { type: "collect", color: "yellow", count: 3 },
         { type: "forward", count: "2" },
         { type: "collect", color: "yellow", count: 3 },
       ],
@@ -855,6 +863,127 @@ export default class Scene extends Phaser.Scene {
     }
 
     return success;
+  }
+
+  /**
+   * Khởi tạo ActionExecutor cho physical robot mode
+   */
+  initializeActionExecutor() {
+    try {
+      this.actionExecutor = new ActionExecutor(this);
+
+      if (
+        this.mapModel &&
+        this.robotManager &&
+        this.batteryManager &&
+        this.boxManager
+      ) {
+        this.actionExecutor.initialize(
+          this.mapModel.getFirstRobot(),
+          this.batteryManager,
+          this.boxManager,
+          this.mapModel
+        );
+        console.log("🤖 ActionExecutor initialized successfully");
+      } else {
+        console.warn(
+          "⚠️ ActionExecutor initialized but some managers not ready"
+        );
+      }
+    } catch (error) {
+      console.error("❌ Failed to initialize ActionExecutor:", error);
+    }
+  }
+
+  /**
+   * Thực thi actions từ robot vật lý
+   * @param {Array} actions - List actions từ robot
+   * @returns {Promise<Object>} Kết quả thắng/thua
+   */
+  async executePhysicalRobotActions(actions) {
+    if (!this.actionExecutor) {
+      console.error("❌ ActionExecutor not initialized");
+      return {
+        isVictory: false,
+        message: "ActionExecutor not initialized",
+        error: "ActionExecutor not available",
+      };
+    }
+
+    if (!Array.isArray(actions) || actions.length === 0) {
+      console.error("❌ No actions provided");
+      return {
+        isVictory: false,
+        message: "No actions provided",
+        error: "Invalid actions array",
+      };
+    }
+
+    console.log(
+      `🤖 Starting physical robot execution with ${actions.length} actions`
+    );
+
+    try {
+      // Set physical robot mode
+      this.physicalRobotMode = true;
+      this.gameState = "playing";
+
+      const result = await this.actionExecutor.executeActions(actions);
+
+      // Update game state based on result
+      if (result.isVictory) {
+        this.gameState = "won";
+        console.log("🏆 Physical robot completed successfully!");
+      } else {
+        this.gameState = "lost";
+        console.log("❌ Physical robot failed to complete challenge");
+      }
+
+      return result;
+    } catch (error) {
+      console.error("❌ Physical robot execution failed:", error);
+      this.gameState = "lost";
+
+      return {
+        isVictory: false,
+        message: `Execution failed: ${error.message}`,
+        error: error,
+        step: 0,
+        totalSteps: actions.length,
+      };
+    } finally {
+      this.physicalRobotMode = false;
+    }
+  }
+
+  /**
+   * Kiểm tra có đang ở physical robot mode không
+   * @returns {boolean}
+   */
+  isPhysicalRobotMode() {
+    return this.physicalRobotMode;
+  }
+
+  /**
+   * Lấy trạng thái ActionExecutor
+   * @returns {Object|null}
+   */
+  getActionExecutorStatus() {
+    if (!this.actionExecutor) {
+      return null;
+    }
+
+    return {
+      initialized: !!(
+        this.actionExecutor.robotModel &&
+        this.actionExecutor.batteryManager &&
+        this.actionExecutor.boxManager
+      ),
+      robotModel: !!this.actionExecutor.robotModel,
+      batteryManager: !!this.actionExecutor.batteryManager,
+      boxManager: !!this.actionExecutor.boxManager,
+      mapModel: !!this.actionExecutor.mapModel,
+    };
   }
 
   update() {

@@ -17,6 +17,9 @@ export class ProgramExecutor {
     // Lưu trữ chương trình gốc (chưa parse) và thống kê block
     this.originalProgramData = null;
     this.totalRawBlocks = 0;
+
+    // Bộ sưu tập actions primitive khi chạy headless
+    this._compiledPrimitiveActions = [];
   }
 
   /**
@@ -541,6 +544,299 @@ export class ProgramExecutor {
     }
 
     console.log("⏹️ Program stopped");
+  }
+
+  /**
+   * Chạy chương trình ở chế độ headless, không cập nhật UI/animation.
+   * Trả về danh sách primitive actions và kết quả cuối cùng.
+   * - Tôn trọng điều kiện, vòng lặp, và hàm.
+   * - Chỉ ghi nhận các hành động đơn giản: forward, turnRight, turnLeft, turnBack, collect
+   */
+  compileProgramToPrimitiveActions() {
+    if (!this.program) {
+      throw new Error("No program loaded");
+    }
+
+    // Sao lưu trạng thái hiện tại để khôi phục sau khi mô phỏng
+    const scene = this.scene;
+    const robot = scene?.mapModel?.getFirstRobot?.();
+    if (!scene || !robot) {
+      throw new Error("Scene or RobotModel not available");
+    }
+
+    const originalSerializedRobot = robot.serialize();
+    const originalBatteries = scene.mapModel
+      ? scene.mapModel.getAllBatteries().map((b) => b.serialize())
+      : [];
+    const originalBoxes = scene.mapModel
+      ? Array.from(scene.mapModel.boxes.values()).map((b) => b.serialize())
+      : [];
+
+    // Khởi tạo bộ sưu tập actions
+    this._compiledPrimitiveActions = [];
+
+    // Helper: ghi nhận action primitive
+    const record = (type, extra = {}) => {
+      const entry = { type, ...extra };
+      // Chỉ giữ các thuộc tính hợp lệ
+      const sanitized = {};
+      sanitized.type = entry.type;
+      if (typeof entry.count === "number") sanitized.count = entry.count;
+      if (typeof entry.color === "string") sanitized.color = entry.color;
+      this._compiledPrimitiveActions.push(sanitized);
+    };
+
+    // Trình thực thi tạm thời mô phỏng không UI dựa trên ActionExecutor logic
+    const executePrimitive = (action) => {
+      switch (action.type) {
+        case "forward": {
+          const steps = action.count || 1;
+          for (let i = 0; i < steps; i++) {
+            const res = robot.moveForward();
+            if (!res.success) throw new Error(res.error || "Move failed");
+            record("forward");
+          }
+          return true;
+        }
+        case "turnLeft":
+          robot.turnLeft();
+          record("turnLeft");
+          return true;
+        case "turnRight":
+          robot.turnRight();
+          record("turnRight");
+          return true;
+        case "turnBack":
+          robot.turnBack();
+          record("turnBack");
+          return true;
+        case "collect": {
+          const count =
+            typeof action.count === "string"
+              ? parseInt(action.count) || 1
+              : action.count || 1;
+          const colors =
+            Array.isArray(action.colors) && action.colors.length > 0
+              ? action.colors
+              : ["green"];
+          for (let i = 0; i < count; i++) {
+            const c = colors[i] || colors[colors.length - 1] || "green";
+            const robotPos = robot.position;
+            const batteriesAtPos = scene.mapModel.getBatteriesAtPosition(
+              robotPos.x,
+              robotPos.y
+            );
+            let target = batteriesAtPos.find(
+              (b) => b.color === c && b.isAvailable()
+            );
+            if (!target) {
+              // Nếu màu cụ thể không có, thử bất kỳ cái nào available nếu không yêu cầu rõ
+              if (action.colors && action.colors.length > 0) {
+                throw new Error(`Không đủ pin màu ${c} để collect`);
+              }
+              target = batteriesAtPos.find((b) => b.isAvailable());
+            }
+            if (!target)
+              throw new Error("Không có pin để collect tại vị trí hiện tại");
+            const result =
+              typeof target.collectSilently === "function"
+                ? target.collectSilently(robot.id)
+                : target.collect(robot.id);
+            if (!result.success)
+              throw new Error(result.message || "Collect failed");
+            robot.addBattery(target.color);
+            record("collect", { color: target.color });
+          }
+          return true;
+        }
+        default:
+          // putBox, takeBox… không thuộc danh sách yêu cầu trả về nên bỏ qua ghi nhận, nhưng vẫn mô phỏng nếu có
+          if (action.type === "putBox" || action.type === "takeBox") {
+            // Bỏ qua để giữ đúng phạm vi yêu cầu hiện tại
+            return true;
+          }
+          return true;
+      }
+    };
+
+    // Đánh giá tuần tự giống runtime để điều kiện phản ánh trạng thái mô phỏng hiện tại
+    const queue = [...this.program.actions.map((a) => ({ ...a }))];
+
+    // Đánh giá điều kiện theo trạng thái robot/map hiện tại (headless)
+    const headlessEvaluateCondition = (cond, variableContext = {}) => {
+      if (!cond) return false;
+      // variableComparison: tái sử dụng evaluateCondition hiện có
+      if (
+        cond.type === "variableComparison" ||
+        cond.type === "and" ||
+        cond.type === "or"
+      ) {
+        return this.evaluateCondition(cond, variableContext);
+      }
+
+      // Sensor-based: isGreen/isRed/isYellow nhưng dựa trên mapModel + robot.position
+      const fn = cond.functionName || cond.function;
+      if (!scene?.mapModel || !robot) return false;
+      const pos = robot.position;
+      const batteries = scene.mapModel.getBatteriesAtPosition(pos.x, pos.y);
+      const hasColor = (color) =>
+        batteries.some((b) => b.color === color && b.isAvailable());
+      let actual = false;
+      switch (fn) {
+        case "isGreen":
+          actual = hasColor("green");
+          break;
+        case "isRed":
+          actual = hasColor("red");
+          break;
+        case "isYellow":
+          actual = hasColor("yellow");
+          break;
+        default:
+          actual = false;
+      }
+      return cond.check ? actual : !actual;
+    };
+
+    // Duyệt tuần tự: khi gặp if/while/callFunction thì thao tác trực tiếp trên queue
+    let idx = 0;
+    const MAX_OPS = 10000; // tránh vòng lặp vô hạn
+    let ops = 0;
+    while (idx < queue.length && ops < MAX_OPS) {
+      ops++;
+      const act = queue[idx];
+      if (!act || !act.type) {
+        idx++;
+        continue;
+      }
+
+      if (act.type === "if") {
+        const branches = [];
+        branches.push({ cond: act.condition, actions: act.thenActions || [] });
+        if (Array.isArray(act.elseIfClauses)) {
+          for (const cl of act.elseIfClauses) {
+            branches.push({
+              cond: cl?.condition,
+              actions: cl?.thenActions || [],
+            });
+          }
+        }
+        let chosen = null;
+        for (const br of branches) {
+          if (
+            headlessEvaluateCondition(br.cond, act._currentVariableValue || {})
+          ) {
+            chosen = br.actions;
+            break;
+          }
+        }
+        if (!chosen || chosen.length === 0) chosen = act.elseActions || [];
+        if (Array.isArray(chosen) && chosen.length > 0) {
+          queue.splice(idx + 1, 0, ...chosen.map((a) => ({ ...a })));
+        }
+        idx++;
+        continue;
+      }
+
+      if (act.type === "while") {
+        const MAX_LOOP = 1000;
+        let guard = 0;
+        while (
+          headlessEvaluateCondition(act.condition) &&
+          Array.isArray(act.bodyActions) &&
+          act.bodyActions.length > 0 &&
+          guard < MAX_LOOP
+        ) {
+          // chèn body ngay sau while hiện tại, và tiếp tục kiểm tra lại
+          queue.splice(idx + 1, 0, ...act.bodyActions.map((a) => ({ ...a })));
+          guard++;
+          idx++;
+          // thực thi các action trong body ngay sau đó ở các vòng lặp while của vòng while chính
+          // phần evaluate sẽ tiếp tục xử lý ở vòng while chính
+        }
+        // Sau khi không còn thoả điều kiện, bỏ qua while
+        idx++;
+        continue;
+      }
+
+      if (act.type === "callFunction") {
+        const func = this.functions.get(act.functionName);
+        if (func && Array.isArray(func.actions) && func.actions.length > 0) {
+          queue.splice(idx + 1, 0, ...func.actions.map((a) => ({ ...a })));
+        }
+        idx++;
+        continue;
+      }
+
+      // Primitive action: thực thi và ghi nhận trên mô hình
+      executePrimitive(act);
+      idx++;
+    }
+
+    // Thực thi xong, chấm điều kiện thắng/thua
+    let isVictory = false;
+    let message = "";
+    try {
+      const victory = checkAndDisplayVictory(scene);
+      isVictory = !!victory.isVictory;
+      message = isVictory
+        ? "Program completed successfully (headless)"
+        : "Program failed to meet victory conditions (headless)";
+    } catch (e) {
+      isVictory = false;
+      message = e?.message || String(e);
+    }
+
+    // Khôi phục trạng thái ban đầu để không ảnh hưởng UI/game
+    try {
+      // Robot
+      robot.position = { ...originalSerializedRobot.position };
+      robot.direction = originalSerializedRobot.direction;
+      robot.isMoving = originalSerializedRobot.isMoving;
+      robot.inventory = JSON.parse(
+        JSON.stringify(originalSerializedRobot.inventory)
+      );
+
+      // Batteries
+      if (scene.mapModel) {
+        const all = scene.mapModel.getAllBatteries();
+        // reset theo serialize đã lưu
+        const byId = new Map();
+        all.forEach((b) => byId.set(b.id, b));
+        for (const snap of originalBatteries) {
+          const b = byId.get(snap.id);
+          if (b) {
+            b.position = { ...snap.position };
+            b.isCollected = !!snap.isCollected;
+            b.collectedBy = snap.collectedBy || null;
+          }
+        }
+      }
+
+      // Boxes
+      // Nếu box model có serialize fields tương tự, khôi phục các trường cơ bản
+      if (scene.mapModel && scene.mapModel.boxes) {
+        const cur = Array.from(scene.mapModel.boxes.values());
+        const byId = new Map();
+        cur.forEach((bx) => byId.set(bx.id, bx));
+        for (const snap of originalBoxes) {
+          const bx = byId.get(snap.id);
+          if (bx) {
+            bx.position = { ...snap.position };
+            if (Object.prototype.hasOwnProperty.call(snap, "isPlaced")) {
+              bx.isPlaced = !!snap.isPlaced;
+            }
+          }
+        }
+      }
+    } catch {
+      // ignore restore errors
+    }
+
+    return {
+      actions: this._compiledPrimitiveActions,
+      result: { isVictory, message },
+    };
   }
 
   /**

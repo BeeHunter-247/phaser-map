@@ -109,6 +109,44 @@ export class BatteryModel extends BaseModel {
   }
 
   /**
+   * Thu thập battery ở chế độ im lặng (không cập nhật sprite/UI)
+   * Dùng cho physical robot mode khi chỉ cần xử lý logic ngầm
+   * @param {string} robotId - ID của robot thu thập
+   * @returns {Object} {success: boolean, gameOver: boolean, message: string}
+   */
+  collectSilently(robotId) {
+    if (this.isCollected || !this.isActive) {
+      return {
+        success: false,
+        gameOver: false,
+        message: "Battery already collected or inactive",
+      };
+    }
+
+    // Kiểm tra allowedCollect
+    if (!this.allowedCollect) {
+      return {
+        success: false,
+        gameOver: true,
+        message: `Game Over! You collected a forbidden ${this.color} battery at (${this.position.x}, ${this.position.y})`,
+      };
+    }
+
+    this.isCollected = true;
+    this.collectedBy = robotId;
+    this.collectedAt = Date.now();
+    this.setActive(false);
+
+    // KHÔNG cập nhật sprite ở chế độ im lặng
+
+    return {
+      success: true,
+      gameOver: false,
+      message: `Collected ${this.color} battery (silent)`,
+    };
+  }
+
+  /**
    * Reset battery về trạng thái chưa được thu thập
    */
   reset() {

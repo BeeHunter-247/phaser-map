@@ -90,6 +90,31 @@ export function sendLoseMessage(loseData = {}) {
 }
 
 /**
+ * Gửi danh sách actions đã compile từ chương trình Blockly (headless)
+ * @param {Object} payload
+ * @param {Array}  payload.actions - Danh sách primitive actions
+ * @param {Object} [payload.result] - Kết quả tóm tắt (isVictory, message, etc.)
+ */
+export function sendCompiledActions(payload) {
+  const data = {
+    actions: Array.isArray(payload?.actions) ? payload.actions : [],
+    result: payload?.result || null,
+  };
+  try {
+    const preview = data.actions.slice(0, 10);
+    console.log(
+      `📤 PROGRAM_COMPILED_ACTIONS → sending ${data.actions.length} action(s)`,
+      preview
+    );
+    console.log("📤 Actions detail (full):", data.actions);
+    if (data.result) {
+      console.log("📤 Headless result:", data.result);
+    }
+  } catch (_) {}
+  return sendMessageToParent("PROGRAM_COMPILED_ACTIONS", data);
+}
+
+/**
  * Gửi thông báo lỗi đến trang web chứa iframe
  * @param {Object} errorData - Dữ liệu về lỗi
  */
@@ -374,6 +399,54 @@ export function initWebViewCommunication(game) {
         }
         break;
 
+      case "RUN_PROGRAM_HEADLESS": {
+        // Thực thi ngầm: compile → simulate → trả actions + kết quả, KHÔNG cập nhật UI
+        const scene = game.scene.getScene("Scene");
+        const program = message.data && message.data.program;
+        if (scene && program) {
+          try {
+            const ok = scene.loadProgram(program, false);
+            if (!ok) {
+              sendErrorMessage({
+                type: "PROGRAM_LOAD_FAILED",
+                message: "Invalid program",
+              });
+              break;
+            }
+
+            // Chạy headless để lấy primitive actions và kết quả
+            const result =
+              scene.programExecutor?.compileProgramToPrimitiveActions?.();
+
+            try {
+              const count = Array.isArray(result?.actions)
+                ? result.actions.length
+                : 0;
+              console.log(
+                `✅ RUN_PROGRAM_HEADLESS compiled ${count} primitive action(s)`
+              );
+              console.log("✅ Actions detail (full):", result?.actions || []);
+            } catch (_) {}
+
+            if (result && Array.isArray(result.actions)) {
+              sendCompiledActions(result);
+            } else {
+              sendErrorMessage({
+                type: "HEADLESS_EXECUTION_FAILED",
+                message: "Compilation produced no actions",
+              });
+            }
+          } catch (e) {
+            console.error("❌ RUN_PROGRAM_HEADLESS error:", e);
+            sendErrorMessage({
+              type: "HEADLESS_EXECUTION_ERROR",
+              message: e?.message || String(e),
+            });
+          }
+        }
+        break;
+      }
+
       case "GET_STATUS":
         // Gửi trạng thái hiện tại
         const scene = game.scene.getScene("Scene");
@@ -404,6 +477,77 @@ export function initWebViewCommunication(game) {
           } else {
             // Nếu scene chưa chạy, chỉ cần start (sẽ hiện loading UI nếu thiếu data)
             game.scene.start("Scene", {});
+          }
+        }
+        break;
+
+      case "EXECUTE_PHYSICAL_ROBOT_ACTIONS":
+        // Xử lý thực thi actions từ robot vật lý
+        {
+          const scene = game.scene.getScene("Scene");
+          if (scene && message.data && message.data.actions) {
+            console.log(
+              `🤖 Received ${message.data.actions.length} actions from physical robot`
+            );
+
+            scene
+              .executePhysicalRobotActions(message.data.actions)
+              .then((result) => {
+                console.log("🤖 Physical robot execution completed:", result);
+
+                // Gửi kết quả về frontend
+                if (result.isVictory) {
+                  sendVictoryMessage({
+                    reason: "PHYSICAL_ROBOT_SUCCESS",
+                    message: result.message,
+                    details: result.details,
+                    executionTime: result.executionTime,
+                    totalSteps: result.totalSteps,
+                    robotPosition: result.robotPosition,
+                    robotDirection: result.robotDirection,
+                  });
+                } else {
+                  sendLoseMessage({
+                    reason: "PHYSICAL_ROBOT_FAILED",
+                    message: result.message,
+                    details: result.details,
+                    executionTime: result.executionTime,
+                    totalSteps: result.totalSteps,
+                    failedStep: result.step,
+                    failedAction: result.failedAction,
+                    error: result.error,
+                  });
+                }
+              })
+              .catch((error) => {
+                console.error("❌ Physical robot execution error:", error);
+                sendLoseMessage({
+                  reason: "PHYSICAL_ROBOT_ERROR",
+                  message: `Execution error: ${error.message}`,
+                  error: error,
+                });
+              });
+          } else {
+            console.error("❌ Invalid physical robot actions data");
+            sendErrorMessage({
+              type: "INVALID_DATA",
+              message: "Invalid actions data for physical robot execution",
+            });
+          }
+        }
+        break;
+
+      case "GET_PHYSICAL_ROBOT_STATUS":
+        // Lấy trạng thái ActionExecutor
+        {
+          const scene = game.scene.getScene("Scene");
+          if (scene) {
+            const status = {
+              isPhysicalRobotMode: scene.isPhysicalRobotMode(),
+              actionExecutorStatus: scene.getActionExecutorStatus(),
+              gameState: scene.gameState,
+            };
+            sendMessageToParent("PHYSICAL_ROBOT_STATUS", status);
           }
         }
         break;
@@ -455,6 +599,46 @@ export function initWebViewCommunication(game) {
       }
       game.scene.start("Scene", {});
       return true;
+    },
+
+    // Physical Robot API
+    executePhysicalRobotActions: async (actions) => {
+      const scene = game.scene.getScene("Scene");
+      if (scene) {
+        try {
+          const result = await scene.executePhysicalRobotActions(actions);
+          return result;
+        } catch (error) {
+          console.error("❌ Physical robot execution failed:", error);
+          return {
+            isVictory: false,
+            message: `Execution failed: ${error.message}`,
+            error: error,
+          };
+        }
+      }
+      return {
+        isVictory: false,
+        message: "Scene not available",
+        error: "Scene not initialized",
+      };
+    },
+
+    getPhysicalRobotStatus: () => {
+      const scene = game.scene.getScene("Scene");
+      if (scene) {
+        return {
+          isPhysicalRobotMode: scene.isPhysicalRobotMode(),
+          actionExecutorStatus: scene.getActionExecutorStatus(),
+          gameState: scene.gameState,
+        };
+      }
+      return null;
+    },
+
+    isPhysicalRobotMode: () => {
+      const scene = game.scene.getScene("Scene");
+      return scene ? scene.isPhysicalRobotMode() : false;
     },
   };
 }
