@@ -229,9 +229,15 @@ export class ProgramExecutor {
         );
 
         // Tạo vòng lặp từ fromValue đến toValue với stepValue
+        // Hỗ trợ cả step dương và âm
+        const isForward = stepValue > 0;
+        const condition = isForward
+          ? (val) => val <= toValue
+          : (val) => val >= toValue;
+
         for (
           let currentValue = fromValue;
-          currentValue <= toValue;
+          condition(currentValue);
           currentValue += stepValue
         ) {
           // Tạo bản sao sâu của parsedBody và thay thế biến
@@ -392,7 +398,7 @@ export class ProgramExecutor {
       case "forward":
         return {
           type: "forward",
-          count: parseInt(action.count) || 1,
+          count: action.count, // Don't parse immediately, let replaceVariableInAction handle it
           original: action,
         };
 
@@ -590,7 +596,10 @@ export class ProgramExecutor {
     const executePrimitive = (action) => {
       switch (action.type) {
         case "forward": {
-          const steps = action.count || 1;
+          const steps =
+            typeof action.count === "string"
+              ? parseInt(action.count) || 1
+              : action.count || 1;
           for (let i = 0; i < steps; i++) {
             const res = robot.moveForward();
             if (!res.success) throw new Error(res.error || "Move failed");
@@ -1390,10 +1399,13 @@ export class ProgramExecutor {
    * @returns {boolean} Success/failure
    */
   executeForward(count) {
-    console.log(`🚶 Moving forward ${count} step(s)`);
+    // Parse count if it's a string (e.g., after variable replacement)
+    const parsedCount =
+      typeof count === "string" ? parseInt(count) || 1 : count || 1;
+    console.log(`🚶 Moving forward ${parsedCount} step(s)`);
 
     // Thực hiện từng bước một cách tuần tự
-    this.executeForwardStep(count, 0);
+    this.executeForwardStep(parsedCount, 0);
     return true; // Không gọi executeNextCommand() ở đây, để executeForwardStep xử lý
   }
 
