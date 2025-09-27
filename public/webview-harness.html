@@ -106,7 +106,7 @@
 
           // Load từ challengeString thay vì fetch từ file
           const challengeString =
-            '{"robot":{"tile":{"x":3,"y":4},"direction":"east"},"batteries":[{"tiles":[{"x":7,"y":4,"count":3,"type":"yellow","spread":1,"allowedCollect":true},{"x":5,"y":4,"count":3,"type":"yellow","spread":1,"allowedCollect":true}]}],"victory":{"byType":[{"yellow":6,"red":0,"green":0}],"description":"Collect all yellow batteries using if statements"},"statement":[],"minCards":4,"maxCards":6}';
+            '{"robot":{"tile":{"x":3,"y":4},"direction":"east"},"batteries":[{"tiles":[{"x":5,"y":4,"count":2,"type":"yellow","spread":1.2,"allowedCollect":true},{"x":7,"y":4,"count":2,"type":"yellow","spread":1.2,"allowedCollect":true}]}],"victory":{"byType":[{"red":0,"yellow":4,"green":0}],"description":"Help me collect the yellow 🟨 battery!💡With the repeat block, you can loop code over and over."},"statement":["forward","collect"],"minCards":3,"maxCards":5}';
           const challengeJson = JSON.parse(challengeString);
 
           // Log để kiểm tra dữ liệu trước khi gửi
