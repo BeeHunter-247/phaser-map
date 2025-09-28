@@ -264,15 +264,6 @@ export class RobotModel extends BaseModel {
       return {
         success: false,
         newPosition: this.position,
-        error: `Ô không hợp lệ tại (${frontTile.x}, ${frontTile.y})`,
-      };
-    }
-
-    // Luật thua mới: chạm vào ô trống (index 0) => thua
-    if (targetTile.index === 0) {
-      return {
-        success: false,
-        newPosition: this.position,
         error: "Uh-oh! Empty space trap — game over! 😵",
       };
     }
