@@ -1517,6 +1517,11 @@ export class ProgramExecutor {
       console.error(
         `❌ Failed to move forward at step ${currentStep + 1}/${totalCount}`
       );
+      if (this.scene && typeof this.scene.lose === "function") {
+        this.scene.lose(
+          "Oops! Can't move forward - hit a wall or boundary! 🧱"
+        );
+      }
       this.stopProgram();
       return;
     }
