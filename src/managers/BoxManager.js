@@ -279,6 +279,12 @@ export class BoxManager {
    * @returns {boolean} Success/failure
    */
   takeBox(count = 1) {
+    // Chỉ cho phép nhặt 1 box mỗi lần
+    if (count !== 1) {
+      console.error(`❌ Can only take 1 box at a time, requested: ${count}`);
+      return false;
+    }
+
     const frontTile = this.getFrontTilePosition();
     if (!frontTile) {
       console.error("❌ No front tile for robot");
@@ -301,20 +307,20 @@ export class BoxManager {
     console.log(`📦 tileKey: ${tileKey}`);
     console.log(`📦 tileData: ${tileData}`);
 
-    if (!tileData || tileData.count < count) {
+    if (!tileData || tileData.count < 1) {
       console.error(
-        `❌ Not enough boxes at front tile ${tileKey}. Available: ${
+        `❌ No boxes available at front tile ${tileKey}. Available: ${
           tileData?.count || 0
-        }, Requested: ${count}`
+        }`
       );
       return false;
     }
 
-    // Cập nhật số lượng
-    tileData.count -= count;
-    this.totalBoxes -= count;
-    this.collectedBoxes += count;
-    this.carriedBoxes += count;
+    // Cập nhật số lượng - chỉ nhặt 1 box
+    tileData.count -= 1;
+    this.totalBoxes -= 1;
+    this.collectedBoxes += 1;
+    this.carriedBoxes += 1;
 
     // Xóa sprites nếu có
     console.log(
@@ -353,11 +359,15 @@ export class BoxManager {
    * @returns {boolean} Success/failure
    */
   putBox(count = 1) {
+    // Chỉ cho phép đặt 1 box mỗi lần
+    if (count !== 1) {
+      console.error(`❌ Can only put 1 box at a time, requested: ${count}`);
+      return false;
+    }
+
     // Không cho đặt vượt quá số lượng đang mang
-    if (this.carriedBoxes < count) {
-      console.error(
-        `❌ Cannot put ${count} box(es). Carried: ${this.carriedBoxes}`
-      );
+    if (this.carriedBoxes < 1) {
+      console.error(`❌ Cannot put box. Carried: ${this.carriedBoxes}`);
       return false;
     }
 
@@ -386,9 +396,6 @@ export class BoxManager {
           console.error(
             `❌ Cannot put box at ${tileKey}. Not a target position.`
           );
-          if (this.scene && typeof this.scene.lose === "function") {
-            this.scene.lose(`Đặt hộp sai vị trí mục tiêu (${tileKey}).`);
-          }
           return false;
         }
       }
@@ -407,31 +414,29 @@ export class BoxManager {
 
     const tileData = this.boxes.get(tileKey);
 
-    // Tạo sprites cho boxes mới
-    for (let i = 0; i < count; i++) {
-      const boxSprite = this.createBoxSprite(
-        frontTile.x,
-        frontTile.y,
-        i,
-        tileData.count + i
-      );
-      if (boxSprite) {
-        tileData.sprites.push(boxSprite);
-        tileData.types.push("box");
-      }
+    // Tạo sprite cho box mới - chỉ 1 box
+    const boxSprite = this.createBoxSprite(
+      frontTile.x,
+      frontTile.y,
+      0,
+      tileData.count
+    );
+    if (boxSprite) {
+      tileData.sprites.push(boxSprite);
+      tileData.types.push("box");
     }
 
-    // Cập nhật số lượng
-    tileData.count += count;
+    // Cập nhật số lượng - chỉ đặt 1 box
+    tileData.count += 1;
     // Chỉ tăng totalBoxes nếu không phải warehouse
     if (!this.isWarehouseTile(tileKey)) {
-      this.totalBoxes += count;
+      this.totalBoxes += 1;
     }
-    this.putBoxes += count; // Tăng số box đã đặt
-    this.carriedBoxes -= count; // Giảm số đang mang
+    this.putBoxes += 1; // Tăng số box đã đặt
+    this.carriedBoxes -= 1; // Giảm số đang mang
 
     console.log(
-      `📦 Put ${count} box(es) at front tile ${tileKey}. Total: ${tileData.count}`
+      `📦 Put 1 box at front tile ${tileKey}. Total: ${tileData.count}`
     );
 
     // Re-layout after placing

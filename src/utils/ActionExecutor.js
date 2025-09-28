@@ -265,14 +265,20 @@ export class ActionExecutor {
    * @returns {boolean} Success/failure
    */
   putBox(count) {
+    // Chỉ cho phép đặt 1 box mỗi lần
+    if (count !== 1) {
+      console.error(`❌ Can only put 1 box at a time, requested: ${count}`);
+      return false;
+    }
+
     if (!this.robotModel || !this.boxManager) {
       console.error("❌ Robot model or box manager not initialized");
       return false;
     }
 
-    if (this.boxManager.carriedBoxes < count) {
+    if (this.boxManager.carriedBoxes < 1) {
       console.error(
-        `❌ Not enough boxes to put: ${count} (carried: ${this.boxManager.carriedBoxes})`
+        `❌ Not enough boxes to put: 1 (carried: ${this.boxManager.carriedBoxes})`
       );
       return false;
     }
@@ -293,11 +299,11 @@ export class ActionExecutor {
     }
 
     const tileData = this.boxManager.boxes.get(tileKey);
-    tileData.count += count;
-    this.boxManager.putBoxes += count;
-    this.boxManager.carriedBoxes -= count;
+    tileData.count += 1; // Chỉ đặt 1 box
+    this.boxManager.putBoxes += 1;
+    this.boxManager.carriedBoxes -= 1;
 
-    console.log(`📦 Put ${count} box(es) at (${frontTile.x}, ${frontTile.y})`);
+    console.log(`📦 Put 1 box at (${frontTile.x}, ${frontTile.y})`);
     return true;
   }
 
@@ -307,6 +313,12 @@ export class ActionExecutor {
    * @returns {boolean} Success/failure
    */
   takeBox(count) {
+    // Chỉ cho phép nhặt 1 box mỗi lần
+    if (count !== 1) {
+      console.error(`❌ Can only take 1 box at a time, requested: ${count}`);
+      return false;
+    }
+
     if (!this.robotModel || !this.boxManager) {
       console.error("❌ Robot model or box manager not initialized");
       return false;
@@ -325,23 +337,21 @@ export class ActionExecutor {
 
     const tileData = this.boxManager.boxes.get(tileKey);
 
-    if (!tileData || tileData.count < count) {
+    if (!tileData || tileData.count < 1) {
       console.error(
-        `❌ Not enough boxes to take: ${count} (available: ${
+        `❌ Not enough boxes to take: 1 (available: ${
           tileData?.count || 0
         }) at (${frontTile.x}, ${frontTile.y})`
       );
       return false;
     }
 
-    tileData.count -= count;
-    this.boxManager.totalBoxes -= count;
-    this.boxManager.collectedBoxes += count;
-    this.boxManager.carriedBoxes += count;
+    tileData.count -= 1; // Chỉ nhặt 1 box
+    this.boxManager.totalBoxes -= 1;
+    this.boxManager.collectedBoxes += 1;
+    this.boxManager.carriedBoxes += 1;
 
-    console.log(
-      `📦 Took ${count} box(es) from (${frontTile.x}, ${frontTile.y})`
-    );
+    console.log(`📦 Took 1 box from (${frontTile.x}, ${frontTile.y})`);
     return true;
   }
 
