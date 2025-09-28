@@ -238,6 +238,8 @@ export class BatteryManager {
     );
 
     if (availableBatteries.length === 0) {
+      console.log(`   ❌ No available batteries found at ${tileKey}`);
+      this.scene.lose(`Không có pin tại ô (${robotPos.x}, ${robotPos.y})`);
       return 0;
     }
 
@@ -248,6 +250,9 @@ export class BatteryManager {
         (battery) => battery.color === preferredColor
       );
       if (!targetBattery) {
+        this.scene.lose(
+          `Sai màu pin. Cần nhặt màu ${preferredColor} tại ô (${robotPos.x}, ${robotPos.y})`
+        );
         return 0;
       }
     } else {
@@ -266,6 +271,7 @@ export class BatteryManager {
     } else if (result.gameOver) {
       // Nếu thu thập battery không được phép, game over
       console.log(`❌ Game Over: ${result.message}`);
+      this.scene.lose(result.message);
       return 0;
     } else {
       console.log(`❌ Failed to collect battery: ${result.message}`);
