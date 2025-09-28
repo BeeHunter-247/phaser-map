@@ -273,7 +273,7 @@ export class RobotModel extends BaseModel {
       return {
         success: false,
         newPosition: this.position,
-        error: `Rơi vào ô trống (index 0) tại (${frontTile.x}, ${frontTile.y})`,
+        error: "Uh-oh! Empty space trap — game over! 😵",
       };
     }
 
@@ -282,7 +282,7 @@ export class RobotModel extends BaseModel {
       return {
         success: false,
         newPosition: this.position,
-        error: `Rơi vào ô cấm (index ${targetTile.index}) tại (${frontTile.x}, ${frontTile.y})`,
+        error: "Yikes! You walked straight into nothingness 😬",
       };
     }
 

@@ -382,6 +382,31 @@ export function checkAndDisplayVictory(scene) {
     isVictory: result.isVictory && statementCheck.isValid,
   };
 
+  // Xác định loại thua và message cụ thể
+  if (!finalResult.isVictory) {
+    if (!result.isVictory && !statementCheck.isValid) {
+      // Thua cả pin và statement
+      const missingBlocks = statementCheck.missingStatements || [];
+      const missingText =
+        missingBlocks.length > 0
+          ? `Missing: ${missingBlocks.join(", ")}`
+          : "Statement validation error";
+      finalResult.loseMessage = `Double trouble! Out of power AND ${missingText} 😵⚡📝`;
+    } else if (!result.isVictory) {
+      // Thua do thiếu pin
+      finalResult.loseMessage =
+        "Mission failed! The program stopped without enough power ⚡🚫";
+    } else if (!statementCheck.isValid) {
+      // Thua do thiếu statement
+      const missingBlocks = statementCheck.missingStatements || [];
+      const missingText =
+        missingBlocks.length > 0
+          ? `Missing: ${missingBlocks.join(", ")}`
+          : "Statement validation error";
+      finalResult.loseMessage = `Oops! Missing code blocks: ${missingText} ❌`;
+    }
+  }
+
   // Tính số sao dựa trên minCards/maxCards và tổng số block người dùng sử dụng (raw)
   const starsInfo = computeStars(scene);
   if (starsInfo) {

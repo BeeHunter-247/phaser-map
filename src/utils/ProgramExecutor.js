@@ -58,7 +58,7 @@ export class ProgramExecutor {
         }
       }
 
-      // Parse và validate actions
+      // Parse actions
       const parsedActions = this.parseActions(programData.actions);
 
       this.program = {
@@ -91,6 +91,39 @@ export class ProgramExecutor {
       console.error("❌ Failed to load program:", error.message);
       return false;
     }
+  }
+
+  /**
+   * Kiểm tra 2 lệnh takeBox hoặc putBox liên tiếp trong quá trình thực thi
+   * @returns {boolean} true nếu có lỗi (đã gọi this.scene.lose()), false nếu OK
+   */
+  checkConsecutiveBoxActions() {
+    const currentAction = this.program.actions[this.currentStep];
+    const nextAction = this.program.actions[this.currentStep + 1];
+
+    if (!currentAction || !nextAction) {
+      return false; // Không có lệnh tiếp theo, OK
+    }
+
+    // Kiểm tra 2 lệnh takeBox liên tiếp
+    if (currentAction.type === "takeBox" && nextAction.type === "takeBox") {
+      if (this.scene && typeof this.scene.lose === "function") {
+        this.scene.lose(`Hey! No back-to-back takeBox commands. Play fair 😉`);
+      }
+      this.stopProgram();
+      return true; // Có lỗi
+    }
+
+    // Kiểm tra 2 lệnh putBox liên tiếp
+    if (currentAction.type === "putBox" && nextAction.type === "putBox") {
+      if (this.scene && typeof this.scene.lose === "function") {
+        this.scene.lose(`Hey! No back-to-back putBox commands. Play fair 😉`);
+      }
+      this.stopProgram();
+      return true; // Có lỗi
+    }
+
+    return false; // OK
   }
 
   /**
@@ -215,64 +248,17 @@ export class ProgramExecutor {
         // Track repeatRange statement usage
         this.usedStatements.add("repeatRange");
 
-        const variableName = action.variable || "i";
-        const fromValue = parseInt(action.from) || 1;
-        const toValue = parseInt(action.to) || 5;
-        const stepValue = parseInt(action.step) || 1;
-        const bodyRaw = Array.isArray(action.body) ? action.body : [];
-
-        // Đệ quy parse phần thân để hỗ trợ repeat lồng nhau
-        const parsedBody = this.parseActions(bodyRaw);
-
-        console.log(
-          `🔄 Expanding repeatRange ${variableName} from ${fromValue} to ${toValue} by ${stepValue} with ${parsedBody.length} action(s) in body`
-        );
-
-        // Tạo vòng lặp từ fromValue đến toValue với stepValue
-        // Hỗ trợ cả step dương và âm
-        const isForward = stepValue > 0;
-        const condition = isForward
-          ? (val) => val <= toValue
-          : (val) => val >= toValue;
-
-        for (
-          let currentValue = fromValue;
-          condition(currentValue);
-          currentValue += stepValue
-        ) {
-          // Tạo bản sao sâu của parsedBody và thay thế biến
-          for (let j = 0; j < parsedBody.length; j++) {
-            const actionCopy = JSON.parse(JSON.stringify(parsedBody[j]));
-
-            // Thay thế biến trong action nếu có
-            this.replaceVariableInAction(
-              actionCopy,
-              variableName,
-              currentValue
-            );
-
-            // Thêm thông tin về giá trị biến hiện tại cho việc đánh giá điều kiện
-            if (
-              actionCopy.type === "if" &&
-              actionCopy.condition &&
-              actionCopy.condition.type === "variableComparison"
-            ) {
-              actionCopy._currentVariableValue = {
-                [variableName]: currentValue,
-              };
-            }
-
-            // Debug log để kiểm tra biến đã được thay thế
-            if (actionCopy.type === "collect") {
-              console.log(
-                `🔧 DEBUG: Action copy for i=${currentValue}:`,
-                JSON.stringify(actionCopy)
-              );
-            }
-
-            parsedActions.push(actionCopy);
-          }
-        }
+        // Giữ nguyên cấu trúc repeatRange để xử lý ở runtime với context đầy đủ
+        const repeatRangeAction = {
+          type: "repeatRange",
+          variable: action.variable || "i",
+          from: action.from,
+          to: action.to,
+          step: action.step,
+          body: Array.isArray(action.body) ? action.body : [],
+          original: action,
+        };
+        parsedActions.push(repeatRangeAction);
         continue;
       }
 
@@ -921,14 +907,15 @@ export class ProgramExecutor {
       // KIỂM TRA THUA KHI CHƯƠNG TRÌNH KẾT THÚC
       const victoryResult = checkAndDisplayVictory(this.scene);
       if (!victoryResult.isVictory) {
-        // Chương trình kết thúc nhưng chưa đủ pin = THUA
-        this.scene.lose("Chương trình kết thúc thua cuộc!");
+        // Chương trình kết thúc nhưng thua = THUA
+        const loseMessage = victoryResult.loseMessage || "Mission failed!";
+        this.scene.lose(loseMessage);
       } else {
         // Chương trình kết thúc và thắng = THẮNG
         console.log(
           "🏆 Program completed successfully! Setting game state to WON"
         );
-        this.scene.win("Chương trình hoàn thành thành công!");
+        this.scene.win("Program finished perfectly. Champion mode unlocked 🏅");
         console.log("🏆 Game state after win:", this.scene.gameState);
 
         // Gửi thông báo chiến thắng ra webview (không blocking)
@@ -955,6 +942,11 @@ export class ProgramExecutor {
         this.program.actions.length
       }: ${action.type}${action.count ? ` (count: ${action.count})` : ""}`
     );
+
+    // Kiểm tra 2 lệnh box liên tiếp trước khi thực thi
+    if (this.checkConsecutiveBoxActions()) {
+      return; // Đã gọi this.scene.lose() trong checkConsecutiveBoxActions
+    }
 
     // Thực thi lệnh
     const success = this.executeCommand(action);
@@ -995,6 +987,9 @@ export class ProgramExecutor {
 
         case "callFunction":
           return this.executeCallFunction(action);
+
+        case "repeatRange":
+          return this.executeRepeatRange(action);
 
         case "forward":
           return this.executeForward(action.count);
@@ -1173,6 +1168,101 @@ export class ProgramExecutor {
       return true;
     } catch (e) {
       console.error("❌ Failed to execute function call:", e);
+      return false;
+    }
+  }
+
+  /**
+   * Thực thi câu lệnh repeatRange
+   * - Xử lý thay thế biến trong from, to, step với context hiện tại
+   * - Chèn các action đã được thay thế biến vào vị trí hiện tại
+   */
+  executeRepeatRange(action) {
+    try {
+      const variableName = action.variable || "i";
+      const bodyRaw = Array.isArray(action.body) ? action.body : [];
+
+      // Lấy context biến hiện tại từ action (nếu có)
+      const variableContext = action._currentVariableValue || {};
+
+      // Tạo bản sao của action để xử lý thay thế biến
+      const actionCopy = JSON.parse(JSON.stringify(action));
+
+      // Thay thế biến trong các tham số from, to, step với context hiện tại
+      // Cần thay thế tất cả biến có trong context, không chỉ biến của vòng lặp hiện tại
+      for (const [varName, varValue] of Object.entries(variableContext)) {
+        this.replaceVariableInAction(actionCopy, varName, varValue);
+      }
+
+      // Parse các giá trị sau khi thay thế biến
+      const fromValue = parseInt(actionCopy.from) || 1;
+      const toValue = parseInt(actionCopy.to) || 5;
+      const stepValue = parseInt(actionCopy.step) || 1;
+
+      console.log(
+        `🔄 Executing repeatRange ${variableName} from ${fromValue} to ${toValue} by ${stepValue} with ${bodyRaw.length} action(s) in body`
+      );
+
+      // Tạo vòng lặp từ fromValue đến toValue với stepValue
+      // Hỗ trợ cả step dương và âm
+      const isForward = stepValue > 0;
+      const condition = isForward
+        ? (val) => val <= toValue
+        : (val) => val >= toValue;
+
+      const actionsToInsert = [];
+
+      for (
+        let currentValue = fromValue;
+        condition(currentValue);
+        currentValue += stepValue
+      ) {
+        // Parse body actions trước khi thay thế biến
+        const parsedBody = this.parseActions(bodyRaw);
+
+        // Tạo bản sao sâu của parsed body và thay thế biến
+        for (let j = 0; j < parsedBody.length; j++) {
+          const actionCopy = JSON.parse(JSON.stringify(parsedBody[j]));
+
+          // Thay thế biến trong action nếu có
+          this.replaceVariableInAction(actionCopy, variableName, currentValue);
+
+          // Thêm thông tin về giá trị biến hiện tại cho việc đánh giá điều kiện
+          if (
+            actionCopy.type === "if" &&
+            actionCopy.condition &&
+            actionCopy.condition.type === "variableComparison"
+          ) {
+            actionCopy._currentVariableValue = {
+              ...variableContext,
+              [variableName]: currentValue,
+            };
+          }
+
+          // Debug log để kiểm tra biến đã được thay thế
+          if (actionCopy.type === "collect") {
+            console.log(
+              `🔧 DEBUG: Action copy for ${variableName}=${currentValue}:`,
+              JSON.stringify(actionCopy)
+            );
+          }
+
+          actionsToInsert.push(actionCopy);
+        }
+      }
+
+      // Chèn các action đã được thay thế biến vào vị trí hiện tại
+      if (actionsToInsert.length > 0) {
+        const insertIndex = this.currentStep + 1;
+        this.program.actions.splice(insertIndex, 0, ...actionsToInsert);
+        console.log(
+          `🔄 Inserted ${actionsToInsert.length} action(s) from repeatRange at ${insertIndex}`
+        );
+      }
+
+      return true;
+    } catch (e) {
+      console.error("❌ Failed to execute repeatRange:", e);
       return false;
     }
   }
@@ -1460,7 +1550,7 @@ export class ProgramExecutor {
       count: perTileCount,
     } = this.scene.getBatteriesAtCurrentTile();
     if (perTileCount === 0) {
-      this.scene.lose("Không có pin tại ô hiện tại");
+      this.scene.lose("No batteries here... just dust 🪹");
       return false;
     }
 
@@ -1471,7 +1561,7 @@ export class ProgramExecutor {
     // Quy tắc: số lượng yêu cầu không được vượt quá số pin có sẵn
     if (perTileCount < parsedCount) {
       this.scene.lose(
-        `Không đủ pin tại ô. Có ${perTileCount} pin, nhưng yêu cầu thu thập ${parsedCount}`
+        `Whoops! This tile only has ${perTileCount} batteries, not ${parsedCount} 😅`
       );
       return false;
     }
@@ -1498,9 +1588,9 @@ export class ProgramExecutor {
     for (const c of Object.keys(requiredByColor)) {
       if (requiredByColor[c] > 0 && (available[c] || 0) < requiredByColor[c]) {
         this.scene.lose(
-          `Không đủ pin màu ${c}. Cần ${requiredByColor[c]}, có ${
-            available[c] || 0
-          }`
+          `Energy mismatch! ${c} batteries required: ${
+            requiredByColor[c]
+          }, collected: ${available[c] || 0} 🔋🚫`
         );
         return false;
       }
@@ -1526,21 +1616,30 @@ export class ProgramExecutor {
    * @returns {boolean} Success/failure
    */
   executePutBox(count) {
-    console.log(`📦 Putting ${count} box(es)`);
+    // Chỉ cho phép đặt 1 box mỗi lần
+    if (count !== 1) {
+      console.error(`❌ Can only put 1 box at a time, requested: ${count}`);
+      if (this.scene && typeof this.scene.lose === "function") {
+        this.scene.lose(
+          `Oops! Can only put 1 box at a time, but tried to put ${count} 😬`
+        );
+      }
+      return false;
+    }
+
+    console.log(`📦 Putting 1 box`);
 
     try {
-      const success = this.scene.putBox(count);
+      const success = this.scene.putBox(1);
       if (!success) {
-        console.error(`❌ Failed to put ${count} box(es)`);
+        console.error(`❌ Failed to put 1 box`);
         if (this.scene && typeof this.scene.lose === "function") {
-          this.scene.lose(
-            `Không thể đặt ${count} hộp (vượt quá số đang mang hoặc ô trước mặt không hợp lệ).`
-          );
+          this.scene.lose(`Uh-oh! Can't put 1 box here. Not allowed 🚷`);
         }
         return false;
       }
 
-      console.log(`✅ Successfully put ${count} box(es)`);
+      console.log(`✅ Successfully put 1 box`);
       return true;
     } catch (error) {
       console.error(`❌ Error putting boxes:`, error);
@@ -1554,21 +1653,32 @@ export class ProgramExecutor {
    * @returns {boolean} Success/failure
    */
   executeTakeBox(count) {
-    console.log(`📦 Taking ${count} box(es)`);
+    // Chỉ cho phép nhặt 1 box mỗi lần
+    if (count !== 1) {
+      console.error(`❌ Can only take 1 box at a time, requested: ${count}`);
+      if (this.scene && typeof this.scene.lose === "function") {
+        this.scene.lose(
+          `Oops! Can only grab 1 box at a time, but tried to grab ${count} 😬`
+        );
+      }
+      return false;
+    }
+
+    console.log(`📦 Taking 1 box`);
 
     try {
-      const success = this.scene.takeBox(count);
+      const success = this.scene.takeBox(1);
       if (!success) {
-        console.error(`❌ Failed to take ${count} box(es)`);
+        console.error(`❌ Failed to take 1 box`);
         if (this.scene && typeof this.scene.lose === "function") {
           this.scene.lose(
-            `Không thể lấy ${count} hộp (không đủ hộp tại ô trước mặt).`
+            `Oops! Tried to grab 1 box, but the spot is empty 😬`
           );
         }
         return false;
       }
 
-      console.log(`✅ Successfully took ${count} box(es)`);
+      console.log(`✅ Successfully took 1 box`);
       return true;
     } catch (error) {
       console.error(`❌ Error taking boxes:`, error);

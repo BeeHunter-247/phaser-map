@@ -543,8 +543,8 @@ export default class Scene extends Phaser.Scene {
       import("../utils/WebViewMessenger.js").then(({ sendLoseMessage }) => {
         if (typeof sendLoseMessage === "function") {
           const loseData = {
-            reason: reason || "UNKNOWN",
-            message: typeof reason === "string" ? reason : "Game over",
+            reason: "Game Over",
+            message: reason || "Mission failed!",
             details: {},
           };
           sendLoseMessage(loseData);
@@ -835,27 +835,10 @@ export default class Scene extends Phaser.Scene {
     // Sử dụng program từ webview hoặc tạo demo program
     const exampleProgram = programData || {
       version: "1.0.0",
-      programName: "demo_program",
+      programName: "user_program",
       actions: [
-        {
-          type: "repeatRange",
-          variable: "i",
-          from: 4,
-          to: 1,
-          step: -1,
-          body: [
-            { type: "forward", count: 1 },
-            {
-              type: "if",
-              cond: {
-                type: "condition",
-                function: "isYellow",
-                check: true,
-              },
-              then: [{ type: "collect", color: "yellow", count: 2 }],
-            },
-          ],
-        },
+        { type: "forward", count: 1 },
+        { type: "collect", color: "yellow", count: 1 },
       ],
     };
 

@@ -89,7 +89,7 @@ export class BatteryModel extends BaseModel {
       return {
         success: false,
         gameOver: true,
-        message: `Game Over! You collected a forbidden ${this.color} battery at (${this.position.x}, ${this.position.y})`,
+        message: `Uh-oh! You weren’t allowed to collect the ${this.color} battery 😬`,
       };
     }
 
@@ -128,7 +128,7 @@ export class BatteryModel extends BaseModel {
       return {
         success: false,
         gameOver: true,
-        message: `Game Over! You collected a forbidden ${this.color} battery at (${this.position.x}, ${this.position.y})`,
+        message: `Uh-oh! You weren’t allowed to collect the ${this.color} battery 😬`,
       };
     }
 

@@ -140,7 +140,6 @@ export class RobotManager {
     const result = this.robotModel.moveForward();
 
     if (!result.success) {
-      this.scene.lose(result.error);
       return false;
     }
 
