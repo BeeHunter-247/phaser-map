@@ -115,90 +115,6 @@ export function sendCompiledActions(payload) {
 }
 
 /**
- * Chuyển danh sách action dạng string sang format program chuẩn
- * Ví dụ input: ["forward","turnRight","collectYellow","collectYellow","victory"]
- * Output actions:
- *   [ { type: "forward", count: 1 },
- *     { type: "turnRight" },
- *     { type: "collect", color: "yellow", count: 2 } ]
- * Bỏ qua các token không hỗ trợ như "victory", "defeat".
- *
- * @param {Array<string>} strActions - Danh sách action dạng string
- * @param {Object} [meta] - Thông tin phụ (version, programName, ...)
- * @returns {Object} program JSON chuẩn
- */
-function normalizeStringActionsToProgram(strActions, meta = {}) {
-  const actions = Array.isArray(strActions) ? strActions : [];
-
-  const result = [];
-  let pending = null; // { type, count, color? }
-
-  const flush = () => {
-    if (!pending) return;
-    // Sao chép để tránh bị mutate ngoài ý muốn
-    const entry = { type: pending.type };
-    if (typeof pending.count === "number") entry.count = pending.count;
-    if (typeof pending.color === "string") entry.color = pending.color;
-    result.push(entry);
-    pending = null;
-  };
-
-  const toCollectColor = (token) => {
-    if (token === "collectYellow") return "yellow";
-    if (token === "collectGreen") return "green";
-    if (token === "collectRed") return "red";
-    return null;
-  };
-
-  for (const token of actions) {
-    if (token === "forward") {
-      if (pending && pending.type === "forward") {
-        pending.count += 1;
-      } else {
-        flush();
-        pending = { type: "forward", count: 1 };
-      }
-      continue;
-    }
-
-    if (token === "turnLeft" || token === "turnRight" || token === "turnBack") {
-      flush();
-      result.push({ type: token });
-      continue;
-    }
-
-    const color = toCollectColor(token);
-    if (color) {
-      if (pending && pending.type === "collect" && pending.color === color) {
-        pending.count += 1;
-      } else {
-        flush();
-        pending = { type: "collect", color, count: 1 };
-      }
-      continue;
-    }
-
-    // Bỏ qua các token không hỗ trợ hoặc đánh dấu kết thúc như "victory"/"defeat"
-    if (token === "victory" || token === "defeat") {
-      // ignore
-      continue;
-    }
-
-    // Token lạ: bỏ qua
-    // console.warn("Unknown action token:", token);
-  }
-
-  // Đẩy phần pending cuối cùng nếu có
-  flush();
-
-  return {
-    version: meta.version || "1.0.0",
-    programName: meta.programName || "headless_from_actions",
-    actions: result,
-  };
-}
-
-/**
  * Gửi thông báo lỗi đến trang web chứa iframe
  * @param {Object} errorData - Dữ liệu về lỗi
  */
@@ -486,20 +402,7 @@ export function initWebViewCommunication(game) {
       case "RUN_PROGRAM_HEADLESS": {
         // Thực thi ngầm: compile → simulate → trả actions + kết quả, KHÔNG cập nhật UI
         const scene = game.scene.getScene("Scene");
-        let program = message.data && message.data.program;
-        // Hỗ trợ schema mới: truyền trực tiếp actions dạng string
-        if (!program && Array.isArray(message?.data?.actions)) {
-          program = normalizeStringActionsToProgram(message.data.actions, message.data);
-        }
-        // Hỗ trợ trường hợp program.actions vẫn là mảng string
-        if (
-          program &&
-          Array.isArray(program.actions) &&
-          program.actions.length > 0 &&
-          typeof program.actions[0] === "string"
-        ) {
-          program = normalizeStringActionsToProgram(program.actions, program);
-        }
+        const program = message.data && message.data.program;
         if (scene && program) {
           try {
             const ok = scene.loadProgram(program, false);
