@@ -488,8 +488,13 @@ function computeStars(scene) {
   try {
     if (!scene) return null;
 
-    // usedCards: lấy từ tổng block raw
-    const usedCards = scene.programExecutor?.totalRawBlocks || 0;
+    // usedCards: lấy từ tổng block raw hoặc số actions thực tế
+    let usedCards = scene.programExecutor?.totalRawBlocks || 0;
+
+    // Nếu totalRawBlocks = 0 (physical robot mode), tính từ số actions thực tế
+    if (usedCards === 0 && scene.actionExecutor) {
+      usedCards = scene.actionExecutor.usedStatements?.size || 0;
+    }
 
     // Lấy min/max từ nhiều nguồn khả dĩ
     const vMin1 = scene.mapModel?.victoryConditions?.minCards;

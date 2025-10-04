@@ -13,6 +13,7 @@ export class ActionExecutor {
     this.batteryManager = null;
     this.boxManager = null;
     this.mapModel = null;
+    this.usedStatements = new Set(); // Track statements used in physical robot actions
   }
 
   /**
@@ -45,6 +46,9 @@ export class ActionExecutor {
         totalSteps: 0,
       };
     }
+
+    // Reset used statements for new execution
+    this.usedStatements.clear();
 
     console.log(`🤖 Executing ${actions.length} actions from physical robot`);
 
@@ -105,6 +109,9 @@ export class ActionExecutor {
       console.warn("⚠️ Invalid action:", action);
       return false;
     }
+
+    // Track statement usage for victory conditions
+    this.usedStatements.add(action.type);
 
     try {
       switch (action.type) {
@@ -367,6 +374,18 @@ export class ActionExecutor {
       };
     }
 
+    // Sync used statements to ProgramExecutor for victory conditions
+    if (this.scene.programExecutor && this.usedStatements.size > 0) {
+      // Merge physical robot statements with existing ones
+      this.usedStatements.forEach((statement) => {
+        this.scene.programExecutor.usedStatements.add(statement);
+      });
+      console.log(
+        `🤖 Synced ${this.usedStatements.size} statements to ProgramExecutor:`,
+        Array.from(this.usedStatements)
+      );
+    }
+
     const victoryResult = checkAndDisplayVictory(this.scene);
 
     return {
@@ -391,6 +410,7 @@ export class ActionExecutor {
     this.batteryManager = null;
     this.boxManager = null;
     this.mapModel = null;
+    this.usedStatements.clear();
     console.log("🤖 ActionExecutor reset");
   }
 }
