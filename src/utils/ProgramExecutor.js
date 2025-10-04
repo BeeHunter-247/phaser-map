@@ -580,6 +580,9 @@ export class ProgramExecutor {
 
     // Trình thực thi tạm thời mô phỏng không UI dựa trên ActionExecutor logic
     const executePrimitive = (action) => {
+      // Track statement usage trong headless mode
+      this.usedStatements.add(action.type);
+
       switch (action.type) {
         case "forward": {
           const steps =
@@ -785,6 +788,9 @@ export class ProgramExecutor {
     } catch (outer) {
       earlyFailure = outer?.message || String(outer);
     }
+
+    // Debug: Log used statements trong headless mode
+    console.log("🔍 Headless usedStatements:", Array.from(this.usedStatements));
 
     // Thực thi xong (hoặc dừng sớm), chấm điều kiện thắng/thua
     let isVictory = false;

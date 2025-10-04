@@ -228,7 +228,7 @@ export class RobotModel extends BaseModel {
   }
 
   /**
-   * Di chuyển tiến lên phía trước với validation
+   * Di chuyển tiến lên phía trước - move trước, check sau
    * @returns {Object} {success: boolean, newPosition: Object, error: string}
    */
   moveForward() {
@@ -242,44 +242,62 @@ export class RobotModel extends BaseModel {
 
     const frontTile = this.getFrontPosition();
 
-    // Thua khi đi ra ngoài biên
-    if (!this.isWithinBounds(frontTile.x, frontTile.y)) {
+    // Di chuyển trước (update position)
+    this.moveTo(frontTile.x, frontTile.y);
+
+    // Kiểm tra sau khi đã di chuyển
+    const validationResult = this.validateCurrentPosition();
+
+    if (!validationResult.isValid) {
+      // Không rollback - đứng tại vị trí mới và thông báo thua
       return {
         success: false,
-        newPosition: this.position,
-        error: `Đi ra ngoài bản đồ tại (${frontTile.x}, ${frontTile.y})`,
+        newPosition: frontTile, // Vị trí mới (không rollback)
+        error: validationResult.error,
+      };
+    }
+
+    // Di chuyển thành công
+    return { success: true, newPosition: frontTile, error: null };
+  }
+
+  /**
+   * Kiểm tra vị trí hiện tại có hợp lệ không
+   * @returns {Object} {isValid: boolean, error: string}
+   */
+  validateCurrentPosition() {
+    // Kiểm tra có trong bounds không
+    if (!this.isWithinBounds(this.position.x, this.position.y)) {
+      return {
+        isValid: false,
+        error: `Đi ra ngoài bản đồ tại (${this.position.x}, ${this.position.y})`,
       };
     }
 
     if (!this.layer) {
       return {
-        success: false,
-        newPosition: this.position,
+        isValid: false,
         error: `Layer không tồn tại`,
       };
     }
 
-    const targetTile = this.layer.getTileAt(frontTile.x, frontTile.y);
-    if (!targetTile) {
+    const currentTile = this.layer.getTileAt(this.position.x, this.position.y);
+    if (!currentTile) {
       return {
-        success: false,
-        newPosition: this.position,
+        isValid: false,
         error: "Uh-oh! Empty space trap — game over! 😵",
       };
     }
 
-    // Luật thua cũ: chạm vào tile index 4 hoặc 5 => thua (nếu có)
-    if (targetTile.index === 4 || targetTile.index === 5) {
+    // Luật thua: chạm vào tile index 4 hoặc 5 => thua
+    if (currentTile.index === 4 || currentTile.index === 5) {
       return {
-        success: false,
-        newPosition: this.position,
+        isValid: false,
         error: "Yikes! You walked straight into nothingness 😬",
       };
     }
 
-    // Di chuyển thành công
-    this.moveTo(frontTile.x, frontTile.y);
-    return { success: true, newPosition: frontTile, error: null };
+    return { isValid: true, error: null };
   }
 
   // ========================================

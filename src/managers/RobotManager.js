@@ -139,11 +139,6 @@ export class RobotManager {
     // Use RobotModel to validate and get movement result
     const result = this.robotModel.moveForward();
 
-    if (!result.success) {
-      this.scene.lose(result.error);
-      return false;
-    }
-
     console.log(
       `Moving ${this.robotModel.getDirectionName()} to tile (${
         result.newPosition.x
@@ -173,10 +168,15 @@ export class RobotManager {
           `Arrived at tile (${this.robotModel.position.x}, ${this.robotModel.position.y})`
         );
         this.updateRobotDepth();
+
+        // Kiểm tra thua sau khi di chuyển xong
+        if (!result.success) {
+          this.scene.lose(result.error);
+        }
       },
     });
 
-    return true;
+    return result.success;
   }
 
   /**
