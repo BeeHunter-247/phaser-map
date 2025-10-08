@@ -1596,7 +1596,7 @@ export class ProgramExecutor {
         this.scene.lose(
           `Energy mismatch! ${c} batteries required: ${
             requiredByColor[c]
-          }, collected: ${available[c] || 0} 🔋🚫`
+          }, available: ${available[c] || 0} 🔋🚫`
         );
         return false;
       }
