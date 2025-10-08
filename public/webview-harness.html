@@ -147,9 +147,9 @@
           programName: "demo_headless",
           actions: [
             { type: "forward", count: 2 },
-            { type: "collect", color: "yellow", count: 3 },
+            { type: "collect", color: "yellow", count: 2 },
             { type: "forward", count: 2 },
-            { type: "collect", color: "yellow", count: 3 },
+            { type: "collect", color: "yellow", count: 2 },
           ],
         };
         sendToGame("RUN_PROGRAM_HEADLESS", { program });
@@ -165,7 +165,7 @@
           { type: "forward", count: 2 },
           { type: "collect", color: "yellow", count: 2 },
           { type: "forward", count: 2 },
-          { type: "collect", color: "yellow", count: 3 },
+          { type: "collect", color: "yellow", count: 2 },
         ];
         sendToGame("EXECUTE_PHYSICAL_ROBOT_ACTIONS", { actions });
       };
