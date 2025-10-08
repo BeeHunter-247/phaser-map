@@ -525,19 +525,14 @@ export default class Scene extends Phaser.Scene {
     this.uiManager.showToast(message, background);
   }
 
-  /**
-   * Hiển thị banner chiến thắng ngắn gọn
-   */
-  showBanner(message, background = "#006600") {
-    this.uiManager.showBanner(message, background);
-  }
+  // (Removed) showBanner: No longer used; FE/MB handle messages via webview
 
   /**
    * Thua cuộc với lý do cụ thể
    */
   lose(reason) {
     this.gameState = "lost";
-    this.uiManager.showLoseMessage(reason);
+    // Skip showing in-Phaser lose banner; handled by FE/MB via webview message
     // Gửi thông báo thua ra webview
     try {
       import("../utils/WebViewMessenger.js").then(({ sendLoseMessage }) => {
@@ -563,7 +558,7 @@ export default class Scene extends Phaser.Scene {
    */
   win(reason) {
     this.gameState = "won";
-    this.uiManager.showBanner(reason || "Chiến thắng!", "#006600");
+    // Skip showing in-Phaser win banner; handled by FE/MB via webview message
     // Gửi thông báo thắng ra webview
     try {
       import("../utils/WebViewMessenger.js").then(({ sendVictoryMessage }) => {
@@ -839,7 +834,7 @@ export default class Scene extends Phaser.Scene {
       actions: [
         {
           type: "repeat",
-          count: 4,
+          count: 2,
           body: [
             {
               type: "forward",
@@ -848,7 +843,7 @@ export default class Scene extends Phaser.Scene {
             {
               type: "collect",
               count: 2,
-              color: "yellow",
+              color: "red",
             },
           ],
         },

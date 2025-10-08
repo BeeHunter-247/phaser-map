@@ -66,30 +66,7 @@ export class GameUIManager {
     });
   }
 
-  /**
-   * Hiển thị banner chiến thắng ngắn gọn
-   * @param {string} message - Message to display
-   * @param {string} background - Background color (default: "#006600")
-   */
-  showBanner(message, background = "#006600") {
-    const x = this.scene.cameras.main.width / 2;
-    const y = this.scene.cameras.main.height / 2 - 120;
-    const text = this.scene.add.text(x, y, message, {
-      fontFamily: "Arial",
-      fontSize: "22px",
-      color: "#ffffff",
-      backgroundColor: background,
-      padding: { x: 16, y: 10 },
-    });
-    text.setOrigin(0.5, 0.5);
-    this.scene.tweens.add({
-      targets: text,
-      alpha: { from: 1, to: 0 },
-      duration: 1500,
-      delay: 800,
-      onComplete: () => text.destroy(),
-    });
-  }
+  // (Removed) showBanner: generic center-screen banner not needed for win/lose
 
   /**
    * Hiển thị yêu cầu chiến thắng của map hiện tại
@@ -346,22 +323,9 @@ export class GameUIManager {
     }
   }
 
-  /**
-   * Hiển thị thông báo thua cuộc
-   * @param {string} reason - Lý do thua cuộc
-   */
-  showLoseMessage(reason) {
-    console.warn(`💥 THUA CUỘC: ${reason}`);
-    this.showBanner(reason, "#8B0000");
-  }
+  // (Removed) showLoseMessage: FE/MB display lose reason externally
 
-  /**
-   * Hiển thị thông báo chiến thắng
-   * @param {string} message - Thông báo chiến thắng
-   */
-  showVictoryMessage(message) {
-    this.showBanner(message, "#006600");
-  }
+  // (Removed) showVictoryMessage: FE/MB display win reason externally
 
   /**
    * Hiển thị thông báo tiến độ
