@@ -27,6 +27,12 @@ export class GameInputHandler {
         case "KeyR":
           // Restart current scene (reload map)
           if (this.scene && this.scene.scene) {
+            // Dừng chương trình đang chạy trước khi restart
+            if (typeof this.scene.stopProgram === "function") {
+              try {
+                this.scene.stopProgram();
+              } catch (_) {}
+            }
             const currentMapKey = this.scene.mapKey;
             this.scene.scene.restart({ mapKey: currentMapKey });
           }

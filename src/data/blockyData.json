@@ -1,24 +1,32 @@
 {
   "version": "1.0.0",
-  "programName": "condition_demo",
+  "programName": "from_blockly_image",
   "actions": [
     {
-      "type": "repeatRange",
-      "variable": "i",
-      "from": 1,
-      "to": 4,
-      "step": 1,
+      "type": "repeat",
+      "count": 4,
       "body": [
         { "type": "forward", "count": 1 },
         {
           "type": "if",
           "cond": {
-            "type": "condition",
-            "function": "isYellow",
-            "check": true
+            "type": "and",
+            "conditions": [
+              {
+                "type": "variableComparison",
+                "variable": "batteryCount",
+                "operator": "==",
+                "value": 3
+              },
+              {
+                "type": "condition",
+                "function": "isGreen",
+                "check": true
+              }
+            ]
           },
           "then": [
-            { "type": "collect", "color": "yellow", "count": 3 }
+            { "type": "collect", "color": "green", "count": 2 }
           ]
         }
       ]
