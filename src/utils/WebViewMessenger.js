@@ -469,6 +469,13 @@ export function initWebViewCommunication(game) {
         {
           const current = game.scene.getScene("Scene");
           if (current) {
+            // Đảm bảo dừng chương trình đang chạy trước khi restart
+            if (typeof current.stopProgram === "function") {
+              try {
+                current.stopProgram();
+              } catch (_) {}
+            }
+
             const payload = {
               mapJson: current.mapJson || null,
               challengeJson: current.challengeJson || null,
@@ -591,6 +598,12 @@ export function initWebViewCommunication(game) {
     restart: () => {
       const scene = game.scene.getScene("Scene");
       if (scene) {
+        // Dừng chương trình (nếu đang chạy) trước khi restart
+        if (typeof scene.stopProgram === "function") {
+          try {
+            scene.stopProgram();
+          } catch (_) {}
+        }
         scene.scene.restart({
           mapJson: scene.mapJson || null,
           challengeJson: scene.challengeJson || null,

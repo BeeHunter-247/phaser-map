@@ -834,16 +834,28 @@ export default class Scene extends Phaser.Scene {
       actions: [
         {
           type: "repeat",
-          count: 2,
+          count: 4,
           body: [
+            { type: "forward", count: 1 },
             {
-              type: "forward",
-              count: 2,
-            },
-            {
-              type: "collect",
-              count: 2,
-              color: "red",
+              type: "if",
+              cond: {
+                type: "and",
+                conditions: [
+                  {
+                    type: "variableComparison",
+                    variable: "batteryCount",
+                    operator: "==",
+                    value: 2,
+                  },
+                  {
+                    type: "condition",
+                    function: "isGreen",
+                    check: true,
+                  },
+                ],
+              },
+              then: [{ type: "collect", color: "green", count: 2 }],
             },
           ],
         },
