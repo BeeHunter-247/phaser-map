@@ -739,6 +739,15 @@ export default class Scene extends Phaser.Scene {
       return false;
     }
 
+    // Không cho load chương trình mới khi đang chạy
+    const runningStatus = this.programExecutor.getStatus?.();
+    if (runningStatus && runningStatus.isRunning) {
+      console.warn(
+        "⚠️ Cannot load program: Another program is currently running"
+      );
+      return false;
+    }
+
     const success = this.programExecutor.loadProgram(programData);
     if (success) {
       this.programMode = true;
@@ -767,6 +776,13 @@ export default class Scene extends Phaser.Scene {
     // Kiểm tra trạng thái game trước khi bắt đầu
     if (this.gameState === "lost" || this.gameState === "won") {
       console.warn("⚠️ Cannot start program: Game is in lost or won state");
+      return false;
+    }
+
+    // Không cho start nếu đang chạy
+    const runningStatus = this.programExecutor.getStatus?.();
+    if (runningStatus && runningStatus.isRunning) {
+      console.warn("⚠️ Cannot start program: Program already running");
       return false;
     }
 
