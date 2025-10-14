@@ -1429,6 +1429,89 @@ export class ProgramExecutor {
   }
 
   /**
+   * Đánh giá biểu thức số học dạng nhị phân
+   * Hỗ trợ: +, -, *, /, ^ với toán hạng là số, chuỗi số,
+   * hoặc biến/biểu thức lồng nhau (object) sẽ được resolve đệ quy
+   * @param {Object} expr - { type: "arithmetic"|"binary", op, left, right }
+   * @param {Object} variableContext
+   * @returns {number|undefined}
+   */
+  evaluateArithmeticExpression(expr, variableContext = {}) {
+    if (!expr || typeof expr !== "object") return undefined;
+    // Chỉ chấp nhận type === "arithmetic" nếu có khai báo type
+    if (expr.type && expr.type !== "arithmetic") return undefined;
+    const op = expr.op || expr.operator;
+    if (!op) return undefined;
+
+    const left = this.resolveNumericValue(expr.left, variableContext);
+    const right = this.resolveNumericValue(expr.right, variableContext);
+    if (typeof left !== "number" || typeof right !== "number") return undefined;
+
+    switch (op) {
+      case "+":
+        return left + right;
+      case "-":
+        return left - right;
+      case "*":
+        return left * right;
+      case "/":
+        return right === 0 ? undefined : left / right;
+      case "^":
+        return Math.pow(left, right);
+      default:
+        console.warn(`⚠️ Unknown arithmetic operator: ${op}`);
+        return undefined;
+    }
+  }
+
+  /**
+   * Cố gắng chuyển bất kỳ giá trị nào thành number.
+   * Hỗ trợ:
+   *  - number trực tiếp
+   *  - chuỗi số
+   *  - biến/special variable
+   *  - biểu thức số học nhị phân { type: "arithmetic"|"binary", op, left, right }
+   *  - lồng nhau (left/right cũng có thể là các dạng trên)
+   */
+  resolveNumericValue(value, variableContext = {}) {
+    try {
+      // number
+      if (typeof value === "number" && Number.isFinite(value)) return value;
+      // numeric string
+      if (typeof value === "string" && value.trim() !== "") {
+        const n = Number(value);
+        if (!Number.isNaN(n)) return n;
+      }
+      // object expression
+      if (value && typeof value === "object") {
+        const kind = value.type || value.kind;
+        if (kind === "arithmetic") {
+          return this.evaluateArithmeticExpression(value, variableContext);
+        }
+        // function/variable-style value
+        const resolved = this.resolveVariableValue(value, variableContext);
+        if (typeof resolved === "number" && Number.isFinite(resolved))
+          return resolved;
+        if (typeof resolved === "string") {
+          const n = Number(resolved);
+          if (!Number.isNaN(n)) return n;
+        }
+      }
+
+      // plain variable name
+      if (typeof value === "string") {
+        const v = this.getSpecialVariableValue(value);
+        if (typeof v === "number" && Number.isFinite(v)) return v;
+      }
+
+      return undefined;
+    } catch (e) {
+      console.warn("⚠️ resolveNumericValue failed:", e);
+      return undefined;
+    }
+  }
+
+  /**
    * Kiểm tra có pin màu chỉ định tại ô hiện tại không
    */
   hasBatteryColorAtCurrentTile(color) {
@@ -1495,9 +1578,14 @@ export class ProgramExecutor {
    * @returns {boolean} Success/failure
    */
   executeForward(count) {
-    // Parse count if it's a string (e.g., after variable replacement)
+    // Hỗ trợ biểu thức số học/biến cho count
+    const numeric = this.resolveNumericValue(count);
     const parsedCount =
-      typeof count === "string" ? parseInt(count) || 1 : count || 1;
+      typeof numeric === "number" && Number.isFinite(numeric)
+        ? Math.max(0, Math.floor(numeric))
+        : typeof count === "string"
+        ? parseInt(count) || 1
+        : count || 1;
     console.log(`🚶 Moving forward ${parsedCount} step(s)`);
 
     // Thực hiện từng bước một cách tuần tự
@@ -1540,9 +1628,14 @@ export class ProgramExecutor {
    * @returns {boolean} Success/failure
    */
   executeCollect(count, colors) {
-    // Parse count nếu là string
+    // Hỗ trợ biểu thức số học/biến cho count
+    const numeric = this.resolveNumericValue(count);
     const parsedCount =
-      typeof count === "string" ? parseInt(count) || 1 : count || 1;
+      typeof numeric === "number" && Number.isFinite(numeric)
+        ? Math.max(0, Math.floor(numeric))
+        : typeof count === "string"
+        ? parseInt(count) || 1
+        : count || 1;
     console.log(
       `🔋 Collecting ${parsedCount} battery(ies) with colors:`,
       colors
