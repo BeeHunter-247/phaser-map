@@ -394,6 +394,12 @@ export function initWebViewCommunication(game) {
         if (message.data && message.data.program) {
           const scene = game.scene.getScene("Scene");
           if (scene) {
+            // Chặn khi đang chạy
+            const status = scene.getProgramStatus?.();
+            if (status && status.isRunning) {
+              console.warn("⚠️ RUN_PROGRAM ignored: program already running");
+              break;
+            }
             scene.loadProgram(message.data.program, true);
           }
         }
@@ -405,6 +411,14 @@ export function initWebViewCommunication(game) {
         const program = message.data && message.data.program;
         if (scene && program) {
           try {
+            // Chặn khi đang chạy
+            const status = scene.getProgramStatus?.();
+            if (status && status.isRunning) {
+              console.warn(
+                "⚠️ RUN_PROGRAM_HEADLESS ignored: program already running"
+              );
+              break;
+            }
             const ok = scene.loadProgram(program, false);
             if (!ok) {
               sendErrorMessage({
@@ -573,6 +587,12 @@ export function initWebViewCommunication(game) {
         // Kiểm tra trạng thái game trước khi chạy program
         if (scene.gameState === "lost" || scene.gameState === "won") {
           console.warn("⚠️ Cannot run program: Game is in lost or won state");
+          return false;
+        }
+        // Chặn nếu đang chạy
+        const status = scene.getProgramStatus?.();
+        if (status && status.isRunning) {
+          console.warn("⚠️ Cannot run program: A program is already running");
           return false;
         }
         return scene.loadProgram(program, true);
