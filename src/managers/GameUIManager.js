@@ -309,7 +309,13 @@ export class GameUIManager {
     );
 
     const x = this.scene.cameras.main.width / 2;
-    const y = this.scene.cameras.main.height - 40;
+    // Always keep a margin from bottom so long text isn't cut off
+    const bottomMargin = 24;
+    const sceneHeight = this.scene.cameras.main.height;
+    const y = Math.max(
+      contentHeight / 2 + 60, // top safety margin
+      sceneHeight - (bottomMargin + contentHeight / 2)
+    );
     this.victoryReqContainer.setPosition(x, y);
   }
 
