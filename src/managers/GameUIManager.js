@@ -15,6 +15,7 @@ export class GameUIManager {
     this.scene = scene;
     this.statusText = null;
     this.victoryReqContainer = null;
+    this.infoButton = null;
   }
 
   /**
@@ -23,6 +24,7 @@ export class GameUIManager {
   initialize() {
     // Tạo status UI
     this.createStatusUI();
+    this.createInfoButton();
   }
 
   /**
@@ -130,6 +132,7 @@ export class GameUIManager {
       const text = this.victoryReqContainer.getByName("messageText");
       if (text) text.setText(message);
       this.layoutPersistentBanner();
+      if (this.infoButton) this.infoButton.setVisible(false);
       return;
     }
 
@@ -212,6 +215,9 @@ export class GameUIManager {
     });
 
     this.layoutPersistentBanner();
+
+    // Ẩn nút thông tin khi banner hiển thị
+    if (this.infoButton) this.infoButton.setVisible(false);
   }
 
   /**
@@ -327,6 +333,8 @@ export class GameUIManager {
       this.victoryReqContainer.destroy(true);
       this.victoryReqContainer = null;
     }
+    // Hiện lại nút thông tin để có thể mở mô tả
+    if (this.infoButton) this.infoButton.setVisible(true);
   }
 
   // (Removed) showLoseMessage: FE/MB display lose reason externally
@@ -413,5 +421,67 @@ export class GameUIManager {
    */
   getStatusText() {
     return this.statusText;
+  }
+
+  /**
+   * Tạo nút thông tin (ℹ) để mở lại mô tả khi đã đóng
+   */
+  createInfoButton() {
+    if (this.infoButton) return;
+
+    const size = 44;
+    const margin = 16;
+    const x = this.scene.cameras.main.width * 0.75;
+    const y = this.scene.cameras.main.height - margin - size / 2;
+
+    // Nền tròn
+    const bg = this.scene.add.graphics();
+    bg.fillStyle(0x2563eb, 1);
+    bg.fillCircle(0, 0, size / 2);
+
+    // Icon ℹ
+    const icon = this.scene.add.text(0, 0, "ℹ", {
+      fontFamily: "Arial",
+      fontSize: "22px",
+      fontStyle: "bold",
+      color: "#ffffff",
+    });
+    icon.setOrigin(0.5);
+
+    this.infoButton = this.scene.add.container(x, y, [bg, icon]);
+    this.infoButton.setSize(size, size);
+    this.infoButton.setDepth(1001);
+    this.infoButton.setName("infoButton");
+    // Dùng hit area hình chữ nhật lớn, căn giữa để bắt click tốt hơn cả phía dưới
+    const hitW = size + 20;
+    const hitH = size + 20;
+    this.infoButton.setInteractive(
+      new Phaser.Geom.Rectangle(-hitW / 2, -hitH / 2, hitW, hitH),
+      Phaser.Geom.Rectangle.Contains
+    );
+    if (this.infoButton.input) {
+      this.infoButton.input.cursor = "pointer";
+    }
+    this.infoButton.on("pointerdown", () => this.showVictoryRequirements());
+    this.infoButton.on("pointerover", () => {
+      this.infoButton.setScale(1.06);
+    });
+    this.infoButton.on("pointerout", () => {
+      this.infoButton.setScale(1);
+    });
+
+    // Nếu ngay lúc tạo đã có banner, ẩn nút lại
+    if (this.victoryReqContainer) this.infoButton.setVisible(false);
+
+    // Cập nhật vị trí theo kích thước màn hình (nếu có resize logic bên ngoài, có thể gọi lại hàm này)
+    const reposition = () => {
+      const nx = this.scene.cameras.main.width * 0.6;
+      const ny = this.scene.cameras.main.height - margin - size / 2;
+      this.infoButton.setPosition(nx, ny);
+    };
+    // Thử lắng nghe sự kiện resize của phaser nếu có
+    if (this.scene.scale && this.scene.scale.on) {
+      this.scene.scale.on("resize", reposition);
+    }
   }
 }
