@@ -578,7 +578,7 @@ export class ProgramExecutor {
       this._compiledPrimitiveActions.push(sanitized);
     };
 
-    // Trình thực thi tạm thời mô phỏng không UI dựa trên ActionExecutor logic
+    // Trình thực thi tạm thời mô phỏng không UI
     const executePrimitive = (action) => {
       // Track statement usage trong headless mode
       this.usedStatements.add(action.type);
