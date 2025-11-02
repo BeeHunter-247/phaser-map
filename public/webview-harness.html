@@ -50,8 +50,6 @@
         <button id="btnStart">START (LOAD_MAP_AND_CHALLENGE)</button>
         <button id="btnRun">RUN_PROGRAM</button>
         <button id="btnStatus">GET_STATUS</button>
-        <button id="btnPhysRun">RUN PHYSICAL ACTIONS</button>
-        <button id="btnPhysStatus">GET PHYSICAL STATUS</button>
         <button id="btnReplay">REPLAY</button>
         <button id="btnClear">Clear Log</button>
       </div>
@@ -101,12 +99,12 @@
         try {
           // Load từ mapString - CẬP NHẬT ĐỂ KHỚP VỚI test.json
           const mapString =
-            '{"compressionlevel":-1,"height":10,"infinite":false,"layers":[{"data":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5,5,5,6,6,1,6,1,1,6,5,5,5,5,5,5,5,5,5,5,5,5,4,4,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"height":10,"id":1,"name":"Tile Layer 1","opacity":1,"type":"tilelayer","visible":true,"width":10,"x":0,"y":0}],"nextlayerid":2,"nextobjectid":1,"orientation":"isometric","renderorder":"right-down","tiledversion":"1.11.2","tileheight":80,"tilesets":[{"columns":1,"firstgid":1,"image":".","imageheight":128,"imagewidth":128,"margin":0,"name":"road_v","spacing":0,"tilecount":1,"tileheight":128,"tilewidth":128},{"columns":1,"firstgid":2,"image":".","imageheight":128,"imagewidth":128,"margin":0,"name":"road_h","spacing":0,"tilecount":1,"tileheight":128,"tilewidth":128},{"columns":1,"firstgid":3,"image":".","imageheight":128,"imagewidth":128,"margin":0,"name":"wood","spacing":0,"tilecount":1,"tileheight":128,"tilewidth":128},{"columns":1,"firstgid":4,"image":".","imageheight":128,"imagewidth":128,"margin":0,"name":"water","spacing":0,"tilecount":1,"tileheight":128,"tilewidth":128},{"columns":1,"firstgid":5,"image":".","imageheight":128,"imagewidth":128,"margin":0,"name":"grass","spacing":0,"tilecount":1,"tileheight":128,"tilewidth":128},{"columns":1,"firstgid":6,"image":".","imageheight":128,"imagewidth":128,"margin":0,"name":"crossroad","spacing":0,"tilecount":1,"tileheight":128,"tilewidth":128}],"tilewidth":128,"type":"map","version":"1.10","width":10}';
+            '{"compressionlevel":-1,"height":10,"infinite":false,"layers":[{"data":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,1,6,1,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"height":10,"id":1,"name":"Tile Layer 1","opacity":1,"type":"tilelayer","visible":true,"width":10,"x":0,"y":0}],"nextlayerid":2,"nextobjectid":1,"orientation":"isometric","renderorder":"right-down","tiledversion":"1.11.2","tileheight":80,"tilesets":[{"columns":1,"firstgid":1,"image":".","imageheight":128,"imagewidth":128,"margin":0,"name":"road_v","spacing":0,"tilecount":1,"tileheight":128,"tilewidth":128},{"columns":1,"firstgid":2,"image":".","imageheight":128,"imagewidth":128,"margin":0,"name":"road_h","spacing":0,"tilecount":1,"tileheight":128,"tilewidth":128},{"columns":1,"firstgid":3,"image":".","imageheight":128,"imagewidth":128,"margin":0,"name":"wood","spacing":0,"tilecount":1,"tileheight":128,"tilewidth":128},{"columns":1,"firstgid":4,"image":".","imageheight":128,"imagewidth":128,"margin":0,"name":"water","spacing":0,"tilecount":1,"tileheight":128,"tilewidth":128},{"columns":1,"firstgid":5,"image":".","imageheight":128,"imagewidth":128,"margin":0,"name":"grass","spacing":0,"tilecount":1,"tileheight":128,"tilewidth":128},{"columns":1,"firstgid":6,"image":".","imageheight":128,"imagewidth":128,"margin":0,"name":"crossroad","spacing":0,"tilecount":1,"tileheight":128,"tilewidth":128}],"tilewidth":128,"type":"map","version":"1.10","width":10}';
           const mapJson = JSON.parse(mapString);
 
           // Load từ challengeString thay vì fetch từ file
           const challengeString =
-            '{"robot":{"tile":{"x":1,"y":5},"direction":"east"},"batteries":[{"tiles":[{"x":2,"y":5,"count":2,"type":"yellow","spread":1.2,"allowedCollect":true},{"x":4,"y":5,"count":4,"type":"yellow","spread":1.2,"allowedCollect":true},{"x":7,"y":5,"count":6,"type":"yellow","spread":1.2,"allowedCollect":true}]}],"victory":{"byType":[{"red":0,"yellow":12,"green":0}],"description":"Let\'s create a variable and assign it a value of 3.💡Remember to subtract the value of the variable by 1. Add to variable -1."},"statement":["forward","collect"],"minCards":6,"maxCards":9}';
+            '{"robot":{"tile":{"x":3,"y":4},"direction":"east"},"batteries":[{"tiles":[{"x":5,"y":4,"count":2,"type":"yellow","spread":1.2,"allowedCollect":true},{"x":7,"y":4,"count":2,"type":"yellow","spread":1.2,"allowedCollect":true}]}],"victory":{"byType":[{"red":0,"yellow":4,"green":0}],"description":"Help me collect the yellow 🟨 battery!💡With the repeat block, you can loop code over and over."},"statement":["forward","collect"],"minCards":3,"maxCards":5}';
           const challengeJson = JSON.parse(challengeString);
 
           // Log để kiểm tra dữ liệu trước khi gửi
@@ -157,22 +155,6 @@
 
       document.getElementById("btnStatus").onclick = () => {
         sendToGame("GET_STATUS");
-      };
-
-      // Run a demo list of physical robot actions
-      document.getElementById("btnPhysRun").onclick = () => {
-        const actions = [
-          { type: "forward", count: 2 },
-          { type: "collect", color: "yellow", count: 2 },
-          { type: "forward", count: 2 },
-          { type: "collect", color: "yellow", count: 2 },
-        ];
-        sendToGame("EXECUTE_PHYSICAL_ROBOT_ACTIONS", { actions });
-      };
-
-      // Query physical robot execution status
-      document.getElementById("btnPhysStatus").onclick = () => {
-        sendToGame("GET_PHYSICAL_ROBOT_STATUS");
       };
 
       // Replay: ask the game to restart/reload the scene

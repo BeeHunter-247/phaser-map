@@ -394,6 +394,18 @@ export function initWebViewCommunication(game) {
         if (message.data && message.data.program) {
           const scene = game.scene.getScene("Scene");
           if (scene) {
+            // Chặn khi game đã thắng hoặc thua
+            if (scene.gameState === "lost" || scene.gameState === "won") {
+              console.warn(
+                "⚠️ RUN_PROGRAM ignored: Game is in lost or won state"
+              );
+              sendErrorMessage({
+                type: "GAME_ENDED",
+                message: "Cannot run program: Game has ended.",
+                gameState: scene.gameState,
+              });
+              break;
+            }
             // Chặn khi đang chạy
             const status = scene.getProgramStatus?.();
             if (status && status.isRunning) {
@@ -411,6 +423,18 @@ export function initWebViewCommunication(game) {
         const program = message.data && message.data.program;
         if (scene && program) {
           try {
+            // Chặn khi game đã thắng hoặc thua
+            if (scene.gameState === "lost" || scene.gameState === "won") {
+              console.warn(
+                "⚠️ RUN_PROGRAM_HEADLESS ignored: Game is in lost or won state"
+              );
+              sendErrorMessage({
+                type: "GAME_ENDED",
+                message: "Cannot run program: Game has ended.",
+                gameState: scene.gameState,
+              });
+              break;
+            }
             // Chặn khi đang chạy
             const status = scene.getProgramStatus?.();
             if (status && status.isRunning) {
@@ -423,7 +447,7 @@ export function initWebViewCommunication(game) {
             if (!ok) {
               sendErrorMessage({
                 type: "PROGRAM_LOAD_FAILED",
-                message: "Invalid program",
+                message: "Invalid program or game state invalid",
               });
               break;
             }
@@ -501,77 +525,6 @@ export function initWebViewCommunication(game) {
           }
         }
         break;
-
-      case "EXECUTE_PHYSICAL_ROBOT_ACTIONS":
-        // Xử lý thực thi actions từ robot vật lý
-        {
-          const scene = game.scene.getScene("Scene");
-          if (scene && message.data && message.data.actions) {
-            console.log(
-              `🤖 Received ${message.data.actions.length} actions from physical robot`
-            );
-
-            scene
-              .executePhysicalRobotActions(message.data.actions)
-              .then((result) => {
-                console.log("🤖 Physical robot execution completed:", result);
-
-                // Gửi kết quả về frontend
-                if (result.isVictory) {
-                  sendVictoryMessage({
-                    reason: "PHYSICAL_ROBOT_SUCCESS",
-                    message: result.message,
-                    details: result.details,
-                    executionTime: result.executionTime,
-                    totalSteps: result.totalSteps,
-                    robotPosition: result.robotPosition,
-                    robotDirection: result.robotDirection,
-                  });
-                } else {
-                  sendLoseMessage({
-                    reason: "PHYSICAL_ROBOT_FAILED",
-                    message: result.message,
-                    details: result.details,
-                    executionTime: result.executionTime,
-                    totalSteps: result.totalSteps,
-                    failedStep: result.step,
-                    failedAction: result.failedAction,
-                    error: result.error,
-                  });
-                }
-              })
-              .catch((error) => {
-                console.error("❌ Physical robot execution error:", error);
-                sendLoseMessage({
-                  reason: "PHYSICAL_ROBOT_ERROR",
-                  message: `Execution error: ${error.message}`,
-                  error: error,
-                });
-              });
-          } else {
-            console.error("❌ Invalid physical robot actions data");
-            sendErrorMessage({
-              type: "INVALID_DATA",
-              message: "Invalid actions data for physical robot execution",
-            });
-          }
-        }
-        break;
-
-      case "GET_PHYSICAL_ROBOT_STATUS":
-        // Lấy trạng thái ActionExecutor
-        {
-          const scene = game.scene.getScene("Scene");
-          if (scene) {
-            const status = {
-              isPhysicalRobotMode: scene.isPhysicalRobotMode(),
-              actionExecutorStatus: scene.getActionExecutorStatus(),
-              gameState: scene.gameState,
-            };
-            sendMessageToParent("PHYSICAL_ROBOT_STATUS", status);
-          }
-        }
-        break;
     }
   });
 
@@ -632,46 +585,6 @@ export function initWebViewCommunication(game) {
       }
       game.scene.start("Scene", {});
       return true;
-    },
-
-    // Physical Robot API
-    executePhysicalRobotActions: async (actions) => {
-      const scene = game.scene.getScene("Scene");
-      if (scene) {
-        try {
-          const result = await scene.executePhysicalRobotActions(actions);
-          return result;
-        } catch (error) {
-          console.error("❌ Physical robot execution failed:", error);
-          return {
-            isVictory: false,
-            message: `Execution failed: ${error.message}`,
-            error: error,
-          };
-        }
-      }
-      return {
-        isVictory: false,
-        message: "Scene not available",
-        error: "Scene not initialized",
-      };
-    },
-
-    getPhysicalRobotStatus: () => {
-      const scene = game.scene.getScene("Scene");
-      if (scene) {
-        return {
-          isPhysicalRobotMode: scene.isPhysicalRobotMode(),
-          actionExecutorStatus: scene.getActionExecutorStatus(),
-          gameState: scene.gameState,
-        };
-      }
-      return null;
-    },
-
-    isPhysicalRobotMode: () => {
-      const scene = game.scene.getScene("Scene");
-      return scene ? scene.isPhysicalRobotMode() : false;
     },
   };
 }
