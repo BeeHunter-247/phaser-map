@@ -466,6 +466,21 @@ export function initWebViewCommunication(game) {
               console.log("✅ Actions detail (full):", result?.actions || []);
             } catch (_) {}
 
+            // Cập nhật gameState dựa trên kết quả headless để chặn các lần chạy tiếp theo
+            if (result?.result) {
+              if (result.result.isVictory === false) {
+                scene.gameState = "lost";
+                console.log(
+                  "🔄 Game state updated to 'lost' after headless execution"
+                );
+              } else if (result.result.isVictory === true) {
+                scene.gameState = "won";
+                console.log(
+                  "🔄 Game state updated to 'won' after headless execution"
+                );
+              }
+            }
+
             if (result && Array.isArray(result.actions)) {
               sendCompiledActions(result);
             } else {
