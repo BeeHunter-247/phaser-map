@@ -1,8 +1,4 @@
-import {
-  createBatteryStatusText,
-  updateBatteryStatusText,
-  VictoryConditions,
-} from "../utils/VictoryConditions.js";
+import { VictoryConditions } from "../utils/VictoryConditions.js";
 
 /**
  * GameUIManager - Quản lý UI elements và notifications
@@ -13,34 +9,12 @@ import {
 export class GameUIManager {
   constructor(scene) {
     this.scene = scene;
-    this.statusText = null;
     this.victoryReqContainer = null;
     this.infoButton = null;
   }
 
-  /**
-   * Khởi tạo UI Manager
-   */
   initialize() {
-    // Tạo status UI
-    this.createStatusUI();
     this.createInfoButton();
-  }
-
-  /**
-   * Tạo status UI cho progress/victory
-   */
-  createStatusUI() {
-    this.statusText = createBatteryStatusText(this.scene);
-  }
-
-  /**
-   * Cập nhật status UI
-   */
-  updateStatusUI() {
-    if (this.statusText) {
-      updateBatteryStatusText(this.scene, this.statusText);
-    }
   }
 
   /**
@@ -408,19 +382,7 @@ export class GameUIManager {
    * Xóa tất cả UI elements
    */
   clearAllUI() {
-    if (this.statusText) {
-      this.statusText.destroy();
-      this.statusText = null;
-    }
     this.hidePersistentBanner();
-  }
-
-  /**
-   * Lấy status text reference
-   * @returns {Phaser.GameObjects.Text|null} Status text object
-   */
-  getStatusText() {
-    return this.statusText;
   }
 
   /**

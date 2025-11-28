@@ -6,11 +6,7 @@ import { BatteryManager } from "../managers/BatteryManager.js";
 import { BoxManager } from "../managers/BoxManager.js";
 import { GameInputHandler } from "../managers/GameInputHandler.js";
 import { GameUIManager } from "../managers/GameUIManager.js";
-import {
-  createBatteryStatusText,
-  updateBatteryStatusText,
-  checkAndDisplayVictory,
-} from "../utils/VictoryConditions.js";
+import { checkAndDisplayVictory } from "../utils/VictoryConditions.js";
 import { ConfigLoader } from "../utils/ConfigLoader.js";
 
 export default class Scene extends Phaser.Scene {
@@ -645,11 +641,6 @@ export default class Scene extends Phaser.Scene {
           this.batteryManager.hideBatterySprite(targetBattery);
         }
 
-        // Cập nhật UI
-        if (this.uiManager) {
-          this.uiManager.updateStatusUI();
-        }
-
         console.log(
           `🔋 Collected ${targetBattery.color} battery at (${robotPos.x}, ${robotPos.y})`
         );
@@ -669,9 +660,6 @@ export default class Scene extends Phaser.Scene {
     const result = this.batteryManager
       ? this.batteryManager.collectBattery(preferredColor)
       : 0;
-    if (result > 0 && this.uiManager) {
-      this.uiManager.updateStatusUI();
-    }
     return result;
   }
 
@@ -684,8 +672,6 @@ export default class Scene extends Phaser.Scene {
     const result = this.boxManager.putBox(count);
 
     if (result) {
-      // Cập nhật UI trạng thái
-      this.uiManager.updateStatusUI();
       console.log(`📦 Put ${count} box(es) successfully`);
     }
 
@@ -701,8 +687,6 @@ export default class Scene extends Phaser.Scene {
     const result = this.boxManager.takeBox(count);
 
     if (result) {
-      // Cập nhật UI trạng thái
-      this.uiManager.updateStatusUI();
       console.log(`📦 Took ${count} box(es) successfully`);
     }
 
