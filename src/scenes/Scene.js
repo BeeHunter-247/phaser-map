@@ -317,6 +317,9 @@ export default class Scene extends Phaser.Scene {
 
     // Setup input
     this.inputHandler.setupInput();
+
+    // Xử lý sự kiện visibility của tab để reset trạng thái khi tab được phóng to lại
+    this.setupVisibilityHandlers();
   }
 
   /**
@@ -850,6 +853,59 @@ export default class Scene extends Phaser.Scene {
     }
 
     return success;
+  }
+
+  /**
+   * Setup handlers cho browser visibility changes
+   * Giúp reset trạng thái robot nếu bị kẹt do tab bị thu nhỏ/phóng to
+   */
+  setupVisibilityHandlers() {
+    // Xử lý khi tab trở nên visible (phóng to lại)
+    const handleVisibilityChange = () => {
+      if (
+        !document.hidden &&
+        this.robotManager &&
+        this.robotManager.robotModel
+      ) {
+        // Kiểm tra nếu robot đang bị kẹt ở trạng thái moving
+        if (this.robotManager.robotModel.isMoving) {
+          // Kiểm tra xem có tween đang chạy không
+          const activeTweens = this.tweens.getAllTweens();
+          const robotTweens = activeTweens.filter(
+            (tween) =>
+              tween.targets && tween.targets.includes(this.robotManager.robot)
+          );
+
+          // Nếu không có tween nào đang chạy nhưng isMoving vẫn là true, reset nó
+          if (robotTweens.length === 0) {
+            console.warn(
+              "⚠️ Tab visibility change: Resetting stuck robot movement state"
+            );
+            this.robotManager.robotModel.isMoving = false;
+          }
+        }
+      }
+    };
+
+    // Lắng nghe sự kiện visibility change
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // Lưu reference để có thể cleanup sau
+    this._visibilityHandler = handleVisibilityChange;
+  }
+
+  /**
+   * Cleanup khi scene bị destroy
+   */
+  destroy() {
+    // Remove visibility handler
+    if (this._visibilityHandler) {
+      document.removeEventListener("visibilitychange", this._visibilityHandler);
+      this._visibilityHandler = null;
+    }
+
+    // Gọi destroy của parent
+    super.destroy();
   }
 
   update() {
