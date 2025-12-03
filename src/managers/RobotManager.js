@@ -136,8 +136,20 @@ export class RobotManager {
       return false;
     }
 
+    // Kiểm tra robot có đang di chuyển không (tránh race condition khi tab bị thu nhỏ)
+    if (this.robotModel.isMoving) {
+      console.warn("⚠️ Robot is already moving! Resetting state...");
+      // Reset trạng thái nếu bị kẹt (có thể do tab bị thu nhỏ/phóng to)
+      this.robotModel.isMoving = false;
+    }
+
     // Use RobotModel to validate and get movement result
     const result = this.robotModel.moveForward();
+
+    if (!result.success) {
+      // Nếu moveForward thất bại, không bắt đầu animation
+      return false;
+    }
 
     console.log(
       `Moving ${this.robotModel.getDirectionName()} to tile (${
@@ -152,8 +164,19 @@ export class RobotManager {
       result.newPosition.y
     );
 
+    // Lưu reference tween để có thể hủy nếu cần
+    let tweenRef = null;
+    
+    // Safety timeout: nếu callback bị trễ (do tab thu nhỏ), tự động reset sau 1 giây
+    const safetyTimeout = setTimeout(() => {
+      if (this.robotModel.isMoving) {
+        console.warn("⚠️ Movement safety timeout: Resetting isMoving state");
+        this.robotModel.isMoving = false;
+      }
+    }, 1000); // 1 giây (dài hơn animation 300ms)
+
     // Tween di chuyển (cộng thêm 30 vào Y để phù hợp với MapLoader)
-    this.scene.tweens.add({
+    tweenRef = this.scene.tweens.add({
       targets: this.robot,
       x: targetPos.x,
       y: targetPos.y + 30,
@@ -163,6 +186,9 @@ export class RobotManager {
         this.updateRobotDepth();
       },
       onComplete: () => {
+        // Clear safety timeout vì animation đã hoàn thành
+        clearTimeout(safetyTimeout);
+        
         this.robotModel.isMoving = false;
         console.log(
           `Arrived at tile (${this.robotModel.position.x}, ${this.robotModel.position.y})`
