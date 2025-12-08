@@ -448,8 +448,8 @@ export default class Scene extends Phaser.Scene {
    * Di chuyển thẳng theo hướng hiện tại của robot
    * @returns {boolean} Success/failure
    */
-  moveForward() {
-    return this.robotManager.moveForward();
+  moveForward(onComplete) {
+    return this.robotManager.moveForward(onComplete);
   }
 
   /**
@@ -824,8 +824,11 @@ export default class Scene extends Phaser.Scene {
       version: "1.0.0",
       programName: "user_program",
       actions: [
-        { type: "forward", count: 8 },
+        { type: "forward", count: 2 },
+        { type: "turnRight", count: 1 },
+        { type: "forward", count: 2 },
         { type: "collect", color: "yellow", count: 2 },
+        { type: "turnRight", count: 1 },
         { type: "forward", count: 2 },
         { type: "collect", color: "yellow", count: 2 },
       ],
