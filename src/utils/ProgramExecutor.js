@@ -1597,38 +1597,12 @@ export class ProgramExecutor {
    * Thực thi một bước forward
    * @param {number} totalCount - Tổng số bước
    * @param {number} currentStep - Bước hiện tại
-   * @param {number} retryCount - Số lần retry (để xử lý race condition)
    */
-  executeForwardStep(totalCount, currentStep, retryCount = 0) {
+  executeForwardStep(totalCount, currentStep) {
     if (currentStep >= totalCount) {
       // Hoàn thành tất cả bước, tăng step và tiếp tục với lệnh tiếp theo
       this.currentStep++;
       this.executeNextCommand();
-      return;
-    }
-
-    // Kiểm tra nếu robot đang di chuyển (có thể do tab bị thu nhỏ/phóng to)
-    if (this.scene.robotManager && this.scene.robotManager.isRobotMoving()) {
-      // Nếu đã retry quá nhiều lần, dừng chương trình
-      if (retryCount >= 5) {
-        console.error(
-          `❌ Robot stuck in moving state after ${retryCount} retries. Stopping program.`
-        );
-        // Force reset trạng thái
-        if (this.scene.robotManager.robotModel) {
-          this.scene.robotManager.robotModel.isMoving = false;
-        }
-        this.stopProgram();
-        return;
-      }
-
-      // Retry sau một khoảng thời gian ngắn
-      console.warn(
-        `⚠️ Robot is moving, waiting... (retry ${retryCount + 1}/5)`
-      );
-      setTimeout(() => {
-        this.executeForwardStep(totalCount, currentStep, retryCount + 1);
-      }, 200);
       return;
     }
 
@@ -1643,7 +1617,7 @@ export class ProgramExecutor {
 
     // Chờ animation hoàn thành rồi thực hiện bước tiếp theo
     setTimeout(() => {
-      this.executeForwardStep(totalCount, currentStep + 1, 0);
+      this.executeForwardStep(totalCount, currentStep + 1);
     }, 400); // Chờ animation hoàn thành
   }
 
