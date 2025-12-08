@@ -147,7 +147,11 @@ export class RobotManager {
     const result = this.robotModel.moveForward();
 
     if (!result.success) {
-      // Nếu moveForward thất bại, không bắt đầu animation
+      // Nếu moveForward thất bại, gọi scene.lose() để gửi thông báo thua
+      const errorMessage = result.error || "Cannot move forward";
+      if (this.scene && typeof this.scene.lose === "function") {
+        this.scene.lose(errorMessage);
+      }
       return false;
     }
 
