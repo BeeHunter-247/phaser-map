@@ -1637,11 +1637,6 @@ export class ProgramExecutor {
       console.error(
         `❌ Failed to move forward at step ${currentStep + 1}/${totalCount}`
       );
-      // Gọi scene.lose() để gửi thông báo thua ra FE/MB
-      // RobotManager đã gọi lose() rồi, nhưng để đảm bảo thì kiểm tra lại
-      if (this.scene && typeof this.scene.lose === "function" && this.scene.gameState !== "lost") {
-        this.scene.lose("Failed to move forward - invalid tile or out of bounds");
-      }
       this.stopProgram();
       return;
     }
