@@ -147,11 +147,6 @@ export class RobotManager {
     const result = this.robotModel.moveForward();
 
     if (!result.success) {
-      // Nếu moveForward thất bại, gọi scene.lose() để gửi thông báo thua
-      const errorMessage = result.error || "Cannot move forward";
-      if (this.scene && typeof this.scene.lose === "function") {
-        this.scene.lose(errorMessage);
-      }
       return false;
     }
 
@@ -170,7 +165,7 @@ export class RobotManager {
 
     // Lưu reference tween để có thể hủy nếu cần
     let tweenRef = null;
-    
+
     // Safety timeout: nếu callback bị trễ (do tab thu nhỏ), tự động reset sau 1 giây
     const safetyTimeout = setTimeout(() => {
       if (this.robotModel.isMoving) {
@@ -192,7 +187,7 @@ export class RobotManager {
       onComplete: () => {
         // Clear safety timeout vì animation đã hoàn thành
         clearTimeout(safetyTimeout);
-        
+
         this.robotModel.isMoving = false;
         console.log(
           `Arrived at tile (${this.robotModel.position.x}, ${this.robotModel.position.y})`
