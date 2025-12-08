@@ -130,7 +130,7 @@ export class RobotManager {
    * Di chuyển thẳng theo hướng hiện tại của robot
    * @returns {boolean} Success/failure
    */
-  moveForward() {
+  moveForward(onComplete) {
     if (!this.robotModel) {
       console.error("Robot model not initialized!");
       return false;
@@ -172,6 +172,12 @@ export class RobotManager {
         // Kiểm tra thua sau khi di chuyển xong
         if (!result.success) {
           this.scene.lose(result.error);
+          return;
+        }
+
+        // Thông báo hoàn thành bước di chuyển cho caller (vd: ProgramExecutor)
+        if (typeof onComplete === "function") {
+          onComplete();
         }
       },
     });

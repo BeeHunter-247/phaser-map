@@ -1606,7 +1606,10 @@ export class ProgramExecutor {
       return;
     }
 
-    const success = this.scene.moveForward();
+    const success = this.scene.moveForward(() => {
+      // Chờ animation hoàn thành rồi thực hiện bước tiếp theo
+      this.executeForwardStep(totalCount, currentStep + 1);
+    });
     if (!success) {
       console.error(
         `❌ Failed to move forward at step ${currentStep + 1}/${totalCount}`
@@ -1614,11 +1617,6 @@ export class ProgramExecutor {
       this.stopProgram();
       return;
     }
-
-    // Chờ animation hoàn thành rồi thực hiện bước tiếp theo
-    setTimeout(() => {
-      this.executeForwardStep(totalCount, currentStep + 1);
-    }, 400); // Chờ animation hoàn thành
   }
 
   /**
