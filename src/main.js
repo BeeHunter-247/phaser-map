@@ -11,8 +11,6 @@ class PhaserChannelEmitter {
 
   // Method để Flutter gọi: window.PhaserChannel.sendEvent('load_map', { mapKey: 'map1' })
   sendEvent(eventType, data) {
-    console.log(`📨 PhaserChannel received event: ${eventType}`, data);
-
     // Emit event để WebViewMessenger có thể lắng nghe
     this.emit(eventType, {
       source: "flutter",
@@ -24,7 +22,6 @@ class PhaserChannelEmitter {
 
   // Method để gửi message (tương thích với code hiện tại)
   postMessage(message) {
-    console.log(`📨 PhaserChannel received message:`, message);
     try {
       const parsed = JSON.parse(message);
       this.emit("message", parsed);
@@ -81,7 +78,6 @@ class PhaserChannelEmitter {
 
 // Tạo PhaserChannel ngay khi script load
 window.PhaserChannel = new PhaserChannelEmitter();
-console.log("✅ PhaserChannel created and available globally");
 
 const sizes = {
   width: 1400,
@@ -121,6 +117,5 @@ window.addEventListener("load", () => {
   // Đợi game khởi tạo xong
   setTimeout(() => {
     initWebViewCommunication(game);
-    console.log("🔄 WebView communication initialized");
   }, 1000);
 });
