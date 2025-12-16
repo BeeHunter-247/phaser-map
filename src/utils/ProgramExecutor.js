@@ -362,7 +362,9 @@ export class ProgramExecutor {
 
       case "while": {
         // Giữ nguyên cấu trúc while để đánh giá ở runtime
-        const bodyActions = Array.isArray(action.body) ? action.body : [];
+        const bodyActions = Array.isArray(action.body)
+          ? this.parseActions(action.body)
+          : [];
         const condition = this.parseCondition(action.cond);
         return {
           type: "while",
