@@ -1116,15 +1116,20 @@ export class ProgramExecutor {
   executeWhile(action) {
     try {
       const result = this.evaluateCondition(action.condition);
-      console.log(
-        `🔄 WHILE condition (${action.condition?.functionName}) => ${result}`
-      );
 
-      if (
-        result &&
-        Array.isArray(action.bodyActions) &&
-        action.bodyActions.length > 0
-      ) {
+      if (result) {
+        // Nếu body rỗng, coi như chương trình lỗi và kết thúc
+        if (
+          !Array.isArray(action.bodyActions) ||
+          action.bodyActions.length === 0
+        ) {
+          if (this.scene && typeof this.scene.lose === "function") {
+            this.scene.lose("While loop has no actions to execute.");
+          }
+          this.stopProgram();
+          return false;
+        }
+
         // Chèn bodyActions và tái chèn while để lặp lại
         const insertIndex = this.currentStep + 1;
         const whileAction = { ...action }; // Tạo bản sao của while action
