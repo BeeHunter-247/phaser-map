@@ -21,8 +21,6 @@ export class ConfigLoader {
         throw new Error("MapData and challengeData are required from webview");
       }
 
-      console.log(`🗺️ Loading map config from webview data`);
-
       // Transform challenge config để phù hợp với MapModel
       const transformedConfig = this.transformChallengeConfig(challengeData);
 
@@ -36,17 +34,8 @@ export class ConfigLoader {
         mapData: mapData, // Lưu map data để sử dụng sau
       };
 
-      console.log("✅ Loaded config from webview:", {
-        width: fullConfig.width,
-        height: fullConfig.height,
-        robot: !!fullConfig.robot,
-        batteries: fullConfig.batteries?.length || 0,
-        boxes: fullConfig.boxes?.length || 0,
-      });
-
       return MapModel.fromConfig("webview", fullConfig);
     } catch (error) {
-      console.error(`❌ Failed to load map config from webview:`, error);
       throw error;
     }
   }
@@ -70,10 +59,8 @@ export class ConfigLoader {
       // Transform config để phù hợp với MapModel
       const transformedConfig = this.transformChallengeConfig(challengeData);
 
-      console.log("✅ Processed webview challenge config:", transformedConfig);
       return transformedConfig;
     } catch (error) {
-      console.error("❌ Failed to process webview challenge config:", error);
       throw new Error(`Failed to process challenge data: ${error.message}`);
     }
   }
@@ -94,16 +81,8 @@ export class ConfigLoader {
         throw new Error("Invalid map data: missing layers");
       }
 
-      console.log("✅ Processed webview map data:", {
-        width: mapData.width,
-        height: mapData.height,
-        layers: mapData.layers.length,
-        tilesets: mapData.tilesets?.length || 0,
-      });
-
       return mapData;
     } catch (error) {
-      console.error("❌ Failed to process webview map data:", error);
       throw new Error(`Failed to process map data: ${error.message}`);
     }
   }
