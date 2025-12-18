@@ -85,7 +85,7 @@ export class GameUIManager {
         messageBody =
           parts.length > 0
             ? parts.join(" • ")
-            : "Thu thập đúng số lượng pin yêu cầu";
+            : "Collect the required number of pins";
       }
 
       const message = ` ${messageBody}`;

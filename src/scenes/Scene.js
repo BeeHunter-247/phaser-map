@@ -81,8 +81,6 @@ export default class Scene extends Phaser.Scene {
       this.mapModel = await this.loadMapModelFromWebview();
       this.challengeConfig = this.challengeJson;
 
-      console.log(`🗺️ Loaded map model`, this.mapModel.getStatistics());
-
       // Load map visual từ Tiled
       const mapData = MapLoader.loadMap(
         this,
@@ -107,8 +105,6 @@ export default class Scene extends Phaser.Scene {
       // Start game
       this.mapModel.startGame();
       this.gameState = "ready"; // Reset game state when creating new scene
-
-      console.log("✅ Scene created successfully with webview data");
     } catch (error) {
       console.error("❌ Failed to create scene:", error);
       this.showLoadingScreen("Loading data");
@@ -163,12 +159,6 @@ export default class Scene extends Phaser.Scene {
         sprite.model = boxModel; // Link sprite với model
         loadedObjects.boxes.push(sprite);
       }
-    });
-
-    console.log(`🎮 Loaded objects from models:`, {
-      robot: loadedObjects.robot ? 1 : 0,
-      batteries: loadedObjects.batteries.length,
-      boxes: loadedObjects.boxes.length,
     });
 
     return loadedObjects;
@@ -324,8 +314,6 @@ export default class Scene extends Phaser.Scene {
    * @param {string} message - Loading message
    */
   showLoadingScreen(message = "Loading data") {
-    console.log("🔄 Showing loading screen:", message);
-
     // Set background màu trắng
     this.cameras.main.setBackgroundColor("#F3F5F2");
 
@@ -623,7 +611,7 @@ export default class Scene extends Phaser.Scene {
 
       if (!targetBattery) {
         this.lose(
-          `Không có pin ${preferredColor || "phù hợp"} tại ô (${robotPos.x}, ${
+          `No ${preferredColor || "matching"} pin at cell (${robotPos.x}, ${
             robotPos.y
           })`
         );
@@ -641,9 +629,6 @@ export default class Scene extends Phaser.Scene {
           this.batteryManager.hideBatterySprite(targetBattery);
         }
 
-        console.log(
-          `🔋 Collected ${targetBattery.color} battery at (${robotPos.x}, ${robotPos.y})`
-        );
         return 1;
       } else if (result.gameOver) {
         // Nếu thu thập battery không được phép, game over
@@ -670,11 +655,6 @@ export default class Scene extends Phaser.Scene {
    */
   putBox(count = 1) {
     const result = this.boxManager.putBox(count);
-
-    if (result) {
-      console.log(`📦 Put ${count} box(es) successfully`);
-    }
-
     return result;
   }
 
@@ -685,11 +665,6 @@ export default class Scene extends Phaser.Scene {
    */
   takeBox(count = 1) {
     const result = this.boxManager.takeBox(count);
-
-    if (result) {
-      console.log(`📦 Took ${count} box(es) successfully`);
-    }
-
     return result;
   }
 
@@ -727,10 +702,8 @@ export default class Scene extends Phaser.Scene {
     const success = this.programExecutor.loadProgram(programData);
     if (success) {
       this.programMode = true;
-      console.log("📋 Program loaded successfully");
 
       if (autoStart) {
-        console.log("🚀 Auto-starting program execution...");
         setTimeout(() => {
           this.startProgram();
         }, 500);
@@ -766,7 +739,6 @@ export default class Scene extends Phaser.Scene {
     if (success) {
       this.programMode = true;
       this.gameState = "playing";
-      console.log("🚀 Program execution started");
     }
     return success;
   }
@@ -778,7 +750,6 @@ export default class Scene extends Phaser.Scene {
     if (this.programExecutor) {
       this.programExecutor.stopProgram();
       this.programMode = false;
-      console.log("⏹️ Program execution stopped");
     }
   }
 
@@ -834,18 +805,9 @@ export default class Scene extends Phaser.Scene {
       ],
     };
 
-    console.log("📋 Loading program...");
     const success = this.loadProgram(exampleProgram);
 
     if (success) {
-      console.log("✅ Program loaded! Starting execution automatically...");
-      if (!programData) {
-        console.log("🎯 Demo program will:");
-        console.log("   1. Turn right");
-        console.log("   2. Move forward 2 steps");
-        console.log("   3. Collect 1 green battery");
-      }
-
       // Tự động bắt đầu thực thi chương trình
       setTimeout(() => {
         this.startProgram();

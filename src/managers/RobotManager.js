@@ -34,17 +34,6 @@ export class RobotManager {
 
     this.updateRobotRotation();
     this.updateRobotDepth();
-
-    // Log initial robot state
-    console.log(
-      `🤖 Robot initialized at tile (${this.robotModel.position.x}, ${this.robotModel.position.y})`
-    );
-    console.log(
-      `   Facing: ${this.robotModel.getDirectionName()} (from config: "${
-        robotConfig.direction
-      }")`
-    );
-    console.log(`   Robot sprite: ${this.robotModel.getSpriteKey()}`);
   }
 
   /**
@@ -66,17 +55,6 @@ export class RobotManager {
 
     this.updateRobotRotation();
     this.updateRobotDepth();
-
-    // Log initial robot state
-    console.log(
-      `🤖 Robot initialized with model at tile (${this.robotModel.position.x}, ${this.robotModel.position.y})`
-    );
-    console.log(
-      `   Facing: ${this.robotModel.getDirectionName()} (direction index: ${
-        this.robotModel.direction
-      })`
-    );
-    console.log(`   Robot sprite: ${robotModel.getSpriteKey()}`);
   }
 
   /**
@@ -139,12 +117,6 @@ export class RobotManager {
     // Use RobotModel to validate and get movement result
     const result = this.robotModel.moveForward();
 
-    console.log(
-      `Moving ${this.robotModel.getDirectionName()} to tile (${
-        result.newPosition.x
-      }, ${result.newPosition.y})`
-    );
-
     // Set moving state
     this.robotModel.isMoving = true;
     const targetPos = this.robotModel.getTileWorldCenter(
@@ -164,9 +136,6 @@ export class RobotManager {
       },
       onComplete: () => {
         this.robotModel.isMoving = false;
-        console.log(
-          `Arrived at tile (${this.robotModel.position.x}, ${this.robotModel.position.y})`
-        );
         this.updateRobotDepth();
 
         // Kiểm tra thua sau khi di chuyển xong
@@ -196,7 +165,6 @@ export class RobotManager {
     }
 
     if (this.robotModel.isMoving) {
-      console.log("Cannot turn while moving!");
       return false;
     }
 
@@ -204,13 +172,6 @@ export class RobotManager {
     this.robotModel.turnLeft();
     this.updateRobotRotation();
     this.updateRobotDepth();
-
-    console.log(
-      `Turned left: ${oldDirection} → ${this.robotModel.getDirectionName()}`
-    );
-    console.log(
-      `   Robot sprite changed to: robot_${this.robotModel.getDirectionName()}`
-    );
     return true;
   }
 
@@ -225,7 +186,6 @@ export class RobotManager {
     }
 
     if (this.robotModel.isMoving) {
-      console.log("Cannot turn while moving!");
       return false;
     }
 
@@ -233,13 +193,6 @@ export class RobotManager {
     this.robotModel.turnRight();
     this.updateRobotRotation();
     this.updateRobotDepth();
-
-    console.log(
-      `Turned right: ${oldDirection} → ${this.robotModel.getDirectionName()}`
-    );
-    console.log(
-      `   Robot sprite changed to: robot_${this.robotModel.getDirectionName()}`
-    );
     return true;
   }
 
@@ -254,7 +207,6 @@ export class RobotManager {
     }
 
     if (this.robotModel.isMoving) {
-      console.log("Cannot turn while moving!");
       return false;
     }
 
@@ -262,13 +214,6 @@ export class RobotManager {
     this.robotModel.turnBack();
     this.updateRobotRotation();
     this.updateRobotDepth();
-
-    console.log(
-      `Turned around: ${oldDirection} → ${this.robotModel.getDirectionName()}`
-    );
-    console.log(
-      `   Robot sprite changed to: robot_${this.robotModel.getDirectionName()}`
-    );
     return true;
   }
 

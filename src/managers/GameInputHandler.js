@@ -53,19 +53,6 @@ export class GameInputHandler {
           break;
       }
     });
-
-    // Log controls khi khởi tạo
-    console.log("🎮 Robot Program Controls:");
-    console.log("  L   : Load & Auto-Start Example Program");
-    console.log("  P   : Pause/Resume Program");
-    console.log("  R   : Restart (reload current map)");
-    console.log("");
-    console.log("📋 To load custom program, use:");
-    console.log("  scene.loadProgram(yourProgramData, true)  // Auto-start");
-    console.log("  scene.loadProgram(yourProgramData)        // Manual start");
-    console.log(
-      "  scene.startProgram()                      // Start manually"
-    );
   }
 
   /**
@@ -140,7 +127,6 @@ export class GameInputHandler {
    * Hiển thị controls help
    */
   showControlsHelp() {
-    console.log("�� Available Controls:");
     this.getControlsList().forEach((control) => {
       console.log(`  ${control}`);
     });

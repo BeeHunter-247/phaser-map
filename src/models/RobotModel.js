@@ -270,14 +270,14 @@ export class RobotModel extends BaseModel {
     if (!this.isWithinBounds(this.position.x, this.position.y)) {
       return {
         isValid: false,
-        error: `Đi ra ngoài bản đồ tại (${this.position.x}, ${this.position.y})`,
+        error: `Moved outside the map at (${this.position.x}, ${this.position.y})`,
       };
     }
 
     if (!this.layer) {
       return {
         isValid: false,
-        error: `Layer không tồn tại`,
+        error: `Layer does not exist`,
       };
     }
 

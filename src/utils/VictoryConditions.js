@@ -182,11 +182,11 @@ export class VictoryConditions {
 
     // Thông tin chi tiết theo màu
     const details = {
-      red: `Đỏ: ${collected.byType.red || 0}/${required.byType.red || 0}`,
-      yellow: `Vàng: ${collected.byType.yellow || 0}/${
+      red: `Red: ${collected.byType.red || 0}/${required.byType.red || 0}`,
+      yellow: `Yellow: ${collected.byType.yellow || 0}/${
         required.byType.yellow || 0
       }`,
-      green: `Xanh lá: ${collected.byType.green || 0}/${
+      green: `Green: ${collected.byType.green || 0}/${
         required.byType.green || 0
       }`,
     };
@@ -413,11 +413,6 @@ export function checkAndDisplayVictory(scene) {
     finalResult.stars = starsInfo.stars;
     finalResult.starScore = starsInfo.score;
     finalResult.starDetail = starsInfo.detail;
-    console.log(
-      `⭐ Stars: ${finalResult.stars} | score=${finalResult.starScore.toFixed(
-        2
-      )} | ${finalResult.starDetail}`
-    );
   }
 
   // Hiển thị thông tin trong console
@@ -540,12 +535,6 @@ function computeStars(scene) {
     if (score > 0 && score < 2 / 3) stars = 1;
     else if (score >= 2 / 3 && score < 1) stars = 2;
     else if (score >= 1) stars = 3;
-
-    console.log(
-      `🧮 computeStars:new: usedCards=${usedCards}, minCards=${minCards}, maxCards=${maxCards}, score=${score.toFixed(
-        2
-      )} => stars=${stars}`
-    );
 
     return {
       stars,
