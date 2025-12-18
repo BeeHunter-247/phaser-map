@@ -31,8 +31,6 @@ export class BatteryManager {
 
     // Setup battery tracking
     this.setupBatteryTracking(loadedBatteries);
-
-    console.log("🔋 BatteryManager initialized");
   }
 
   /**
@@ -63,13 +61,6 @@ export class BatteryManager {
 
     // Link sprites với models
     this.linkSpritesToModels(loadedBatteries);
-
-    console.log("🔋 BatteryManager initialized with models");
-    console.log(`   Linked ${loadedBatteries.length} sprites to models`);
-    console.log(
-      `   Setup tracking for ${this.batteryModels.size} tile positions`
-    );
-    console.log(`   Total battery models: ${this.allBatteryModels.length}`);
   }
 
   /**
@@ -90,10 +81,6 @@ export class BatteryManager {
    * @param {Array} batterySprites - Array of battery sprites from MapLoader
    */
   setupBatteryTracking(batterySprites) {
-    console.log("🔋 DEBUG: Setting up battery tracking...");
-    console.log(`   Loaded sprites: ${batterySprites.length}`);
-    console.log(`   Object config:`, this.objectConfig);
-
     // Vì chỉ sử dụng custom config (không có object layer),
     // ta chỉ cần tạo tracking system từ config và map sprites với config
     if (this.objectConfig && this.objectConfig.batteries) {
@@ -103,10 +90,6 @@ export class BatteryManager {
             const tileKey = `${tilePos.x},${tilePos.y}`;
             const count = tilePos.count || 1;
             const batteryType = tilePos.type || batteryConfig.type || "green";
-
-            console.log(
-              `🔋 DEBUG: Registering ${count} ${batteryType} batteries at tile ${tileKey}`
-            );
 
             // Tạo tracking data từ config
             this.batteries.set(tileKey, count);
@@ -124,18 +107,11 @@ export class BatteryManager {
 
             // Lưu sprite references
             this.batterySprites.set(tileKey, [...matchingSprites]);
-
-            console.log(
-              `   Mapped ${matchingSprites.length} sprites to ${count} config batteries`
-            );
           });
         }
       });
     } else {
       // Fallback: Nếu không có config, tạo tracking từ sprites
-      console.log(
-        "🔋 DEBUG: No config found, creating tracking from sprites only"
-      );
       batterySprites.forEach((batterySprite, index) => {
         const batteryTile = this.findTileForSprite(batterySprite);
         if (batteryTile) {
@@ -180,10 +156,6 @@ export class BatteryManager {
     const worldX = sprite?.x ?? 0;
     const tilePoint = this.scene.layer.worldToTileXY(worldX, adjustY);
 
-    console.log(
-      `🔍 findTileForSprite: sprite(${sprite?.x}, ${sprite?.y}) -> adjusted(${worldX}, ${adjustY}) -> tile(${tilePoint?.x}, ${tilePoint?.y})`
-    );
-
     if (!tilePoint) return null;
 
     const tileX = Math.max(0, Math.min(this.scene.map.width - 1, tilePoint.x));
@@ -211,11 +183,6 @@ export class BatteryManager {
     const types = availableBatteries.map((battery) => battery.color);
     const count = availableBatteries.length;
 
-    console.log(`🔍 getBatteriesAtCurrentTile() at ${key}:`);
-    console.log(`   sprites.length: ${sprites.length}`);
-    console.log(`   available count: ${count}`);
-    console.log(`   types:`, types);
-
     return { key, sprites, types, count };
   }
 
@@ -229,17 +196,15 @@ export class BatteryManager {
     const tileKey = `${robotPos.x},${robotPos.y}`;
     const batteryModels = this.batteryModels.get(tileKey) || [];
 
-    console.log(`🔋 DEBUG: Collecting at tile (${robotPos.x},${robotPos.y})`);
-    console.log(`   Available battery models: ${batteryModels.length}`);
-
     // Filter available batteries
     const availableBatteries = batteryModels.filter((battery) =>
       battery.isAvailable()
     );
 
     if (availableBatteries.length === 0) {
-      console.log(`   ❌ No available batteries found at ${tileKey}`);
-      this.scene.lose(`Không có pin tại ô (${robotPos.x}, ${robotPos.y})`);
+      this.scene.lose(
+        `No available batteries found at (${robotPos.x}, ${robotPos.y})`
+      );
       return 0;
     }
 
@@ -251,7 +216,7 @@ export class BatteryManager {
       );
       if (!targetBattery) {
         this.scene.lose(
-          `Sai màu pin. Cần nhặt màu ${preferredColor} tại ô (${robotPos.x}, ${robotPos.y})`
+          `Wrong pin color. Please pick up the ${preferredColor} color at cell (${robotPos.x}, ${robotPos.y}).`
         );
         return 0;
       }
@@ -264,17 +229,12 @@ export class BatteryManager {
     const result = targetBattery.collect(robotModel.id);
 
     if (result.success) {
-      console.log(
-        `🔋 Collected ${targetBattery.color} battery at (${robotPos.x}, ${robotPos.y})`
-      );
       return 1;
     } else if (result.gameOver) {
       // Nếu thu thập battery không được phép, game over
-      console.log(`❌ Game Over: ${result.message}`);
       this.scene.lose(result.message);
       return 0;
     } else {
-      console.log(`❌ Failed to collect battery: ${result.message}`);
       return 0;
     }
   }
@@ -293,10 +253,6 @@ export class BatteryManager {
       collectedBatteryTypes[battery.color] =
         (collectedBatteryTypes[battery.color] || 0) + 1;
     });
-
-    console.log("🔋 getCollectedBatteries() called:");
-    console.log(`   collectedBatteries: ${collectedBatteries.length}`);
-    console.log(`   collectedBatteryTypes:`, collectedBatteryTypes);
 
     return {
       total: collectedBatteries.length,
@@ -358,7 +314,6 @@ export class BatteryManager {
    */
   hideBatterySprite(batteryModel) {
     batteryModel.hideSprite();
-    console.log(`🔋 Hidden battery sprite for model ${batteryModel.id}`);
   }
 
   /**
@@ -374,15 +329,5 @@ export class BatteryManager {
       collectedBatteryTypes[battery.color] =
         (collectedBatteryTypes[battery.color] || 0) + 1;
     });
-
-    console.log("🔍 Battery Manager Debug Info:");
-    console.log(`   Total collected: ${collectedBatteries.length}`);
-    console.log(`   Collected by type:`, collectedBatteryTypes);
-    console.log(`   Total models: ${this.allBatteryModels.length}`);
-    console.log(
-      `   Available models: ${
-        this.allBatteryModels.filter((battery) => battery.isAvailable()).length
-      }`
-    );
   }
 }

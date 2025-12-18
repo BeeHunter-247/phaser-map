@@ -54,7 +54,6 @@ export class ProgramExecutor {
             actions: this.parseActions(func.body || []),
             original: func,
           });
-          console.log(`🔧 Defined function: ${func.name}`);
         }
       }
 
@@ -66,25 +65,6 @@ export class ProgramExecutor {
         programName: programData.programName || "unnamed",
         actions: parsedActions,
       };
-
-      console.log(`📋 Program loaded: ${this.program.programName}`);
-      console.log(`   Version: ${this.program.version}`);
-      console.log(`   Actions: ${this.program.actions.length}`);
-      console.log(`   Functions: ${this.functions.size}`);
-      console.log(`   Raw blocks (pre-parse): ${this.totalRawBlocks}`);
-      console.log(
-        `🧮 Star inputs preview -> minCards: ${
-          this.scene?.mapModel?.victoryConditions?.minCards ??
-          this.scene?.challengeConfig?.victory?.minCards ??
-          this.scene?.challengeJson?.minCards ??
-          "undefined"
-        }, maxCards: ${
-          this.scene?.mapModel?.victoryConditions?.maxCards ??
-          this.scene?.challengeConfig?.victory?.maxCards ??
-          this.scene?.challengeJson?.maxCards ??
-          "undefined"
-        }, totalRawBlocks: ${this.totalRawBlocks}`
-      );
 
       return true;
     } catch (error) {
@@ -229,10 +209,6 @@ export class ProgramExecutor {
 
         // Đệ quy parse phần thân để hỗ trợ repeat lồng nhau
         const parsedBody = this.parseActions(bodyRaw);
-
-        console.log(
-          `🔁 Expanding repeat x${repeatCount} with ${parsedBody.length} action(s) in body`
-        );
 
         for (let r = 0; r < repeatCount; r++) {
           for (let j = 0; j < parsedBody.length; j++) {
@@ -518,7 +494,6 @@ export class ProgramExecutor {
     this.isRunning = true;
     this.isPaused = false;
 
-    console.log(`🚀 Starting program: ${this.program.programName}`);
     this.executeNextCommand();
 
     return true;
@@ -536,8 +511,6 @@ export class ProgramExecutor {
       clearTimeout(this.timer);
       this.timer = null;
     }
-
-    console.log("⏹️ Program stopped");
   }
 
   /**
@@ -632,12 +605,14 @@ export class ProgramExecutor {
             if (!target) {
               // Nếu màu cụ thể không có, thử bất kỳ cái nào available nếu không yêu cầu rõ
               if (action.colors && action.colors.length > 0) {
-                throw new Error(`Không đủ pin màu ${c} để collect`);
+                throw new Error(`Not enough ${c} pins to collect`);
               }
               target = batteriesAtPos.find((b) => b.isAvailable());
             }
             if (!target)
-              throw new Error("Không có pin để collect tại vị trí hiện tại");
+              throw new Error(
+                "There are no pins to collect at the current position"
+              );
             const result =
               typeof target.collectSilently === "function"
                 ? target.collectSilently(robot.id)
@@ -791,9 +766,6 @@ export class ProgramExecutor {
       earlyFailure = outer?.message || String(outer);
     }
 
-    // Debug: Log used statements trong headless mode
-    console.log("🔍 Headless usedStatements:", Array.from(this.usedStatements));
-
     // Thực thi xong (hoặc dừng sớm), chấm điều kiện thắng/thua
     let isVictory = false;
     let message = "";
@@ -876,8 +848,6 @@ export class ProgramExecutor {
       clearTimeout(this.timer);
       this.timer = null;
     }
-
-    console.log("⏸️ Program paused");
   }
 
   /**
@@ -887,7 +857,6 @@ export class ProgramExecutor {
     if (!this.isRunning || !this.isPaused) return;
 
     this.isPaused = false;
-    console.log("▶️ Program resumed");
     this.executeNextCommand();
   }
 
@@ -896,9 +865,6 @@ export class ProgramExecutor {
    */
   executeNextCommand() {
     if (!this.isRunning || this.isPaused) {
-      console.log(
-        `⏸️ Program paused or stopped. Current step: ${this.currentStep}`
-      );
       return;
     }
 
@@ -910,8 +876,6 @@ export class ProgramExecutor {
     }
 
     if (this.currentStep >= this.program.actions.length) {
-      console.log("✅ Program completed!");
-
       // KIỂM TRA THUA KHI CHƯƠNG TRÌNH KẾT THÚC
       const victoryResult = checkAndDisplayVictory(this.scene);
       if (!victoryResult.isVictory) {
@@ -919,12 +883,7 @@ export class ProgramExecutor {
         const loseMessage = victoryResult.loseMessage || "Mission failed!";
         this.scene.lose(loseMessage);
       } else {
-        // Chương trình kết thúc và thắng = THẮNG
-        console.log(
-          "🏆 Program completed successfully! Setting game state to WON"
-        );
         this.scene.win("Program finished perfectly. Champion mode unlocked 🏅");
-        console.log("🏆 Game state after win:", this.scene.gameState);
 
         // Gửi thông báo chiến thắng ra webview (không blocking)
         import("./WebViewMessenger.js")
@@ -945,11 +904,6 @@ export class ProgramExecutor {
     }
 
     const action = this.program.actions[this.currentStep];
-    console.log(
-      `🎯 Executing step ${this.currentStep + 1}/${
-        this.program.actions.length
-      }: ${action.type}${action.count ? ` (count: ${action.count})` : ""}`
-    );
 
     // Kiểm tra 2 lệnh box liên tiếp trước khi thực thi
     if (this.checkConsecutiveBoxActions()) {
@@ -1070,11 +1024,6 @@ export class ProgramExecutor {
       let selectedActions = null;
       for (const br of branches) {
         const ok = this.evaluateCondition(br.condition, variableContext);
-        console.log(
-          `🤔 ${br.label} condition (${
-            br.condition?.functionName || br.condition?.type
-          }) => ${ok}`
-        );
         if (ok) {
           selectedActions = br.actions;
           break;
@@ -1085,9 +1034,6 @@ export class ProgramExecutor {
       if (!selectedActions || selectedActions.length === 0) {
         if (elseActions.length > 0) {
           selectedActions = elseActions;
-          console.log(
-            `🧩 Using ELSE branch with ${elseActions.length} action(s)`
-          );
         }
       }
 
@@ -1097,9 +1043,6 @@ export class ProgramExecutor {
           insertIndex,
           0,
           ...selectedActions.map((a) => ({ ...a }))
-        );
-        console.log(
-          `🧩 Inserted ${selectedActions.length} action(s) at ${insertIndex}`
         );
       }
       return true;
@@ -1139,9 +1082,6 @@ export class ProgramExecutor {
           ...action.bodyActions.map((a) => ({ ...a })),
           whileAction
         );
-        console.log(
-          `🔄 Inserted ${action.bodyActions.length} body action(s) + while loop at ${insertIndex}`
-        );
       }
       return true;
     } catch (e) {
@@ -1164,8 +1104,6 @@ export class ProgramExecutor {
         return false;
       }
 
-      console.log(`🔧 Calling function: ${functionName}`);
-
       if (Array.isArray(func.actions) && func.actions.length > 0) {
         // Chèn các action của hàm vào vị trí hiện tại
         const insertIndex = this.currentStep + 1;
@@ -1173,9 +1111,6 @@ export class ProgramExecutor {
           insertIndex,
           0,
           ...func.actions.map((a) => ({ ...a }))
-        );
-        console.log(
-          `🔧 Inserted ${func.actions.length} action(s) from function '${functionName}' at ${insertIndex}`
         );
       }
       return true;
@@ -1211,10 +1146,6 @@ export class ProgramExecutor {
       const fromValue = parseInt(actionCopy.from) || 1;
       const toValue = parseInt(actionCopy.to) || 5;
       const stepValue = parseInt(actionCopy.step) || 1;
-
-      console.log(
-        `🔄 Executing repeatRange ${variableName} from ${fromValue} to ${toValue} by ${stepValue} with ${bodyRaw.length} action(s) in body`
-      );
 
       // Tạo vòng lặp từ fromValue đến toValue với stepValue
       // Hỗ trợ cả step dương và âm
@@ -1268,9 +1199,6 @@ export class ProgramExecutor {
       if (actionsToInsert.length > 0) {
         const insertIndex = this.currentStep + 1;
         this.program.actions.splice(insertIndex, 0, ...actionsToInsert);
-        console.log(
-          `🔄 Inserted ${actionsToInsert.length} action(s) from repeatRange at ${insertIndex}`
-        );
       }
 
       return true;
@@ -1309,9 +1237,6 @@ export class ProgramExecutor {
         cond.operator,
         cond.value
       );
-      console.log(
-        `🔍 Variable comparison => ${result} | left=${variableValue} op=${cond.operator} right=${cond.value}`
-      );
       return result;
     }
 
@@ -1325,7 +1250,6 @@ export class ProgramExecutor {
         this.evaluateCondition(c, variableContext)
       );
       const result = results.every((r) => r === true);
-      console.log(`🔗 AND condition: [${results.join(", ")}] => ${result}`);
       return result;
     }
 
@@ -1339,7 +1263,6 @@ export class ProgramExecutor {
         this.evaluateCondition(c, variableContext)
       );
       const result = results.some((r) => r === true);
-      console.log(`🔗 OR condition: [${results.join(", ")}] => ${result}`);
       return result;
     }
 
@@ -1593,7 +1516,6 @@ export class ProgramExecutor {
         : typeof count === "string"
         ? parseInt(count) || 1
         : count || 1;
-    console.log(`🚶 Moving forward ${parsedCount} step(s)`);
 
     // Thực hiện từng bước một cách tuần tự
     this.executeForwardStep(parsedCount, 0);
@@ -1641,10 +1563,6 @@ export class ProgramExecutor {
         : typeof count === "string"
         ? parseInt(count) || 1
         : count || 1;
-    console.log(
-      `🔋 Collecting ${parsedCount} battery(ies) with colors:`,
-      colors
-    );
 
     // Pre-check: đủ số lượng theo màu yêu cầu?
     const {
@@ -1657,10 +1575,6 @@ export class ProgramExecutor {
       this.scene.lose("No batteries here... just dust 🪹");
       return false;
     }
-
-    console.log(
-      `🔍 Collect pre-check at tile ${key}: available=${perTileCount}, requested=${parsedCount}`
-    );
 
     // Quy tắc: số lượng yêu cầu không được vượt quá số pin có sẵn
     if (perTileCount < parsedCount) {
@@ -1706,7 +1620,6 @@ export class ProgramExecutor {
         normalizedColors[i] ||
         normalizedColors[normalizedColors.length - 1] ||
         "green";
-      console.log(`   Collecting ${color} battery (${i + 1}/${parsedCount})`);
       const ok = this.scene.collectBattery(color);
       if (!ok) return false;
     }
@@ -1731,8 +1644,6 @@ export class ProgramExecutor {
       return false;
     }
 
-    console.log(`📦 Putting 1 box`);
-
     try {
       const success = this.scene.putBox(1);
       if (!success) {
@@ -1743,7 +1654,6 @@ export class ProgramExecutor {
         return false;
       }
 
-      console.log(`✅ Successfully put 1 box`);
       return true;
     } catch (error) {
       console.error(`❌ Error putting boxes:`, error);
@@ -1768,8 +1678,6 @@ export class ProgramExecutor {
       return false;
     }
 
-    console.log(`📦 Taking 1 box`);
-
     try {
       const success = this.scene.takeBox(1);
       if (!success) {
@@ -1782,7 +1690,6 @@ export class ProgramExecutor {
         return false;
       }
 
-      console.log(`✅ Successfully took 1 box`);
       return true;
     } catch (error) {
       console.error(`❌ Error taking boxes:`, error);
@@ -1795,11 +1702,8 @@ export class ProgramExecutor {
    * @returns {number} Số lượng box còn lại tại warehouse
    */
   executeCheckWarehouse() {
-    console.log(`🏭 Checking warehouse...`);
-
     try {
       const remainingBoxes = this.scene.boxManager.checkWarehouse();
-      console.log(`🏭 Warehouse has ${remainingBoxes} boxes remaining`);
       return remainingBoxes;
     } catch (error) {
       console.error(`❌ Error checking warehouse:`, error);

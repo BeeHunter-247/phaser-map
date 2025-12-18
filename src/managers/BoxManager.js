@@ -25,10 +25,6 @@ export class BoxManager {
     this.collectedBoxes = 0;
     this.carriedBoxes = 0;
 
-    console.log(
-      `📦 BoxManager initializing with ${loadedBoxes.length} loaded boxes`
-    );
-
     // Nếu có config boxes và có sprites đã load, gán mỗi sprite vào tile gần nhất trong config
     if (
       challengeConfig &&
@@ -94,8 +90,6 @@ export class BoxManager {
         }
       });
     }
-
-    console.log(`📦 BoxManager initialized: ${this.totalBoxes} boxes total`);
   }
 
   /**
@@ -120,10 +114,6 @@ export class BoxManager {
         this.registerBoxAtTile(tileKey, sprite);
       }
     });
-
-    console.log("📦 BoxManager initialized with models");
-    console.log(`   Linked ${loadedBoxes.length} sprites to models`);
-    console.log(`   Total boxes: ${this.totalBoxes}`);
   }
 
   /**
@@ -171,7 +161,6 @@ export class BoxManager {
     tileData.types.push("box");
     this.totalBoxes++;
 
-    console.log(`📦 Registered box at ${tileKey}: count=${tileData.count}`);
     // Re-layout sprites to maintain visual grid
     this.layoutTileSpritesGrid(tileKey);
   }
@@ -191,13 +180,6 @@ export class BoxManager {
     const tileData = this.boxes.get(tileKey);
     tileData.count += count;
     this.totalBoxes += count;
-
-    // Không tạo sprites ở đây vì MapLoader đã tạo rồi
-    // Chỉ tăng count để theo dõi logic
-
-    console.log(
-      `📦 Registered ${count} boxes at ${tileKey}: total=${tileData.count}, sprites=${tileData.sprites.length}`
-    );
   }
 
   /**
@@ -302,11 +284,6 @@ export class BoxManager {
     const tileKey = `${frontTile.x},${frontTile.y}`;
     const tileData = this.boxes.get(tileKey);
 
-    console.log(`📦 frontTile: ${frontTile}`);
-    console.log(`📦 boxes: ${this.boxes}`);
-    console.log(`📦 tileKey: ${tileKey}`);
-    console.log(`📦 tileData: ${tileData}`);
-
     if (!tileData || tileData.count < 1) {
       console.error(
         `❌ No boxes available at front tile ${tileKey}. Available: ${
@@ -322,15 +299,8 @@ export class BoxManager {
     this.collectedBoxes += 1;
     this.carriedBoxes += 1;
 
-    // Xóa sprites nếu có
-    console.log(
-      `📦 tileData.sprites.length: ${tileData.sprites.length} at ${tileKey}`
-    );
     if (tileData.sprites.length > 0) {
       const spritesToRemove = tileData.sprites.splice(0, count);
-      console.log(
-        `📦 Removing ${spritesToRemove.length} sprites from ${tileKey}`
-      );
       spritesToRemove.forEach((sprite) => {
         if (sprite && sprite.destroy) {
           sprite.destroy();
@@ -339,13 +309,6 @@ export class BoxManager {
     } else {
       console.log(`📦 No sprites to remove at ${tileKey}`);
     }
-
-    console.log(
-      `📦 Took ${count} box(es) from front tile ${tileKey}. Remaining: ${tileData.count}`
-    );
-
-    // Kiểm tra thắng thua
-    this.checkVictoryConditions();
 
     // Re-layout after removal
     this.layoutTileSpritesGrid(tileKey);
@@ -434,10 +397,6 @@ export class BoxManager {
     }
     this.putBoxes += 1; // Tăng số box đã đặt
     this.carriedBoxes -= 1; // Giảm số đang mang
-
-    console.log(
-      `📦 Put 1 box at front tile ${tileKey}. Total: ${tileData.count}`
-    );
 
     // Re-layout after placing
     this.layoutTileSpritesGrid(tileKey);
@@ -551,7 +510,6 @@ export class BoxManager {
     // Lấy warehouse position từ challenge config
     const challengeConfig = this.scene.challengeConfig;
     if (!challengeConfig || !challengeConfig.boxes) {
-      console.log(`🏭 No warehouse config found`);
       return 0;
     }
 
@@ -561,31 +519,14 @@ export class BoxManager {
         const warehouse = boxConfig.warehouse;
         const tileKey = `${warehouse.x},${warehouse.y}`;
         const tileData = this.boxes.get(tileKey);
-        console.log(`🏭 Warehouse tile data: ${tileData}`);
 
         // Đếm box hiện tại tại warehouse (từ tiles, không phải warehouse config)
         const remainingBoxes = tileData ? tileData.count : 0;
-
-        console.log(
-          `🏭 Warehouse (${warehouse.x}, ${warehouse.y}) has ${remainingBoxes} boxes remaining`
-        );
         return remainingBoxes;
       }
     }
 
-    console.log(`🏭 No warehouse found in config`);
     return 0;
-  }
-
-  /**
-   * Kiểm tra điều kiện thắng thua
-   */
-  checkVictoryConditions() {
-    // Có thể thêm logic kiểm tra thắng thua dựa trên boxes
-    // Ví dụ: thu thập đủ số lượng boxes nhất định
-    console.log(
-      `📦 Box status: ${this.collectedBoxes}/${this.totalBoxes} collected`
-    );
   }
 
   /**
@@ -610,16 +551,5 @@ export class BoxManager {
     this.collectedBoxes = 0;
     this.putBoxes = 0;
     this.carriedBoxes = 0;
-    console.log("📦 BoxManager reset");
-  }
-
-  /**
-   * Debug: In thông tin tất cả boxes
-   */
-  debugBoxes() {
-    console.log("📦 DEBUG: All boxes:");
-    this.boxes.forEach((data, tileKey) => {
-      console.log(`   ${tileKey}: ${data.count} boxes`);
-    });
   }
 }

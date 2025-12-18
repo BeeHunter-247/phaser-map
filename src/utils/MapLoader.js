@@ -15,48 +15,47 @@ export class MapLoader {
     const {
       offsetX = 300,
       offsetY = 0,
-      scale   = 1,
+      scale = 1,
       backgroundColor = 0xf3f5f2,
     } = config;
-  
+
     const cam = scene.cameras.main;
     cam.setBackgroundColor(backgroundColor);
     cam.roundPixels = true;
-  
+
     // 1) Tạo map
     let map;
-  
+
     if (mapJsonData) {
       // JSON từ WebView
-      const tiledJson = typeof mapJsonData === "string"
-        ? JSON.parse(mapJsonData)
-        : mapJsonData;
+      const tiledJson =
+        typeof mapJsonData === "string" ? JSON.parse(mapJsonData) : mapJsonData;
 
-      
-  
       // Bảo vệ: phải có ít nhất 1 tilelayer
-      const firstTL = tiledJson.layers?.find(l => l.type === "tilelayer");
+      const firstTL = tiledJson.layers?.find((l) => l.type === "tilelayer");
       if (!firstTL) throw new Error("Tiled JSON không có tilelayer.");
-  
+
       // *** QUAN TRỌNG: add với { data, format } ***
       const key = "webview-map";
       scene.cache.tilemap.add(key, {
         data: tiledJson,
-        format: Phaser.Tilemaps.Formats.TILED_JSON
+        format: Phaser.Tilemaps.Formats.TILED_JSON,
       });
       map = scene.make.tilemap({ key });
     } else {
       map = scene.make.tilemap({ key: "default" });
     }
-  
-    const tilesets = map.tilesets.map(ts => map.addTilesetImage(ts.name, ts.name));
-  
+
+    const tilesets = map.tilesets.map((ts) =>
+      map.addTilesetImage(ts.name, ts.name)
+    );
+
     let layerName = "Tile Layer 1";
     if (map.getLayerIndex(layerName) === -1) {
       // nếu không có, dùng layer[0]
       layerName = map.layers[0]?.name ?? 0;
     }
-  
+
     let layer = null;
     try {
       layer = map.createLayer(layerName, tilesets, offsetX + 150, offsetY);
@@ -65,16 +64,14 @@ export class MapLoader {
       layer = map.createLayer(0, tilesets, offsetX + 150, offsetY);
     }
 
-  
-    if (!layer) throw new Error("Không tạo được Tilemap Layer (map.layers rỗng).");
-  
+    if (!layer)
+      throw new Error("Không tạo được Tilemap Layer (map.layers rỗng).");
+
     if (scale !== 1) layer.setScale(scale);
     if (layer.setPipelineData) layer.setPipelineData("roundPixels", true);
-  
-  
+
     return { map, layer, scale, offsetX, offsetY };
   }
-  
 
   /**
    * Load objects từ object layer hoặc custom data
@@ -91,8 +88,6 @@ export class MapLoader {
       boxes: [],
       others: [],
     };
-
-    console.log(`📦 MapLoader: Starting to load objects`);
 
     // Load từ object layer nếu có
     const objectLayer = map.getObjectLayer("objects");
@@ -117,12 +112,8 @@ export class MapLoader {
       this.loadCustomObjects(scene, mapData, objectConfig, loadedObjects);
     }
 
-    console.log(
-      `📦 MapLoader: Final loaded objects - boxes: ${loadedObjects.boxes.length}`
-    );
     return loadedObjects;
   }
-
 
   /**
    * Load objects từ custom configuration
@@ -242,9 +233,6 @@ export class MapLoader {
 
     // Load boxes từ config
     if (objectConfig.boxes) {
-      console.log(
-        `📦 MapLoader: Loading ${objectConfig.boxes.length} box configs`
-      );
       objectConfig.boxes.forEach((boxConfig) => {
         if (boxConfig.tiles) {
           boxConfig.tiles.forEach((tilePos) => {
@@ -257,9 +245,6 @@ export class MapLoader {
               box.setOrigin(0.5, 1);
               box.setScale(scale);
               loadedObjects.boxes.push(box);
-              console.log(
-                `📦 MapLoader: Created box at (${tilePos.x},${tilePos.y})`
-              );
             } else {
               // Đặt nhiều boxes theo hình tròn quanh tâm tile
               const base = Math.min(
@@ -278,18 +263,11 @@ export class MapLoader {
                 box.setScale(scale);
                 loadedObjects.boxes.push(box);
               }
-              console.log(
-                `📦 MapLoader: Created ${count} boxes at (${tilePos.x},${tilePos.y})`
-              );
             }
           });
         }
       });
     }
-
-    console.log(
-      `📦 MapLoader: Total boxes loaded: ${loadedObjects.boxes.length}`
-    );
   }
 
   /**
