@@ -46,9 +46,7 @@ export class GameInputHandler {
           ) {
             this.scene.loadExampleProgram();
           } else {
-            console.warn(
-              "⚠️ Cannot load program: Game is in lost or won state"
-            );
+            console.warn("Cannot load program: Game is in lost or won state");
           }
           break;
       }
@@ -81,7 +79,7 @@ export class GameInputHandler {
         if (this.scene.gameState !== "lost" && this.scene.gameState !== "won") {
           this.scene.loadExampleProgram();
         } else {
-          console.warn("⚠️ Cannot load program: Game is in lost or won state");
+          console.warn("Cannot load program: Game is in lost or won state");
         }
         break;
 
@@ -121,14 +119,5 @@ export class GameInputHandler {
       "P   : Pause/Resume Program",
       "R   : Restart (reload current map)",
     ];
-  }
-
-  /**
-   * Hiển thị controls help
-   */
-  showControlsHelp() {
-    this.getControlsList().forEach((control) => {
-      console.log(`  ${control}`);
-    });
   }
 }

@@ -68,7 +68,6 @@ export class ProgramExecutor {
 
       return true;
     } catch (error) {
-      console.error("❌ Failed to load program:", error.message);
       return false;
     }
   }
@@ -88,7 +87,7 @@ export class ProgramExecutor {
     // Kiểm tra 2 lệnh takeBox liên tiếp
     if (currentAction.type === "takeBox" && nextAction.type === "takeBox") {
       if (this.scene && typeof this.scene.lose === "function") {
-        this.scene.lose(`Hey! No back-to-back takeBox commands. Play fair 😉`);
+        this.scene.lose(`Hey! No back-to-back takeBox commands. Play fair`);
       }
       this.stopProgram();
       return true; // Có lỗi
@@ -97,7 +96,7 @@ export class ProgramExecutor {
     // Kiểm tra 2 lệnh putBox liên tiếp
     if (currentAction.type === "putBox" && nextAction.type === "putBox") {
       if (this.scene && typeof this.scene.lose === "function") {
-        this.scene.lose(`Hey! No back-to-back putBox commands. Play fair 😉`);
+        this.scene.lose(`Hey! No back-to-back putBox commands. Play fair`);
       }
       this.stopProgram();
       return true; // Có lỗi
@@ -296,7 +295,6 @@ export class ProgramExecutor {
    */
   parseAction(action, index) {
     if (!action.type) {
-      console.warn(`⚠️ Action ${index}: Missing type`);
       return null;
     }
 
@@ -407,7 +405,6 @@ export class ProgramExecutor {
         };
 
       default:
-        console.warn(`⚠️ Action ${index}: Unknown type "${action.type}"`);
         return null;
     }
   }
@@ -475,18 +472,15 @@ export class ProgramExecutor {
    */
   startProgram() {
     if (!this.program) {
-      console.error("❌ No program loaded");
       return false;
     }
 
     if (this.isRunning) {
-      console.warn("⚠️ Program already running");
       return false;
     }
 
     // Kiểm tra trạng thái game trước khi bắt đầu
     if (this.scene.gameState === "lost" || this.scene.gameState === "won") {
-      console.warn("⚠️ Cannot start program: Game is in lost or won state");
       return false;
     }
 
@@ -870,7 +864,6 @@ export class ProgramExecutor {
 
     // Kiểm tra trạng thái game trước khi thực thi lệnh
     if (this.scene.gameState === "lost" || this.scene.gameState === "won") {
-      console.warn("⚠️ Cannot execute command: Game is in lost or won state");
       this.stopProgram();
       return;
     }
@@ -883,7 +876,7 @@ export class ProgramExecutor {
         const loseMessage = victoryResult.loseMessage || "Mission failed!";
         this.scene.lose(loseMessage);
       } else {
-        this.scene.win("Program finished perfectly. Champion mode unlocked 🏅");
+        this.scene.win("Program finished perfectly. Champion mode unlocked.");
 
         // Gửi thông báo chiến thắng ra webview (không blocking)
         import("./WebViewMessenger.js")
@@ -925,7 +918,6 @@ export class ProgramExecutor {
       }
       // Lệnh forward sẽ tự xử lý việc chuyển sang lệnh tiếp theo
     } else {
-      console.error(`❌ Command failed at step ${this.currentStep + 1}`);
       this.stopProgram();
     }
   }
@@ -975,11 +967,9 @@ export class ProgramExecutor {
           return this.executeTakeBox(action.count);
 
         default:
-          console.error(`❌ Unknown command: ${action.type}`);
           return false;
       }
     } catch (error) {
-      console.error(`❌ Error executing command:`, error);
       return false;
     }
   }
@@ -1047,7 +1037,6 @@ export class ProgramExecutor {
       }
       return true;
     } catch (e) {
-      console.error("❌ Failed to execute IF:", e);
       return false;
     }
   }
@@ -1085,7 +1074,6 @@ export class ProgramExecutor {
       }
       return true;
     } catch (e) {
-      console.error("❌ Failed to execute WHILE:", e);
       return false;
     }
   }
@@ -1100,7 +1088,6 @@ export class ProgramExecutor {
       const func = this.functions.get(functionName);
 
       if (!func) {
-        console.error(`❌ Function '${functionName}' not found`);
         return false;
       }
 
@@ -1115,7 +1102,6 @@ export class ProgramExecutor {
       }
       return true;
     } catch (e) {
-      console.error("❌ Failed to execute function call:", e);
       return false;
     }
   }
@@ -1183,14 +1169,6 @@ export class ProgramExecutor {
             };
           }
 
-          // Debug log để kiểm tra biến đã được thay thế
-          if (actionCopy.type === "collect") {
-            console.log(
-              `🔧 DEBUG: Action copy for ${variableName}=${currentValue}:`,
-              JSON.stringify(actionCopy)
-            );
-          }
-
           actionsToInsert.push(actionCopy);
         }
       }
@@ -1203,7 +1181,6 @@ export class ProgramExecutor {
 
       return true;
     } catch (e) {
-      console.error("❌ Failed to execute repeatRange:", e);
       return false;
     }
   }
@@ -1225,10 +1202,6 @@ export class ProgramExecutor {
         variableContext
       );
       if (variableValue === undefined) {
-        console.warn(
-          `⚠️ Variable not resolvable in variableComparison:`,
-          cond.variable
-        );
         return false;
       }
 
@@ -1280,7 +1253,6 @@ export class ProgramExecutor {
         actual = this.hasBatteryColorAtCurrentTile("yellow");
         break;
       default:
-        console.warn(`⚠️ Unknown condition function: ${functionName}`);
         actual = false;
     }
     return cond.check ? actual : !actual;
@@ -1317,7 +1289,6 @@ export class ProgramExecutor {
               return 0;
             }
             default:
-              console.warn(`⚠️ Unknown function variable: ${name}`);
               return undefined;
           }
         }
@@ -1326,7 +1297,6 @@ export class ProgramExecutor {
       // Not resolvable
       return undefined;
     } catch (e) {
-      console.warn("⚠️ resolveVariableValue failed:", e);
       return undefined;
     }
   }
@@ -1353,7 +1323,6 @@ export class ProgramExecutor {
       case ">=":
         return leftValue >= rightValue;
       default:
-        console.warn(`⚠️ Unknown operator: ${operator}`);
         return false;
     }
   }
@@ -1389,7 +1358,6 @@ export class ProgramExecutor {
       case "^":
         return Math.pow(left, right);
       default:
-        console.warn(`⚠️ Unknown arithmetic operator: ${op}`);
         return undefined;
     }
   }
@@ -1436,7 +1404,6 @@ export class ProgramExecutor {
 
       return undefined;
     } catch (e) {
-      console.warn("⚠️ resolveNumericValue failed:", e);
       return undefined;
     }
   }
@@ -1540,9 +1507,6 @@ export class ProgramExecutor {
       this.executeForwardStep(totalCount, currentStep + 1);
     });
     if (!success) {
-      console.error(
-        `❌ Failed to move forward at step ${currentStep + 1}/${totalCount}`
-      );
       this.stopProgram();
       return;
     }
@@ -1572,14 +1536,14 @@ export class ProgramExecutor {
       count: perTileCount,
     } = this.scene.getBatteriesAtCurrentTile();
     if (perTileCount === 0) {
-      this.scene.lose("No batteries here... just dust 🪹");
+      this.scene.lose("No batteries here... just dust.");
       return false;
     }
 
     // Quy tắc: số lượng yêu cầu không được vượt quá số pin có sẵn
     if (perTileCount < parsedCount) {
       this.scene.lose(
-        `Whoops! This tile only has ${perTileCount} batteries, not ${parsedCount} 😅`
+        `Whoops! This tile only has ${perTileCount} batteries, not ${parsedCount}.`
       );
       return false;
     }
@@ -1635,10 +1599,9 @@ export class ProgramExecutor {
   executePutBox(count) {
     // Chỉ cho phép đặt 1 box mỗi lần
     if (count !== 1) {
-      console.error(`❌ Can only put 1 box at a time, requested: ${count}`);
       if (this.scene && typeof this.scene.lose === "function") {
         this.scene.lose(
-          `Oops! Can only put 1 box at a time, but tried to put ${count} 😬`
+          `Oops! Can only put 1 box at a time, but tried to put ${count}.`
         );
       }
       return false;
@@ -1647,16 +1610,14 @@ export class ProgramExecutor {
     try {
       const success = this.scene.putBox(1);
       if (!success) {
-        console.error(`❌ Failed to put 1 box`);
         if (this.scene && typeof this.scene.lose === "function") {
-          this.scene.lose(`Uh-oh! Can't put 1 box here. Not allowed 🚷`);
+          this.scene.lose(`Uh-oh! Can't put 1 box here. Not allowed!`);
         }
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error(`❌ Error putting boxes:`, error);
       return false;
     }
   }
@@ -1669,10 +1630,9 @@ export class ProgramExecutor {
   executeTakeBox(count) {
     // Chỉ cho phép nhặt 1 box mỗi lần
     if (count !== 1) {
-      console.error(`❌ Can only take 1 box at a time, requested: ${count}`);
       if (this.scene && typeof this.scene.lose === "function") {
         this.scene.lose(
-          `Oops! Can only grab 1 box at a time, but tried to grab ${count} 😬`
+          `Oops! Can only grab 1 box at a time, but tried to grab ${count}.`
         );
       }
       return false;
@@ -1681,18 +1641,14 @@ export class ProgramExecutor {
     try {
       const success = this.scene.takeBox(1);
       if (!success) {
-        console.error(`❌ Failed to take 1 box`);
         if (this.scene && typeof this.scene.lose === "function") {
-          this.scene.lose(
-            `Oops! Tried to grab 1 box, but the spot is empty 😬`
-          );
+          this.scene.lose(`Oops! Tried to grab 1 box, but the spot is empty.`);
         }
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error(`❌ Error taking boxes:`, error);
       return false;
     }
   }
@@ -1706,7 +1662,6 @@ export class ProgramExecutor {
       const remainingBoxes = this.scene.boxManager.checkWarehouse();
       return remainingBoxes;
     } catch (error) {
-      console.error(`❌ Error checking warehouse:`, error);
       return 0;
     }
   }

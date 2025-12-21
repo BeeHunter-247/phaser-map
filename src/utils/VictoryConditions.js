@@ -1,10 +1,3 @@
-/**
- * VictoryConditions.js
- *
- * Hệ thống đánh giá tiêu chí thắng thua cho từng map dựa trên việc thu thập pin
- * Sử dụng challenge.json config thông qua MapModel
- */
-
 import { sendBatteryCollectionResult } from "./WebViewMessenger.js";
 
 /**
@@ -391,11 +384,11 @@ export function checkAndDisplayVictory(scene) {
         missingBlocks.length > 0
           ? `Missing: ${missingBlocks.join(", ")}`
           : "Statement validation error";
-      finalResult.loseMessage = `Double trouble! Out of power AND ${missingText} 😵⚡📝`;
+      finalResult.loseMessage = `Double trouble! Out of power AND ${missingText}.`;
     } else if (!result.isVictory) {
       // Thua do thiếu pin
       finalResult.loseMessage =
-        "Mission failed! The program stopped without enough power ⚡🚫";
+        "Mission failed! The program stopped without enough power.";
     } else if (!statementCheck.isValid) {
       // Thua do thiếu statement
       const missingBlocks = statementCheck.missingStatements || [];
@@ -403,7 +396,7 @@ export function checkAndDisplayVictory(scene) {
         missingBlocks.length > 0
           ? `Missing: ${missingBlocks.join(", ")}`
           : "Statement validation error";
-      finalResult.loseMessage = `Oops! Missing code blocks: ${missingText} ❌`;
+      finalResult.loseMessage = `Oops! Missing code blocks: ${missingText}.`;
     }
   }
 
@@ -413,49 +406,6 @@ export function checkAndDisplayVictory(scene) {
     finalResult.stars = starsInfo.stars;
     finalResult.starScore = starsInfo.score;
     finalResult.starDetail = starsInfo.detail;
-  }
-
-  // Hiển thị thông tin trong console
-  if (finalResult.isVictory) {
-    console.log(
-      `🏆 Chiến thắng! Đã thu thập đủ pin và sử dụng đủ statement theo yêu cầu`
-    );
-  } else {
-    if (!result.isVictory) {
-      console.log(`📊 Chưa thu thập đủ pin theo yêu cầu`);
-    }
-    if (!statementCheck.isValid) {
-      console.log(
-        `❌ Chưa sử dụng đủ statement theo yêu cầu: ${statementCheck.message}`
-      );
-    }
-  }
-
-  // Kiểm tra details có tồn tại không trước khi log
-  if (result.details) {
-    console.log(`   ${result.details.red}`);
-    console.log(`   ${result.details.yellow}`);
-    console.log(`   ${result.details.green}`);
-  }
-
-  // Hiển thị thông tin statement
-  if (
-    statementCheck.usedStatements &&
-    statementCheck.usedStatements.length > 0
-  ) {
-    console.log(
-      `   📝 Đã sử dụng statements: ${statementCheck.usedStatements.join(", ")}`
-    );
-  }
-  if (
-    statementCheck.requiredStatements &&
-    statementCheck.requiredStatements.length > 0
-  ) {
-    console.log(
-      `   📋 Yêu cầu statements: ${statementCheck.requiredStatements.join(
-        ", "
-      )}`
-    );
   }
 
   // Gửi kết quả đến webview bên ngoài (chỉ thắng/thua)
@@ -542,7 +492,6 @@ function computeStars(scene) {
       detail: `score=clamp((maxCards-usedCards)/(maxCards-minCards),0,1) = clamp((${maxCards}-${usedCards})/(${maxCards}-${minCards}),0,1)`,
     };
   } catch (e) {
-    console.warn("⚠️ computeStars failed:", e);
     return null;
   }
 }

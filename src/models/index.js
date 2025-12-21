@@ -1,7 +1,3 @@
-/**
- * Models index file - Export tất cả models
- */
-
 export { BaseModel } from "./BaseModel.js";
 export { RobotModel } from "./RobotModel.js";
 export { BatteryModel } from "./BatteryModel.js";
