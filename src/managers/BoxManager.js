@@ -121,7 +121,6 @@ export class BoxManager {
    */
   getTileKeyFromPosition(worldX, worldY) {
     if (!this.robotManager || !this.robotManager.map) {
-      console.error("❌ RobotManager or map not available");
       return null;
     }
 
@@ -188,7 +187,6 @@ export class BoxManager {
    */
   getFrontTilePosition() {
     if (!this.robotManager) {
-      console.error("❌ RobotManager not initialized");
       return null;
     }
     return this.robotManager.getFrontTile();
@@ -263,21 +261,16 @@ export class BoxManager {
   takeBox(count = 1) {
     // Chỉ cho phép nhặt 1 box mỗi lần
     if (count !== 1) {
-      console.error(`❌ Can only take 1 box at a time, requested: ${count}`);
       return false;
     }
 
     const frontTile = this.getFrontTilePosition();
     if (!frontTile) {
-      console.error("❌ No front tile for robot");
       return false;
     }
 
     // Kiểm tra ô trước mặt có hợp lệ không
     if (!this.robotManager.isWithinBounds(frontTile.x, frontTile.y)) {
-      console.error(
-        `❌ Front tile (${frontTile.x}, ${frontTile.y}) is out of bounds`
-      );
       return false;
     }
 
@@ -285,11 +278,6 @@ export class BoxManager {
     const tileData = this.boxes.get(tileKey);
 
     if (!tileData || tileData.count < 1) {
-      console.error(
-        `❌ No boxes available at front tile ${tileKey}. Available: ${
-          tileData?.count || 0
-        }`
-      );
       return false;
     }
 
@@ -307,7 +295,7 @@ export class BoxManager {
         }
       });
     } else {
-      console.log(`📦 No sprites to remove at ${tileKey}`);
+      console.log(`No sprites to remove at ${tileKey}`);
     }
 
     // Re-layout after removal
@@ -324,27 +312,21 @@ export class BoxManager {
   putBox(count = 1) {
     // Chỉ cho phép đặt 1 box mỗi lần
     if (count !== 1) {
-      console.error(`❌ Can only put 1 box at a time, requested: ${count}`);
       return false;
     }
 
     // Không cho đặt vượt quá số lượng đang mang
     if (this.carriedBoxes < 1) {
-      console.error(`❌ Cannot put box. Carried: ${this.carriedBoxes}`);
       return false;
     }
 
     const frontTile = this.getFrontTilePosition();
     if (!frontTile) {
-      console.error("❌ No front tile for robot");
       return false;
     }
 
     // Kiểm tra ô trước mặt có hợp lệ không
     if (!this.robotManager.isWithinBounds(frontTile.x, frontTile.y)) {
-      console.error(
-        `❌ Front tile (${frontTile.x}, ${frontTile.y}) is out of bounds`
-      );
       return false;
     }
 
@@ -356,9 +338,6 @@ export class BoxManager {
       if (Array.isArray(requiredTargets) && requiredTargets.length > 0) {
         const allowed = new Set(requiredTargets.map((t) => `${t.x},${t.y}`));
         if (!allowed.has(tileKey)) {
-          console.error(
-            `❌ Cannot put box at ${tileKey}. Not a target position.`
-          );
           return false;
         }
       }
@@ -428,7 +407,6 @@ export class BoxManager {
 
       return box;
     } catch (error) {
-      console.error("❌ Failed to create box sprite:", error);
       return null;
     }
   }

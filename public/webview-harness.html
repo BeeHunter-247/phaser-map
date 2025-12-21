@@ -95,7 +95,6 @@
 
       // Buttons
       document.getElementById("btnStart").onclick = async () => {
-        console.log("🔄 START button clicked!");
         try {
           // Load từ mapString - CẬP NHẬT ĐỂ KHỚP VỚI test.json
           const mapString =
@@ -107,34 +106,10 @@
             '{"robot":{"tile":{"x":3,"y":4},"direction":"east"},"batteries":[{"tiles":[{"x":5,"y":4,"count":2,"type":"yellow","spread":1.2,"allowedCollect":true},{"x":7,"y":4,"count":2,"type":"yellow","spread":1.2,"allowedCollect":true}]}],"victory":{"byType":[{"red":0,"yellow":4,"green":0}],"description":"Help me collect the yellow 🟨 battery!💡With the repeat block, you can loop code over and over."},"statement":["forward","collect"],"minCards":3,"maxCards":5}';
           const challengeJson = JSON.parse(challengeString);
 
-          // Log để kiểm tra dữ liệu trước khi gửi
-          console.log("📤 Sending data from strings:");
-          console.log("  📁 MapJson:", {
-            type: typeof mapJson,
-            orientation: mapJson.orientation,
-            layers: mapJson.layers?.length,
-            tilesets: mapJson.tilesets?.length,
-            firstLayerName: mapJson.layers?.[0]?.name,
-            tileheight: mapJson.tileheight,
-            tilewidth: mapJson.tilewidth,
-          });
-          console.log("  🎯 ChallengeJson:", {
-            type: typeof challengeJson,
-            robot: !!challengeJson.robot,
-            robotPosition: challengeJson.robot?.tile,
-            robotDirection: challengeJson.robot?.direction,
-            batteries: challengeJson.batteries?.length || 0,
-            victory: !!challengeJson.victory,
-            minCards: challengeJson.minCards,
-            maxCards: challengeJson.maxCards,
-          });
-
-          console.log("📤 Full objects:", { mapJson, challengeJson });
-
           sendToGame("LOAD_MAP_AND_CHALLENGE", { mapJson, challengeJson });
         } catch (e) {
-          console.error("❌ Error details:", e);
-          log("⚠️ Failed to load map/challenge:", e.message || e);
+          console.error("Error details:", e);
+          log("Failed to load map/challenge:", e.message || e);
         }
       };
 
@@ -164,8 +139,8 @@
 
       // Optional: Mock a Flutter-like channel for quick testing (shown in console)
       window.PhaserChannel = window.PhaserChannel || {
-        postMessage: (s) => console.log("PhaserChannel.postMessage →", s),
-        emit: (type, data) => console.log("PhaserChannel.emit →", type, data),
+        postMessage: (s) => {},
+        emit: (type, data) => {},
         on: () => () => {},
       };
     </script>

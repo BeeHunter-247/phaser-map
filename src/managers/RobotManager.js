@@ -45,7 +45,6 @@ export class RobotManager {
 
     const robotModel = mapModel.getFirstRobot();
     if (!robotModel) {
-      console.warn("⚠️ Không tìm thấy robot model trong map!");
       return;
     }
 
@@ -110,7 +109,6 @@ export class RobotManager {
    */
   moveForward(onComplete) {
     if (!this.robotModel) {
-      console.error("Robot model not initialized!");
       return false;
     }
 
@@ -160,7 +158,6 @@ export class RobotManager {
    */
   turnLeft() {
     if (!this.robotModel) {
-      console.error("Robot model not initialized!");
       return false;
     }
 
@@ -181,7 +178,6 @@ export class RobotManager {
    */
   turnRight() {
     if (!this.robotModel) {
-      console.error("Robot model not initialized!");
       return false;
     }
 
@@ -202,7 +198,6 @@ export class RobotManager {
    */
   turnBack() {
     if (!this.robotModel) {
-      console.error("Robot model not initialized!");
       return false;
     }
 

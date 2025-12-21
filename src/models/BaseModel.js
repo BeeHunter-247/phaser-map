@@ -1,12 +1,3 @@
-/**
- * BaseModel - Base class cho tất cả models trong game
- *
- * Cung cấp các chức năng cơ bản như:
- * - ID generation
- * - Position management
- * - Metadata handling
- * - Serialization interface
- */
 export class BaseModel {
   constructor(config = {}) {
     this.id = config.id || this.generateId();
@@ -18,10 +9,6 @@ export class BaseModel {
     this.createdAt = Date.now();
   }
 
-  /**
-   * Tạo ID duy nhất cho model
-   * @returns {string} Unique ID
-   */
   generateId() {
     return `${this.type}_${Date.now()}_${Math.random()
       .toString(36)

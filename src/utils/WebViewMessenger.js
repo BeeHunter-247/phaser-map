@@ -1,11 +1,4 @@
 /**
- * WebViewMessenger.js
- *
- * Hệ thống giao tiếp giữa game Phaser và webview bên ngoài
- * Sử dụng window.parent.postMessage để gửi thông báo
- */
-
-/**
  * Kiểm tra xem game có đang chạy trong iframe không
  * @returns {boolean} True nếu game đang chạy trong iframe
  */
@@ -51,7 +44,7 @@ export function sendMessageToParent(type, data = {}) {
   }
 
   if (!sent) {
-    console.log("📝 Would send (no bridge/iframe):", message);
+    console.log("Would send (no bridge/iframe):", message);
   }
 
   return sent;
@@ -102,14 +95,6 @@ export function sendCompiledActions(payload) {
   };
   try {
     const preview = data.actions.slice(0, 10);
-    console.log(
-      `📤 PROGRAM_COMPILED_ACTIONS → sending ${data.actions.length} action(s)`,
-      preview
-    );
-    console.log("📤 Actions detail (full):", data.actions);
-    if (data.result) {
-      console.log("📤 Headless result:", data.result);
-    }
   } catch (_) {}
   return sendMessageToParent("PROGRAM_COMPILED_ACTIONS", data);
 }
@@ -164,9 +149,7 @@ export function setupMessageListener(callback, options = {}) {
         };
         if (typeof callback === "function") callback(normalized);
       }
-    } catch (e) {
-      console.error("❌ Error processing message from parent:", e);
-    }
+    } catch (e) {}
   };
   window.addEventListener("message", messageHandler);
 
@@ -201,15 +184,8 @@ export function setupMessageListener(callback, options = {}) {
         return true;
       }
 
-      // Trường hợp không có .on/.emit (kênh tự triển khai khác) thì bạn có thể
-      // bổ sung nhánh này để thích ứng, ví dụ: pc.addEventListener(...)
-      // Ở đây mình chỉ hỗ trợ chuẩn .on/.emit để tối giản như yêu cầu “chỉ sửa trong setupMessageListener”.
-      console.warn(
-        "[setupMessageListener] PhaserChannel không có .on(); bỏ qua."
-      );
       return false;
     } catch (e) {
-      console.error("❌ Error attaching PhaserChannel listeners:", e);
       return false;
     }
   };
@@ -232,7 +208,6 @@ export function setupMessageListener(callback, options = {}) {
       pollId = null;
       timeoutId = null;
       // Không có PhaserChannel trong khoảng waitMs – không sao, vẫn chỉ nghe postMessage
-      // console.debug("[setupMessageListener] Hết thời gian chờ PhaserChannel.");
     }, waitMs);
   }
 
@@ -292,13 +267,8 @@ export function sendBatteryCollectionResult(scene, victoryResult) {
 export function loadMapAndChallenge(game, mapJson, challengeJson) {
   try {
     if (!mapJson || !challengeJson) {
-      console.error(
-        "❌ loadMapAndChallenge: mapJson and challengeJson are required"
-      );
       return false;
     }
-
-    console.log("📥 Loading mapJson and challengeJson from webview");
 
     const scene = game.scene.getScene("Scene");
     if (scene) {
@@ -311,7 +281,6 @@ export function loadMapAndChallenge(game, mapJson, challengeJson) {
 
     return true;
   } catch (error) {
-    console.error("❌ Error loading mapJson and challengeJson:", error);
     sendErrorMessage({
       type: "LOAD_ERROR",
       message: error.message,
@@ -337,22 +306,14 @@ export function initWebViewCommunication(game) {
         const mapJson = message.data && message.data.mapJson;
         const challengeJson = message.data && message.data.challengeJson;
         if (mapJson && challengeJson) {
-          console.log(`▶️ START_MAP with mapJson and challengeJson`);
           game.scene.start("Scene", { mapJson, challengeJson });
         } else if (mapJson) {
-          console.log(`▶️ START_MAP with mapJson only`);
           game.scene.start("Scene", { mapJson });
         } else {
-          console.warn("⚠️ START_MAP: Missing mapJson or challengeJson");
+          console.warn("START_MAP: Missing mapJson or challengeJson");
         }
         break;
       }
-      case "LOAD_MAP":
-        // Xử lý yêu cầu tải map (deprecated - sử dụng LOAD_MAP_AND_CHALLENGE)
-        console.warn(
-          "⚠️ LOAD_MAP is deprecated. Use LOAD_MAP_AND_CHALLENGE instead."
-        );
-        break;
 
       case "LOAD_MAP_AND_CHALLENGE":
         // Xử lý yêu cầu tải mapJson và challengeJson
@@ -360,10 +321,6 @@ export function initWebViewCommunication(game) {
         const challengeJsonData = message.data && message.data.challengeJson;
 
         if (mapJsonData && challengeJsonData) {
-          console.log(
-            `📥 LOAD_MAP_AND_CHALLENGE: Received mapJson and challengeJson`
-          );
-
           const scene = game.scene.getScene("Scene");
           if (scene) {
             // Khởi động lại scene với mapJson và challengeJson mới
@@ -379,9 +336,6 @@ export function initWebViewCommunication(game) {
             });
           }
         } else {
-          console.warn(
-            "⚠️ LOAD_MAP_AND_CHALLENGE: Missing mapJson or challengeJson"
-          );
           sendErrorMessage({
             type: "MISSING_DATA",
             message: "mapJson and challengeJson are required",
@@ -396,9 +350,6 @@ export function initWebViewCommunication(game) {
           if (scene) {
             // Chặn khi game đã thắng hoặc thua
             if (scene.gameState === "lost" || scene.gameState === "won") {
-              console.warn(
-                "⚠️ RUN_PROGRAM ignored: Game is in lost or won state"
-              );
               sendErrorMessage({
                 type: "GAME_ENDED",
                 message: "Cannot run program: Game has ended.",
@@ -409,7 +360,6 @@ export function initWebViewCommunication(game) {
             // Chặn khi đang chạy
             const status = scene.getProgramStatus?.();
             if (status && status.isRunning) {
-              console.warn("⚠️ RUN_PROGRAM ignored: program already running");
               break;
             }
             scene.loadProgram(message.data.program, true);
@@ -425,9 +375,6 @@ export function initWebViewCommunication(game) {
           try {
             // Chặn khi game đã thắng hoặc thua
             if (scene.gameState === "lost" || scene.gameState === "won") {
-              console.warn(
-                "⚠️ RUN_PROGRAM_HEADLESS ignored: Game is in lost or won state"
-              );
               sendErrorMessage({
                 type: "GAME_ENDED",
                 message: "Cannot run program: Game has ended.",
@@ -438,9 +385,6 @@ export function initWebViewCommunication(game) {
             // Chặn khi đang chạy
             const status = scene.getProgramStatus?.();
             if (status && status.isRunning) {
-              console.warn(
-                "⚠️ RUN_PROGRAM_HEADLESS ignored: program already running"
-              );
               break;
             }
             const ok = scene.loadProgram(program, false);
@@ -460,24 +404,14 @@ export function initWebViewCommunication(game) {
               const count = Array.isArray(result?.actions)
                 ? result.actions.length
                 : 0;
-              console.log(
-                `✅ RUN_PROGRAM_HEADLESS compiled ${count} primitive action(s)`
-              );
-              console.log("✅ Actions detail (full):", result?.actions || []);
             } catch (_) {}
 
             // Cập nhật gameState dựa trên kết quả headless để chặn các lần chạy tiếp theo
             if (result?.result) {
               if (result.result.isVictory === false) {
                 scene.gameState = "lost";
-                console.log(
-                  "🔄 Game state updated to 'lost' after headless execution"
-                );
               } else if (result.result.isVictory === true) {
                 scene.gameState = "won";
-                console.log(
-                  "🔄 Game state updated to 'won' after headless execution"
-                );
               }
             }
 
@@ -490,7 +424,6 @@ export function initWebViewCommunication(game) {
               });
             }
           } catch (e) {
-            console.error("❌ RUN_PROGRAM_HEADLESS error:", e);
             sendErrorMessage({
               type: "HEADLESS_EXECUTION_ERROR",
               message: e?.message || String(e),
@@ -554,13 +487,11 @@ export function initWebViewCommunication(game) {
       if (scene) {
         // Kiểm tra trạng thái game trước khi chạy program
         if (scene.gameState === "lost" || scene.gameState === "won") {
-          console.warn("⚠️ Cannot run program: Game is in lost or won state");
           return false;
         }
         // Chặn nếu đang chạy
         const status = scene.getProgramStatus?.();
         if (status && status.isRunning) {
-          console.warn("⚠️ Cannot run program: A program is already running");
           return false;
         }
         return scene.loadProgram(program, true);

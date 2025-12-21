@@ -285,7 +285,7 @@ export class RobotModel extends BaseModel {
     if (!currentTile) {
       return {
         isValid: false,
-        error: "Uh-oh! Empty space trap — game over! 😵",
+        error: "Uh-oh! Empty space trap — game over!",
       };
     }
 
@@ -293,7 +293,7 @@ export class RobotModel extends BaseModel {
     if (currentTile.index === 4 || currentTile.index === 5) {
       return {
         isValid: false,
-        error: "Yikes! You walked straight into nothingness 😬",
+        error: "Yikes! You walked straight into nothingness.",
       };
     }
 

@@ -26,7 +26,7 @@ class PhaserChannelEmitter {
       const parsed = JSON.parse(message);
       this.emit("message", parsed);
     } catch (e) {
-      console.error("❌ Failed to parse PhaserChannel message:", e);
+      throw e;
     }
   }
 
@@ -58,10 +58,7 @@ class PhaserChannelEmitter {
       try {
         callback(data);
       } catch (e) {
-        console.error(
-          `❌ Error in PhaserChannel listener for ${eventType}:`,
-          e
-        );
+        throw e;
       }
     });
 
@@ -70,7 +67,7 @@ class PhaserChannelEmitter {
       try {
         callback(data);
       } catch (e) {
-        console.error(`❌ Error in PhaserChannel wildcard listener:`, e);
+        throw e;
       }
     });
   }

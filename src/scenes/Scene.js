@@ -6,7 +6,6 @@ import { BatteryManager } from "../managers/BatteryManager.js";
 import { BoxManager } from "../managers/BoxManager.js";
 import { GameInputHandler } from "../managers/GameInputHandler.js";
 import { GameUIManager } from "../managers/GameUIManager.js";
-import { checkAndDisplayVictory } from "../utils/VictoryConditions.js";
 import { ConfigLoader } from "../utils/ConfigLoader.js";
 
 export default class Scene extends Phaser.Scene {
@@ -70,7 +69,6 @@ export default class Scene extends Phaser.Scene {
 
   async create() {
     try {
-      // Chỉ hoạt động với data từ webview
       if (!this.challengeJson || !this.mapJson) {
         throw new Error(
           "Scene requires mapJson and challengeJson from webview"
@@ -96,7 +94,6 @@ export default class Scene extends Phaser.Scene {
       this.layer = mapData.layer;
       this.mapData = mapData;
 
-      // Load objects từ map model thay vì hardcode config
       const loadedObjects = this.loadObjectsFromMapModel(mapData);
 
       // Initialize Managers với map model
@@ -106,7 +103,6 @@ export default class Scene extends Phaser.Scene {
       this.mapModel.startGame();
       this.gameState = "ready"; // Reset game state when creating new scene
     } catch (error) {
-      console.error("❌ Failed to create scene:", error);
       this.showLoadingScreen("Loading data");
     }
   }
@@ -120,7 +116,6 @@ export default class Scene extends Phaser.Scene {
       // Sử dụng ConfigLoader để tạo map model từ webview data
       return await ConfigLoader.loadMapModel(this.mapJson, this.challengeJson);
     } catch (error) {
-      console.error("❌ Failed to load map model from webview:", error);
       throw error;
     }
   }
@@ -404,8 +399,6 @@ export default class Scene extends Phaser.Scene {
    * @param {string} message - Error message
    */
   showErrorMessage(message) {
-    console.error("❌ Scene Error:", message);
-
     // Thay vì hiển thị error message, hiển thị loading screen đẹp hơn
     this.showLoadingScreen("Loading data");
 
@@ -680,22 +673,17 @@ export default class Scene extends Phaser.Scene {
    */
   loadProgram(programData, autoStart = false) {
     if (!this.programExecutor) {
-      console.error("❌ ProgramExecutor not initialized");
       return false;
     }
 
     // Kiểm tra trạng thái game trước khi load program
     if (this.gameState === "lost" || this.gameState === "won") {
-      console.warn("⚠️ Cannot load program: Game is in lost or won state");
       return false;
     }
 
     // Không cho load chương trình mới khi đang chạy
     const runningStatus = this.programExecutor.getStatus?.();
     if (runningStatus && runningStatus.isRunning) {
-      console.warn(
-        "⚠️ Cannot load program: Another program is currently running"
-      );
       return false;
     }
 
@@ -718,20 +706,17 @@ export default class Scene extends Phaser.Scene {
    */
   startProgram() {
     if (!this.programExecutor) {
-      console.error("❌ ProgramExecutor not initialized");
       return false;
     }
 
     // Kiểm tra trạng thái game trước khi bắt đầu
     if (this.gameState === "lost" || this.gameState === "won") {
-      console.warn("⚠️ Cannot start program: Game is in lost or won state");
       return false;
     }
 
     // Không cho start nếu đang chạy
     const runningStatus = this.programExecutor.getStatus?.();
     if (runningStatus && runningStatus.isRunning) {
-      console.warn("⚠️ Cannot start program: Program already running");
       return false;
     }
 
@@ -786,7 +771,6 @@ export default class Scene extends Phaser.Scene {
   loadExampleProgram(programData = null) {
     // Kiểm tra trạng thái game trước khi load program
     if (this.gameState === "lost" || this.gameState === "won") {
-      console.warn("⚠️ Cannot load program: Game is in lost or won state");
       return false;
     }
 

@@ -89,7 +89,7 @@ export class BatteryModel extends BaseModel {
       return {
         success: false,
         gameOver: true,
-        message: `Uh-oh! You weren’t allowed to collect the ${this.color} battery 😬`,
+        message: `Uh-oh! You weren't allowed to collect the ${this.color} battery.`,
       };
     }
 
@@ -128,7 +128,7 @@ export class BatteryModel extends BaseModel {
       return {
         success: false,
         gameOver: true,
-        message: `Uh-oh! You weren’t allowed to collect the ${this.color} battery 😬`,
+        message: `Uh-oh! You weren't allowed to collect the ${this.color} battery`,
       };
     }
 
@@ -210,7 +210,7 @@ export class BatteryModel extends BaseModel {
     const count = tileConfig.count || 1;
     let color = "green";
 
-    // Xác định màu theo priority: types[index] > type > 'green'
+    // Xác định màu theo priority
     if (Array.isArray(tileConfig.types) && tileConfig.types.length > 0) {
       color =
         tileConfig.types[index] ||
